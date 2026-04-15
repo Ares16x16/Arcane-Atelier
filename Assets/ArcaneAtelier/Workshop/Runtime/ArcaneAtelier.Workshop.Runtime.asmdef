@@ -1,0 +1,15 @@
+{
+  "name": "ArcaneAtelier.Workshop.Runtime",
+  "rootNamespace": "ArcaneAtelier.Workshop",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
+
