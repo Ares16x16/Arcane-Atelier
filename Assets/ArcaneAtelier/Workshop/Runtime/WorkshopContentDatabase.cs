@@ -66,7 +66,7 @@ namespace ArcaneAtelier.Workshop
             }
 
             var nodeIds = new HashSet<string>();
-            foreach (var node in placeableNodes.Where(node => node != null))
+            foreach (var node in (placeableNodes ?? Array.Empty<WorkshopNodeDefinition>()).Where(node => node != null))
             {
                 if (string.IsNullOrWhiteSpace(node.Id))
                 {
@@ -80,7 +80,7 @@ namespace ArcaneAtelier.Workshop
                 }
             }
 
-            foreach (var seed in defaultLayout.Where(seed => seed != null))
+            foreach (var seed in (defaultLayout ?? Array.Empty<WorkshopPlacedNodeSeed>()).Where(seed => seed != null))
             {
                 if (seed.NodeDefinition == null)
                 {
@@ -95,7 +95,7 @@ namespace ArcaneAtelier.Workshop
             }
 
             var rewardIds = new HashSet<string>();
-            foreach (var reward in debugRewards.Where(reward => reward != null))
+            foreach (var reward in (debugRewards ?? Array.Empty<WorkshopRewardDefinition>()).Where(reward => reward != null))
             {
                 if (string.IsNullOrWhiteSpace(reward.Id))
                 {
