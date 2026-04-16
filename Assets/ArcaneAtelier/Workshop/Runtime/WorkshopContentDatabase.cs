@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace ArcaneAtelier.Workshop
@@ -49,9 +51,78 @@ namespace ArcaneAtelier.Workshop
         {
             gridSize = contentGridSize;
             simulationStepSeconds = stepSeconds;
-            placeableNodes = nodes;
-            debugRewards = rewards;
-            defaultLayout = layout;
+            placeableNodes = nodes ?? Array.Empty<WorkshopNodeDefinition>();
+            debugRewards = rewards ?? Array.Empty<WorkshopRewardDefinition>();
+            defaultLayout = layout ?? Array.Empty<WorkshopPlacedNodeSeed>();
+        }
+
+        public IReadOnlyList<string> ValidateContent()
+        {
+            var errors = new List<string>();
+
+            if (gridSize.x <= 0 || gridSize.y <= 0)
+            {
+                errors.Add("GridSize must be greater than zero on both axes.");
+            }
+
+            var nodeIds = new HashSet<string>();
+            foreach (var node in placeableNodes.Where(node => node != null))
+            {
+                if (string.IsNullOrWhiteSpace(node.Id))
+                {
+                    errors.Add($"Node '{node.name}' has an empty Id.");
+                    continue;
+                }
+
+                if (!nodeIds.Add(node.Id))
+                {
+                    errors.Add($"Duplicate node Id detected: '{node.Id}'.");
+                }
+            }
+
+            foreach (var seed in defaultLayout.Where(seed => seed != null))
+            {
+                if (seed.NodeDefinition == null)
+                {
+                    errors.Add($"Default layout seed at {seed.Position} is missing a NodeDefinition.");
+                    continue;
+                }
+
+                if (seed.Position.x < 0 || seed.Position.y < 0 || seed.Position.x >= gridSize.x || seed.Position.y >= gridSize.y)
+                {
+                    errors.Add($"Default layout seed '{seed.NodeDefinition.DisplayName}' is outside grid bounds at {seed.Position}.");
+                }
+            }
+
+            var rewardIds = new HashSet<string>();
+            foreach (var reward in debugRewards.Where(reward => reward != null))
+            {
+                if (string.IsNullOrWhiteSpace(reward.Id))
+                {
+                    errors.Add($"Reward '{reward.name}' has an empty Id.");
+                    continue;
+                }
+
+                if (!rewardIds.Add(reward.Id))
+                {
+                    errors.Add($"Duplicate reward Id detected: '{reward.Id}'.");
+                }
+            }
+
+            return errors;
+        }
+
+        private void OnValidate()
+        {
+            var errors = ValidateContent();
+            if (errors.Count == 0)
+            {
+                return;
+            }
+
+            Debug.LogWarning(
+                $"WorkshopContentDatabase '{name}' validation found {errors.Count} issue(s):\n- {string.Join("\n- ", errors)}",
+                this);
         }
     }
 }

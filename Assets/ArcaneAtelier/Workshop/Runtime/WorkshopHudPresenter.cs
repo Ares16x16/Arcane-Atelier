@@ -32,6 +32,7 @@ namespace ArcaneAtelier.Workshop
             DrawInspectorPanel();
             DrawInventoryPanel();
             DrawRewardPanel();
+            DrawFlowStatsPanel();
             DrawStatusBar();
         }
 
@@ -180,11 +181,27 @@ namespace ArcaneAtelier.Workshop
             GUILayout.BeginArea(new Rect(12, Screen.height - 96, 300, 84), GUI.skin.window);
             GUILayout.Label("Workshop Flow", HeaderStyle());
             GUILayout.Label(controller.StatusMessage, WrappedLabel());
+            if (GUILayout.Button(controller.IsPaused ? "Resume Time" : "Pause Time"))
+            {
+                controller.TogglePause();
+            }
 
             var payload = WorkshopBattlePayloadBridge.CurrentPayload;
             GUILayout.Label(payload.HasCards
                 ? $"Bridge payload ready: {payload.Cards.Count} card type(s)."
                 : "Bridge payload empty.");
+            GUILayout.EndArea();
+        }
+
+        private void DrawFlowStatsPanel()
+        {
+            var stats = controller.BuildFlowStatsView();
+            GUILayout.BeginArea(new Rect(324, 12, 340, 130), GUI.skin.window);
+            GUILayout.Label("Factory Throughput", HeaderStyle());
+            GUILayout.Label($"Runtime: {stats.ElapsedSeconds:0.0}s");
+            GUILayout.Label($"Element Production: {stats.ElementProductionPerSecond:0.00}/s");
+            GUILayout.Label($"Element Consumption: {stats.ElementConsumptionPerSecond:0.00}/s");
+            GUILayout.Label($"Spell Production: {stats.SpellProductionPerSecond:0.00}/s");
             GUILayout.EndArea();
         }
 

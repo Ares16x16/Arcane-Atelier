@@ -3,20 +3,27 @@ using UnityEngine;
 
 namespace ArcaneAtelier.Workshop
 {
+    [DisallowMultipleComponent]
+    [RequireComponent(typeof(WorkshopGridView))]
+    [RequireComponent(typeof(WorkshopHudPresenter))]
     public sealed class WorkshopSceneController : MonoBehaviour
     {
+        private const int MaxSimulationCatchUpStepsPerFrame = 16;
+
         [SerializeField] private WorkshopContentDatabase contentDatabase;
         [SerializeField] private WorkshopGridView gridView;
         [SerializeField] private WorkshopHudPresenter hudPresenter;
 
         private float accumulatedSimulationTime;
         private string statusMessage = "Spell Assembly ready.";
+        private bool isPaused;
 
         public WorkshopSimulation Simulation { get; private set; }
         public WorkshopNodeDefinition SelectedPaletteNode { get; private set; }
         public Vector2Int SelectedCell { get; private set; } = new(-1, -1);
         public int PlacementRotationQuarterTurns { get; private set; }
         public string StatusMessage => statusMessage;
+        public bool IsPaused => isPaused;
 
         public WorkshopNodeState SelectedNode =>
             Simulation != null && Simulation.TryGetNode(SelectedCell, out var nodeState) ? nodeState : null;
@@ -46,6 +53,14 @@ namespace ArcaneAtelier.Workshop
                 hudPresenter = GetComponent<WorkshopHudPresenter>();
             }
 
+            if (contentDatabase == null)
+            {
+                statusMessage = "Missing WorkshopContentDatabase reference on WorkshopSceneController.";
+                Debug.LogError(statusMessage, this);
+                enabled = false;
+                return;
+            }
+
             Simulation = new WorkshopSimulation(contentDatabase);
             Simulation.StateChanged += HandleSimulationStateChanged;
 
@@ -57,6 +72,7 @@ namespace ArcaneAtelier.Workshop
 
         private void OnDestroy()
         {
+            Time.timeScale = 1f;
             if (Simulation != null)
             {
                 Simulation.StateChanged -= HandleSimulationStateChanged;
@@ -65,16 +81,24 @@ namespace ArcaneAtelier.Workshop
 
         private void Update()
         {
-            if (Simulation == null)
+            if (Simulation == null || isPaused)
             {
                 return;
             }
 
+            var stepSeconds = contentDatabase.SimulationStepSeconds;
             accumulatedSimulationTime += Time.deltaTime;
-            while (accumulatedSimulationTime >= contentDatabase.SimulationStepSeconds)
+            var iterations = 0;
+            while (accumulatedSimulationTime >= stepSeconds && iterations < MaxSimulationCatchUpStepsPerFrame)
             {
-                Simulation.Step(contentDatabase.SimulationStepSeconds);
-                accumulatedSimulationTime -= contentDatabase.SimulationStepSeconds;
+                Simulation.Step(stepSeconds);
+                accumulatedSimulationTime -= stepSeconds;
+                iterations++;
+            }
+
+            if (iterations == MaxSimulationCatchUpStepsPerFrame && accumulatedSimulationTime > stepSeconds)
+            {
+                accumulatedSimulationTime = stepSeconds;
             }
         }
 
@@ -91,6 +115,12 @@ namespace ArcaneAtelier.Workshop
 
         public void SetPaletteNode(WorkshopNodeDefinition definition)
         {
+            if (definition != null && !Simulation.IsUnlocked(definition))
+            {
+                statusMessage = $"{definition.DisplayName} is still locked.";
+                return;
+            }
+
             SelectedPaletteNode = definition;
             statusMessage = definition == null
                 ? "Node palette cleared."
@@ -127,13 +157,20 @@ namespace ArcaneAtelier.Workshop
 
         public void ApplyReward(WorkshopRewardDefinition reward)
         {
+            if (reward == null)
+            {
+                statusMessage = "No reward selected.";
+                return;
+            }
+
             Simulation.ApplyReward(reward);
-            statusMessage = reward == null ? "No reward selected." : $"Applied reward: {reward.DisplayName}.";
+            statusMessage = $"Applied reward: {reward.DisplayName}.";
         }
 
         public void ResetWorkshop()
         {
             Simulation.ResetToDefaultLayout();
+            PlacementRotationQuarterTurns = 0;
             statusMessage = "Workshop reset to default layout.";
         }
 
@@ -148,6 +185,18 @@ namespace ArcaneAtelier.Workshop
         public WorkshopInventoryView BuildInventoryView()
         {
             return Simulation.BuildInventoryView();
+        }
+
+        public WorkshopFlowStatsView BuildFlowStatsView()
+        {
+            return Simulation.BuildFlowStatsView();
+        }
+
+        public void TogglePause()
+        {
+            isPaused = !isPaused;
+            Time.timeScale = isPaused ? 0f : 1f;
+            statusMessage = isPaused ? "Factory time paused." : "Factory time resumed.";
         }
 
         private void HandleSimulationStateChanged()
