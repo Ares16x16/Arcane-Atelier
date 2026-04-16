@@ -61,6 +61,17 @@ namespace ArcaneAtelier.Workshop
                 return;
             }
 
+            var validationErrors = contentDatabase.ValidateContent();
+            if (validationErrors.Count > 0)
+            {
+                statusMessage = $"WorkshopContentDatabase '{contentDatabase.name}' is invalid ({validationErrors.Count} error(s)); workshop disabled.";
+                Debug.LogError(
+                    $"{statusMessage}\n- {string.Join("\n- ", validationErrors)}",
+                    this);
+                enabled = false;
+                return;
+            }
+
             Simulation = new WorkshopSimulation(contentDatabase);
             Simulation.StateChanged += HandleSimulationStateChanged;
 
