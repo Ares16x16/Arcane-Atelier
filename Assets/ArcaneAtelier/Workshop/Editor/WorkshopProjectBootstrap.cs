@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -37,8 +38,12 @@ namespace ArcaneAtelier.Workshop.Editor
             }
 
             var sceneExists = AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null;
-            Run();
-            sceneExists = AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null;
+            var databaseExists = AssetDatabase.LoadAssetAtPath<WorkshopContentDatabase>($"{DataRoot}/WorkshopContentDatabase.asset") != null;
+            if (!sceneExists || !databaseExists)
+            {
+                Run();
+                sceneExists = AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null;
+            }
 
             if (!sceneExists)
             {
@@ -397,7 +402,7 @@ namespace ArcaneAtelier.Workshop.Editor
             float secondaryValue = 0f,
             string effectKeyword = "")
         {
-            var asset = CreateOrLoadAsset<WorkshopItemDefinition>($"{DataRoot}/Items/{displayName.Replace(" ", string.Empty)}.asset");
+            var asset = CreateOrLoadAsset<WorkshopItemDefinition>($"{DataRoot}/Items/{SanitizeAssetName(id)}.asset");
             asset.Configure(id, displayName, description, kind, tint, battleCardId, element, tier, role, rarityWeight, primaryValue, hitCount, secondaryValue, effectKeyword);
             EditorUtility.SetDirty(asset);
             return asset;
@@ -417,7 +422,7 @@ namespace ArcaneAtelier.Workshop.Editor
             bool acceptsAnyResource,
             params WorkshopProductionRecipe[] recipes)
         {
-            var asset = CreateOrLoadAsset<WorkshopNodeDefinition>($"{DataRoot}/Nodes/{displayName.Replace(" ", string.Empty)}.asset");
+            var asset = CreateOrLoadAsset<WorkshopNodeDefinition>($"{DataRoot}/Nodes/{SanitizeAssetName(id)}.asset");
             asset.Configure(id, displayName, description, category, unlockedByDefault, tint, inputPorts, outputPorts, bufferCapacity, maxTransferPerStep, acceptsAnyResource, recipes);
             EditorUtility.SetDirty(asset);
             return asset;
@@ -432,7 +437,7 @@ namespace ArcaneAtelier.Workshop.Editor
             float efficiencyBonus,
             WorkshopItemStack[] grantedItems)
         {
-            var asset = CreateOrLoadAsset<WorkshopRewardDefinition>($"{DataRoot}/Rewards/{displayName.Replace(" ", string.Empty)}.asset");
+            var asset = CreateOrLoadAsset<WorkshopRewardDefinition>($"{DataRoot}/Rewards/{SanitizeAssetName(id)}.asset");
             asset.Configure(id, displayName, description, rewardKind, targetNode, efficiencyBonus, grantedItems);
             EditorUtility.SetDirty(asset);
             return asset;
@@ -471,7 +476,43 @@ namespace ArcaneAtelier.Workshop.Editor
             controller.Configure(database, view, hud);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
-            EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
+
+            var buildScenes = EditorBuildSettings.scenes.ToList();
+            var existingIndex = buildScenes.FindIndex(entry => entry.path == ScenePath);
+            if (existingIndex >= 0)
+            {
+                buildScenes[existingIndex] = new EditorBuildSettingsScene(ScenePath, true);
+            }
+            else
+            {
+                buildScenes.Add(new EditorBuildSettingsScene(ScenePath, true));
+            }
+
+            EditorBuildSettings.scenes = buildScenes.ToArray();
+        }
+
+        private static string SanitizeAssetName(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return "generated_asset";
+            }
+
+            var invalidChars = Path.GetInvalidFileNameChars();
+            var sanitized = new string(id.Select(ch =>
+                invalidChars.Contains(ch)
+                    ? '_'
+                    : ch switch
+                    {
+                        '.' => '_',
+                        '/' => '_',
+                        '\\' => '_',
+                        ':' => '_',
+                        ' ' => '_',
+                        _ => ch
+                    }).ToArray());
+
+            return sanitized.Trim('_');
         }
 
         private static void EnsureFolder(string assetPath)

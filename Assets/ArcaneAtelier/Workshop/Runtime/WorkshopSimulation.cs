@@ -52,7 +52,10 @@ namespace ArcaneAtelier.Workshop
                 return true;
             }
 
-            return Definition.Recipes.SelectMany(recipe => recipe.Inputs).Any(stack => stack.Item == item);
+            return Definition.Recipes
+                .Where(recipe => recipe != null)
+                .SelectMany(recipe => recipe.Inputs ?? Array.Empty<WorkshopItemStack>())
+                .Any(stack => stack != null && stack.Item == item);
         }
 
         public bool TryAddToBuffer(WorkshopItemDefinition item, int amount)
@@ -173,20 +176,22 @@ namespace ArcaneAtelier.Workshop
         private int totalElementProduced;
         private int totalElementConsumed;
         private int totalSpellsProduced;
+        private int notificationSuppressionDepth;
+        private bool notificationQueued;
 
         public WorkshopSimulation(WorkshopContentDatabase contentDatabase)
         {
             ContentDatabase = contentDatabase;
             gridSize = contentDatabase.GridSize;
 
-            foreach (var node in contentDatabase.PlaceableNodes.Where(node => node != null && node.UnlockedByDefault))
+            foreach (var node in (contentDatabase.PlaceableNodes ?? Array.Empty<WorkshopNodeDefinition>()).Where(node => node != null && node.UnlockedByDefault))
             {
                 unlockedNodeIds.Add(node.Id);
             }
 
-            foreach (var seed in contentDatabase.DefaultLayout.Where(seed => seed != null && seed.NodeDefinition != null))
+            foreach (var seed in (contentDatabase.DefaultLayout ?? Array.Empty<WorkshopPlacedNodeSeed>()).Where(seed => seed != null && seed.NodeDefinition != null))
             {
-                PlaceNode(seed.Position, seed.NodeDefinition, seed.RotationQuarterTurns, true);
+                PlaceNodeInternal(seed.Position, seed.NodeDefinition, seed.RotationQuarterTurns);
             }
         }
 
@@ -224,7 +229,7 @@ namespace ArcaneAtelier.Workshop
                 return new PlacementResult(false, $"{definition.DisplayName} is still locked.");
             }
 
-            nodes[cell] = new WorkshopNodeState(definition, cell, rotationQuarterTurns);
+            PlaceNodeInternal(cell, definition, rotationQuarterTurns);
             RaiseStateChanged();
             return new PlacementResult(true, $"Placed {definition.DisplayName}.");
         }
@@ -309,26 +314,32 @@ namespace ArcaneAtelier.Workshop
 
         public void ResetToDefaultLayout()
         {
-            nodes.Clear();
-            preparedCards.Clear();
-            reserveItems.Clear();
-            unlockedNodeIds.Clear();
-            simulatedSeconds = 0f;
-            totalElementProduced = 0;
-            totalElementConsumed = 0;
-            totalSpellsProduced = 0;
-
-            foreach (var node in ContentDatabase.PlaceableNodes.Where(node => node != null && node.UnlockedByDefault))
+            BeginNotificationBatch();
+            try
             {
-                unlockedNodeIds.Add(node.Id);
-            }
+                nodes.Clear();
+                preparedCards.Clear();
+                reserveItems.Clear();
+                unlockedNodeIds.Clear();
+                simulatedSeconds = 0f;
+                totalElementProduced = 0;
+                totalElementConsumed = 0;
+                totalSpellsProduced = 0;
 
-            foreach (var seed in ContentDatabase.DefaultLayout.Where(seed => seed != null && seed.NodeDefinition != null))
+                foreach (var node in (ContentDatabase.PlaceableNodes ?? Array.Empty<WorkshopNodeDefinition>()).Where(node => node != null && node.UnlockedByDefault))
+                {
+                    unlockedNodeIds.Add(node.Id);
+                }
+
+                foreach (var seed in (ContentDatabase.DefaultLayout ?? Array.Empty<WorkshopPlacedNodeSeed>()).Where(seed => seed != null && seed.NodeDefinition != null))
+                {
+                    PlaceNodeInternal(seed.Position, seed.NodeDefinition, seed.RotationQuarterTurns);
+                }
+            }
+            finally
             {
-                PlaceNode(seed.Position, seed.NodeDefinition, seed.RotationQuarterTurns, true);
+                EndNotificationBatch();
             }
-
-            RaiseStateChanged();
         }
 
         public void Step(float deltaTime)
@@ -443,8 +454,13 @@ namespace ArcaneAtelier.Workshop
                     return false;
                 }
 
-                foreach (var input in recipe.Inputs)
+                foreach (var input in recipe.Inputs ?? Array.Empty<WorkshopItemStack>())
                 {
+                    if (input?.Item == null || input.Amount <= 0)
+                    {
+                        return false;
+                    }
+
                     var available = nodeState.CountItem(input.Item);
                     if (input.Item != null && input.Item.Kind == WorkshopItemKind.Resource)
                     {
@@ -465,8 +481,13 @@ namespace ArcaneAtelier.Workshop
                     }
                 }
 
-                foreach (var input in recipe.Inputs)
+                foreach (var input in recipe.Inputs ?? Array.Empty<WorkshopItemStack>())
                 {
+                    if (input?.Item == null || input.Amount <= 0)
+                    {
+                        return false;
+                    }
+
                     var remaining = input.Amount;
                     remaining -= RemoveFromBuffer(nodeState, input.Item, remaining);
                     if (remaining > 0 && input.Item != null && input.Item.Kind == WorkshopItemKind.Resource)
@@ -527,8 +548,15 @@ namespace ArcaneAtelier.Workshop
                         continue;
                     }
 
+                    var transferredThisStep = 0;
+
                     foreach (var direction in WorkshopDirectionUtility.CardinalDirections)
                     {
+                        if (transferredThisStep >= nodeState.Definition.MaxTransferPerStep)
+                        {
+                            break;
+                        }
+
                         if ((nodeState.RotatedOutputPorts & direction) == 0)
                         {
                             continue;
@@ -549,10 +577,9 @@ namespace ArcaneAtelier.Workshop
                         transferBufferCache.Clear();
                         transferBufferCache.AddRange(nodeState.EnumerateBufferUnsorted());
 
-                        var transferredThisEdge = 0;
                         foreach (var pair in transferBufferCache)
                         {
-                            if (transferredThisEdge >= nodeState.Definition.MaxTransferPerStep)
+                            if (transferredThisStep >= nodeState.Definition.MaxTransferPerStep)
                             {
                                 break;
                             }
@@ -562,7 +589,7 @@ namespace ArcaneAtelier.Workshop
                                 continue;
                             }
 
-                            var remainingBudget = nodeState.Definition.MaxTransferPerStep - transferredThisEdge;
+                            var remainingBudget = nodeState.Definition.MaxTransferPerStep - transferredThisStep;
                             var transferCount = Math.Min(pair.Value, remainingBudget);
                             for (var i = 0; i < transferCount; i++)
                             {
@@ -577,7 +604,7 @@ namespace ArcaneAtelier.Workshop
                                     break;
                                 }
 
-                                transferredThisEdge++;
+                                transferredThisStep++;
                                 dirty = true;
                             }
                         }
@@ -721,7 +748,10 @@ namespace ArcaneAtelier.Workshop
                 return true;
             }
 
-            return definition.Recipes.SelectMany(recipe => recipe.Inputs).Any(stack => stack.Item == item);
+            return definition.Recipes
+                .Where(recipe => recipe != null)
+                .SelectMany(recipe => recipe.Inputs ?? Array.Empty<WorkshopItemStack>())
+                .Any(stack => stack != null && stack.Item == item);
         }
 
         private void ConsumeReserveItems(WorkshopItemDefinition item, int amount)
@@ -742,8 +772,34 @@ namespace ArcaneAtelier.Workshop
             }
         }
 
+        private void PlaceNodeInternal(Vector2Int cell, WorkshopNodeDefinition definition, int rotationQuarterTurns)
+        {
+            nodes[cell] = new WorkshopNodeState(definition, cell, rotationQuarterTurns);
+        }
+
+        private void BeginNotificationBatch()
+        {
+            notificationSuppressionDepth++;
+        }
+
+        private void EndNotificationBatch()
+        {
+            notificationSuppressionDepth = Math.Max(0, notificationSuppressionDepth - 1);
+            if (notificationSuppressionDepth == 0 && notificationQueued)
+            {
+                notificationQueued = false;
+                StateChanged?.Invoke();
+            }
+        }
+
         private void RaiseStateChanged()
         {
+            if (notificationSuppressionDepth > 0)
+            {
+                notificationQueued = true;
+                return;
+            }
+
             StateChanged?.Invoke();
         }
     }

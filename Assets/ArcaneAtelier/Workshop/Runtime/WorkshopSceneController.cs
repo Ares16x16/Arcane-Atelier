@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace ArcaneAtelier.Workshop
 {
@@ -10,10 +11,12 @@ namespace ArcaneAtelier.Workshop
     public sealed class WorkshopSceneController : MonoBehaviour
     {
         private const int MaxSimulationCatchUpStepsPerFrame = 16;
+        private const string GeneratedWorkshopScenePath = "Assets/Scenes/SpellAssemblyScene.unity";
 
         [SerializeField] private WorkshopContentDatabase contentDatabase;
         [SerializeField] private WorkshopGridView gridView;
         [SerializeField] private WorkshopHudPresenter hudPresenter;
+        [SerializeField] private bool autoConfigureSceneEnvironment = true;
 
         private float accumulatedSimulationTime;
         private string statusMessage = "Spell Assembly ready.";
@@ -278,26 +281,6 @@ namespace ArcaneAtelier.Workshop
 
         private void EnsureSceneIs2DPlayable()
         {
-            var activeCamera = Camera.main;
-            if (activeCamera == null)
-            {
-                var cameraObject = new GameObject("Main Camera");
-                cameraObject.tag = "MainCamera";
-                activeCamera = cameraObject.AddComponent<Camera>();
-            }
-
-            activeCamera.orthographic = true;
-            activeCamera.orthographicSize = 4.8f;
-            activeCamera.clearFlags = CameraClearFlags.SolidColor;
-            activeCamera.backgroundColor = new Color(0.06f, 0.07f, 0.09f);
-            activeCamera.transform.position = new Vector3(4.8f, 2.8f, -10f);
-
-            foreach (var light in FindObjectsByType<Light>(FindObjectsSortMode.None))
-            {
-                light.enabled = false;
-                light.gameObject.SetActive(false);
-            }
-
             if (gridView == null)
             {
                 gridView = gameObject.AddComponent<WorkshopGridView>();
@@ -307,6 +290,37 @@ namespace ArcaneAtelier.Workshop
             {
                 hudPresenter = gameObject.AddComponent<WorkshopHudPresenter>();
             }
+
+            if (!autoConfigureSceneEnvironment || !ShouldConfigureSceneEnvironment())
+            {
+                return;
+            }
+
+            var activeCamera = Camera.main;
+            var createdCamera = false;
+            if (activeCamera == null)
+            {
+                var cameraObject = new GameObject("Main Camera");
+                cameraObject.tag = "MainCamera";
+                cameraObject.transform.SetParent(transform, false);
+                activeCamera = cameraObject.AddComponent<Camera>();
+                createdCamera = true;
+            }
+
+            if (createdCamera || activeCamera.transform.IsChildOf(transform))
+            {
+                activeCamera.orthographic = true;
+                activeCamera.orthographicSize = 4.8f;
+                activeCamera.clearFlags = CameraClearFlags.SolidColor;
+                activeCamera.backgroundColor = new Color(0.06f, 0.07f, 0.09f);
+                activeCamera.transform.position = new Vector3(4.8f, 2.8f, -10f);
+            }
+        }
+
+        private static bool ShouldConfigureSceneEnvironment()
+        {
+            var activeScene = SceneManager.GetActiveScene();
+            return string.IsNullOrEmpty(activeScene.path) || activeScene.path == GeneratedWorkshopScenePath;
         }
     }
 }

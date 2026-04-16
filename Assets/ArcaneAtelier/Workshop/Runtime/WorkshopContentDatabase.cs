@@ -38,9 +38,9 @@ namespace ArcaneAtelier.Workshop
 
         public Vector2Int GridSize => gridSize;
         public float SimulationStepSeconds => Mathf.Clamp(simulationStepSeconds, 0.05f, 1f);
-        public WorkshopNodeDefinition[] PlaceableNodes => placeableNodes;
-        public WorkshopRewardDefinition[] DebugRewards => debugRewards;
-        public WorkshopPlacedNodeSeed[] DefaultLayout => defaultLayout;
+        public WorkshopNodeDefinition[] PlaceableNodes => placeableNodes ?? Array.Empty<WorkshopNodeDefinition>();
+        public WorkshopRewardDefinition[] DebugRewards => debugRewards ?? Array.Empty<WorkshopRewardDefinition>();
+        public WorkshopPlacedNodeSeed[] DefaultLayout => defaultLayout ?? Array.Empty<WorkshopPlacedNodeSeed>();
 
         public void Configure(
             Vector2Int contentGridSize,
