@@ -1,68 +1,124 @@
-# Workshop to Battle Contract
+# Arcane Atelier — Factory-to-Battle Payload Contract
 
-## Ownership
-The workshop module owns production and card preparation.
-The battle module owns card consumption during combat.
+**Document Type:** Interface Contract (Cross-Scene Runtime)
+**Owner:** Gameplay Engineering (Factory + Combat)
+**Status:** Active integration boundary
 
-The handoff surface is `Assets/ArcaneAtelier/Workshop/Runtime/WorkshopBattlePayload.cs`.
+---
 
-## Data Shape
-`WorkshopBattlePayload` contains a flat list of `WorkshopBattleCardEntry`.
+## 1. Contract Intent
 
-Each entry includes:
+This contract defines the only supported handoff from Factory Scene output into Battle Scene card availability.
 
-- `CardId`
-- `DisplayName`
-- `Amount`
+- Factory owns **production**.
+- Battle owns **consumption and combat semantics**.
+- The bridge must remain the single source of truth between scenes.
 
-`CardId` is the stable integration key. The battle team should map it to their combat card database.
+Contract surface:
 
-Current exported IDs:
+- `Assets/ArcaneAtelier/Workshop/Runtime/WorkshopBattlePayload.cs`
 
-- `combat.flame_bolt`
-- `combat.frost_sigil`
-- `combat.arcane_ward`
+---
 
-## Lifecycle
-### Commit
+## 2. Payload Shape
 
-The workshop scene calls:
+### `WorkshopBattlePayload`
+
+- `List<WorkshopBattleCardEntry> Cards`
+
+### `WorkshopBattleCardEntry`
+
+- `CardId` — stable integration key for battle card lookup.
+- `DisplayName` — display/debug string only (non-authoritative).
+- `Amount` — prepared count available at battle scene entry.
+
+Current ID namespace families produced by factory content:
+
+- `combat.spell.basic.*`
+- `combat.spell.intermediate.*`
+- `combat.spell.advanced.*`
+
+---
+
+## 3. Lifecycle
+
+### 3.1 Commit (Factory)
 
 ```csharp
 WorkshopBattlePayloadBridge.Commit(preparedCards);
 ```
 
-This snapshots the currently crafted cards into the bridge.
+Behavior:
 
-### Read
+- Snapshot copy of current prepared cards.
+- Null/empty entries ignored.
+- Entries sorted by `CardId` for deterministic downstream processing.
 
-The battle scene should read once at scene entry:
+### 3.2 Consume (Battle)
 
 ```csharp
 if (WorkshopBattlePayloadBridge.TryConsume(out var payload))
 {
-    // hydrate battle deck / hand / pre-combat loadout
+    // hydrate battle inventory/deck state
 }
 ```
 
-### Clear
+Behavior:
 
-`TryConsume` clears the bridge after a successful read.
-`WorkshopBattlePayloadBridge.Clear()` is available for explicit cleanup.
+- Intended as one-time read at battle scene startup.
+- Successful consume clears bridge state.
 
-## Integration Rules
+### 3.3 Explicit Clear
 
-- Treat the bridge as the single source of truth for produced combat cards.
-- Do not infer workshop output from scene objects or ScriptableObject asset counts.
-- Use `CardId` for lookup; `DisplayName` is display-only.
-- `Amount` is the count of prepared cards of that type for the next battle.
-- If the payload is empty, combat should fall back to its empty-loadout handling.
+```csharp
+WorkshopBattlePayloadBridge.Clear();
+```
 
-## Extension Path
-When the battle system stabilizes, extend the payload with additional fields only if they are battle-facing and stable, for example:
+Use cases:
 
-- upgrade tier,
-- elemental tags,
-- generated modifiers.
+- Return-to-title resets.
+- Run abort/restart flows.
+- Defensive cleanup in scene transition recovery.
 
-Do not place workshop-only data such as grid coordinates or node identifiers into the battle payload.
+---
+
+## 4. Integration Rules (Must Follow)
+
+1. Battle must resolve gameplay data by `CardId`, not by display text.
+2. Empty payloads are valid and must map to a safe battle fallback.
+3. Combat code must not introspect workshop scene state for card counts.
+4. Workshop-only internals (node IDs, positions, buffers) are prohibited in this payload.
+5. Payload lifecycle is edge-triggered by commit/consume; avoid hidden side channels.
+
+---
+
+## 5. Error Handling Expectations
+
+- Unknown `CardId` on battle side should be logged with structured context and skipped safely.
+- Payload parse/load issues must not crash scene entry.
+- Repeated consume without commit should return false and preserve stable battle startup behavior.
+
+---
+
+## 6. Compatibility and Versioning
+
+When evolving payload shape:
+
+- Prefer additive fields.
+- Keep existing fields backward compatible for at least one release window.
+- Add battle-facing semantics only (e.g., tags, rarity, generated modifiers).
+- Do not include factory implementation details.
+
+If a breaking change is unavoidable, gate it behind explicit contract versioning.
+
+---
+
+## 7. QA Acceptance Checklist
+
+Factory -> Battle integration is considered valid when all checks pass:
+
+- Commit with no prepared cards -> `TryConsume == false`.
+- Commit with prepared cards -> `TryConsume == true` and counts match production output.
+- Second consume without new commit -> returns false/empty.
+- `Clear()` removes staged payload.
+- Unknown card IDs do not hard-fail battle initialization.

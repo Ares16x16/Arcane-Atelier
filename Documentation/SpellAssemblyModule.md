@@ -1,101 +1,184 @@
-# Spell Assembly Module
+# Arcane Atelier — Factory Scene Technical Design
 
-## Purpose
-This module owns the full `Spell Assembly Scene` gameplay slice for `Arcane Atelier`.
-It provides a self-contained workshop loop where the player:
+**Document Type:** Gameplay Module Spec
+**Owner:** Gameplay Engineering (Factory)
+**Audience:** Design, Engineering, QA, Technical Production, Combat Integration
+**Status:** Active implementation baseline
 
-- builds on a fixed placement grid,
-- places, removes, replaces, and rotates production nodes,
-- runs production chains that generate resources and craft battle cards,
-- monitors workshop inventory and prepared card output,
-- receives reward-driven unlocks and efficiency upgrades,
-- commits a battle payload for the combat team to consume.
+---
 
-## Runtime Scope
-The runtime implementation lives under `Assets/ArcaneAtelier/Workshop/Runtime`.
+## 1. Module Purpose
 
-Primary systems:
+The Factory Scene module implements the production half of Arcane Atelier’s core loop:
 
-- `WorkshopSimulation`: authoritative factory state, production ticks, transfers, unlock state, and payload preparation.
-- `WorkshopSceneController`: scene orchestration, placement state, reward application, and battle payload commit.
-- `WorkshopGridView`: world-space grid rendering, node visuals, cell hover/selection, and placement input.
-- `WorkshopHudPresenter`: immediate-mode production HUD for palette, inspection, inventory, rewards, and payload status.
-- `WorkshopBattlePayloadBridge`: handoff surface for the combat scene.
+1. Place and route factory nodes on a fixed grid.
+2. Generate elemental resources from spirit nodes.
+3. Transform elements into spell cards through factory chains.
+4. Commit produced cards to the battle handoff bridge.
+5. Receive post-battle rewards and expand factory capability over successive runs.
 
-## Factory Rules
-### Grid and interaction
+This module is intentionally decoupled from battle runtime systems except through the explicit battle payload contract.
 
-- The workshop uses a bounded 9x6 placement grid.
-- Left click places or replaces a node on the hovered tile.
-- Right click removes a node from the hovered tile.
-- `Rotate Ghost` rotates the next placement.
-- `R` rotates the currently selected placed node.
+---
 
-### Node model
+## 2. Scope of Implementation (Current)
 
-Each node definition declares:
+Implemented and supported in this slice:
 
-- category,
-- input ports,
-- output ports,
-- buffer capacity,
-- transfer rate per simulation step,
-- one or more recipes.
+- Grid-based placement with snap, replace, remove, and rotate interactions.
+- Directional IO transfer model (input/output ports with edge validation).
+- Element production and transformation pipeline:
+  - Basic elements: Fire, Water, Wind, Earth
+  - Secondary elements: Ice, Thunder, Light, Dark
+- Spell production pipeline:
+  - Element Shaping (element -> basic spell)
+  - Spell Fusion Basic (same-element basic -> intermediate)
+  - Spell Fusion Intermediate (non-opposing basic mix -> secondary intermediate)
+  - Spell Fusion Advanced (opposing intermediate -> advanced)
+- Reward hooks (unlock node, efficiency boost, reserve grant).
+- Runtime throughput telemetry panel (element production, element consumption, spell production).
+- Pause/resume time control for scene-level simulation suspension.
+- Battle payload preparation and commit.
 
-All transfers are directional. A transfer succeeds only when:
+Out of scope in this slice:
 
-- the source node exposes an output on the shared edge,
-- the target node exposes an input on the opposite edge,
-- the target node accepts the item,
-- the target node has free buffer capacity.
+- Combat effect resolution, enemy AI, and card drag targeting UX.
+- Save/load persistence.
+- Final production UI art and UX polish.
 
-### Production chains
+---
 
-Included chains:
+## 3. Runtime Architecture
 
-1. `Ember Spring -> Flame Press -> Flame Bolt`
-2. `Mist Well -> Frost Loom -> Frost Sigil`
-3. `Ember Spring + Mist Well -> Arcane Infuser -> Ward Loom + Crystal Lattice -> Arcane Ward`
+Runtime code path: `Assets/ArcaneAtelier/Workshop/Runtime`
 
-The third chain is deliberately reward-gated through node unlocks so reward integration can be tested before the shared reward scene exists.
+### Core classes
 
-## Reward Integration
-The workshop scene exposes reward hooks directly through `WorkshopSimulation.ApplyReward`.
+- **`WorkshopSimulation`**
+  - Authoritative state machine for node placement state, recipe execution, transfer simulation, rewards, and payload commit.
+  - Exposes inventory view and throughput stats view for UI.
+
+- **`WorkshopSceneController`**
+  - Scene orchestrator that owns simulation tick cadence, selected cell/node state, palette state, status messaging, and pause control.
+
+- **`WorkshopGridView`**
+  - Grid and node visualization with direct world interaction (hover/select/place/remove/rotate).
+
+- **`WorkshopHudPresenter`**
+  - IMGUI debug/production-support HUD for palette, inspector, inventory, rewards, throughput, payload status, and pause controls.
+
+- **`WorkshopBattlePayloadBridge`**
+  - One-way handoff boundary from factory output into battle scene consumption.
+
+---
+
+## 4. Factory Rules Implemented
+
+### 4.1 Grid and placement
+
+- Factory area uses a bounded grid (`WorkshopContentDatabase.GridSize`, currently `9x6`).
+- Placement is deterministic and cell-snapped.
+- Nodes can be rotated in 90-degree increments.
+- Transfers occur only through valid directional adjacency.
+
+### 4.2 Transfer validity
+
+An item transfer is valid only when all conditions pass:
+
+1. Source exposes an output port on the shared edge.
+2. Target exposes a matching input port on the opposite edge.
+3. Target accepts the item type.
+4. Target has available buffer capacity.
+
+### 4.3 Recipe execution
+
+- Simulation ticks in fixed steps (`SimulationStepSeconds`).
+- Inputs are consumed from local buffers first, then reserve inventory.
+- Resource outputs are buffered in-node.
+- Card outputs are added to `PreparedCards` for battle payload export.
+
+### 4.4 Element and spell logic
+
+Implemented transformations:
+
+- **Element Fusion Factory**
+  - Wind + Water -> Ice
+  - Wind + Fire -> Thunder
+  - Earth + Fire -> Light
+  - Earth + Water -> Dark
+
+- **Element Shaping Factory**
+  - 1 element -> 1 basic spell card (all 8 elements supported)
+
+- **Spell Fusion Factory — Basic**
+  - 2 same-element basic spells -> 1 intermediate spell
+
+- **Spell Fusion Factory — Intermediate**
+  - Non-opposing mixed basic spells -> secondary intermediate spell
+
+- **Spell Fusion Factory — Advanced**
+  - Opposing intermediate spell pairs -> advanced spell card
+
+---
+
+## 5. Progression and Reward Hooks
+
+Primary API: `WorkshopSimulation.ApplyReward(WorkshopRewardDefinition reward)`
 
 Supported reward effects:
 
-- unlock a new node type,
-- apply a permanent efficiency bonus to placed nodes of a target type,
-- inject reserve resources for recovery / testing.
+- **UnlockNode**: unlocks new spirit/factory nodes in placement palette.
+- **EfficiencyBoost**: permanently increases cycle speed for target node type.
+- **GrantItems**: injects reserve resources to recover stalled lines.
 
-The debug reward panel exists as an integration harness until the shared reward system is assembled.
+Current debug rewards mirror the intended post-boss unlock cadence for factory expansion.
 
-## Authoring Pipeline
-The editor bootstrap lives at `Assets/ArcaneAtelier/Workshop/Editor/WorkshopProjectBootstrap.cs`.
+---
 
-Responsibilities:
+## 6. Time and Scene Behavior
 
-- create or update all workshop item definitions,
-- create or update all node definitions,
-- create or update reward definitions,
-- create or update the workshop content database,
-- create the `SpellAssemblyScene`,
-- register the generated scene in build settings.
+- Factory simulation supports explicit pause/resume controls.
+- Pause is implemented by scene controller suspension plus timescale toggle for expected scene-level behavior.
+- Throughput metrics continue to represent cumulative runtime rates over simulated time.
 
-The bootstrap is idempotent and auto-runs on editor load if generated content is missing.
+---
 
-## Integration Expectations
-The combat team should not read workshop scene objects directly.
-They should consume the committed payload from the battle bridge contract documented in `Documentation/WorkshopBattleContract.md`.
+## 7. Authoring and Content Pipeline
 
-The reward / meta-progression owner should call into `WorkshopSimulation.ApplyReward` or replicate the same effect mapping when their final reward flow is connected.
+Editor bootstrap: `Assets/ArcaneAtelier/Workshop/Editor/WorkshopProjectBootstrap.cs`
 
-## Visual Placeholder Policy
-All visuals in this slice are code-generated placeholders by design:
+Bootstrap responsibilities:
 
-- flat grid cells,
-- tint-coded node bodies,
-- port markers for flow readability,
-- text overlays for buffer inspection.
+- Generate/update item, node, reward ScriptableObject assets.
+- Generate/update `WorkshopContentDatabase`.
+- Validate generated content (`ValidateContent`) and fail fast on invalid assets.
+- Generate/update `SpellAssemblyScene` and ensure build registration.
 
-This keeps the system functional and integration-ready while final art and UI assets are still in production.
+This pipeline is idempotent and intended for repeatable team onboarding.
+
+---
+
+## 8. Integration Contract
+
+- Battle must consume factory output via `WorkshopBattlePayloadBridge` only.
+- Battle systems must never infer state from scene objects or factory ScriptableObjects.
+- Reward/meta systems may call `ApplyReward` directly or map equivalent effects in a higher-level progression service.
+
+Refer to `Documentation/WorkshopBattleContract.md` for payload details.
+
+---
+
+## 9. Operational Notes (Production Readiness)
+
+Known technical debt deliberately retained for this phase:
+
+- IMGUI HUD (functional but not final UX stack).
+- No save/load serialization for run continuity.
+- No deterministic networking guarantees.
+
+Recommended next production milestones:
+
+1. Migrate UI to retained-mode production stack.
+2. Add automated playmode coverage for transfer/recipe/payload edge cases.
+3. Introduce persistence layer for run state and unlocked factory content.
+4. Add telemetry events for throughput bottleneck diagnostics.
