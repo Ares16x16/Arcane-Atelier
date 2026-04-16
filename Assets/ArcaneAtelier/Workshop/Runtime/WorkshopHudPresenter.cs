@@ -8,6 +8,7 @@ namespace ArcaneAtelier.Workshop
         private const float Margin = 18f;
         private const float RightRailWidth = 272f;
         private const float BottomDockHeight = 132f;
+        private const float TopHudHeight = 92f;
 
         private Vector2 paletteScroll;
         private Vector2 rewardScroll;
@@ -71,6 +72,7 @@ namespace ArcaneAtelier.Workshop
             }
 
             EnsureTheme();
+            ApplyCameraViewport();
 
             DrawBackdrop();
 
@@ -134,7 +136,7 @@ namespace ArcaneAtelier.Workshop
             DrawPanelFrame(rect, new Color(0.92f, 0.45f, 0.24f));
 
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(14f, 12f, 110f, 18f), $"Ghost {controller.PlacementRotationQuarterTurns * 90}°", mutedStyle);
+            GUI.Label(new Rect(14f, 12f, 110f, 18f), $"Ghost {controller.PlacementRotationQuarterTurns * 90}°", tinyLabelStyle);
 
             if (GUI.Button(new Rect(rect.width - 210f, 10f, 40f, 40f), "?", smallButtonStyle))
             {
@@ -156,6 +158,11 @@ namespace ArcaneAtelier.Workshop
             {
                 controller.ResetWorkshop();
             }
+
+            GUI.Label(new Rect(rect.width - 216f, 50f, 44f, 12f), "Guide", tinyLabelStyle);
+            GUI.Label(new Rect(rect.width - 168f, 50f, 44f, 12f), "Boons", tinyLabelStyle);
+            GUI.Label(new Rect(rect.width - 120f, 50f, 44f, 12f), "Time", tinyLabelStyle);
+            GUI.Label(new Rect(rect.width - 72f, 50f, 44f, 12f), "Reset", tinyLabelStyle);
             GUI.EndGroup();
         }
 
@@ -175,7 +182,7 @@ namespace ArcaneAtelier.Workshop
             else
             {
                 GUI.Label(new Rect(18f, 62f, rect.width - 36f, 22f), node.Definition.DisplayName, sectionStyle);
-                GUI.Label(new Rect(18f, 84f, rect.width - 36f, 18f), node.Category.ToString(), tinyLabelStyle);
+                GUI.Label(new Rect(18f, 84f, rect.width - 36f, 18f), node.Definition.Category.ToString(), tinyLabelStyle);
                 GUI.Label(new Rect(18f, 104f, rect.width - 36f, 18f), $"Rot {node.RotationQuarterTurns * 90}°   Spd x{node.SpeedMultiplier:0.00}", mutedStyle);
 
                 var y = 134f;
@@ -206,10 +213,10 @@ namespace ArcaneAtelier.Workshop
             DrawRect(new Rect(18f, dividerY, rect.width - 36f, 1f), new Color(0.22f, 0.24f, 0.28f));
 
             GUI.Label(new Rect(18f, 308f, rect.width - 36f, 20f), "Inventory", sectionStyle);
-            DrawChipWrap(18f, 334f, rect.width - 36f, inventory.NetworkItems.OrderBy(pair => pair.Key.DisplayName).Select(pair => (pair.Key.DisplayName + $" x{pair.Value}", pair.Key.Tint)).ToArray());
+            DrawCompactList(new Rect(18f, 334f, rect.width - 36f, 84f), inventory.NetworkItems.OrderBy(pair => pair.Key.DisplayName).Select(pair => (ShortItemName(pair.Key.DisplayName), pair.Value, pair.Key.Tint)).ToArray());
 
             GUI.Label(new Rect(18f, rect.height - 114f, rect.width - 36f, 18f), "Battle Deck", sectionStyle);
-            DrawChipWrap(18f, rect.height - 88f, rect.width - 36f, inventory.PreparedCards.OrderBy(pair => pair.Key.DisplayName).Select(pair => (pair.Key.DisplayName + $" x{pair.Value}", pair.Key.Tint)).ToArray());
+            DrawCompactList(new Rect(18f, rect.height - 88f, rect.width - 36f, 48f), inventory.PreparedCards.OrderBy(pair => pair.Key.DisplayName).Select(pair => (ShortItemName(pair.Key.DisplayName), pair.Value, pair.Key.Tint)).ToArray());
 
             if (GUI.Button(new Rect(18f, rect.height - 42f, rect.width - 36f, 28f), "Forge Battle Deck", buttonStyle))
             {
@@ -373,6 +380,25 @@ namespace ArcaneAtelier.Workshop
             GUI.Label(new Rect(rect.x + 10f, rect.y + 2f, rect.width - 20f, rect.height - 4f), text, chipStyle);
         }
 
+        private void DrawCompactList(Rect rect, (string Label, int Amount, Color Tint)[] items)
+        {
+            if (items.Length == 0)
+            {
+                GUI.Label(new Rect(rect.x, rect.y, rect.width, 18f), "None", tinyLabelStyle);
+                return;
+            }
+
+            var visibleCount = Mathf.Min(items.Length, Mathf.Max(1, Mathf.FloorToInt(rect.height / 18f)));
+            for (var index = 0; index < visibleCount; index++)
+            {
+                var item = items[index];
+                var y = rect.y + index * 18f;
+                DrawRect(new Rect(rect.x, y + 3f, 10f, 10f), item.Tint);
+                GUI.Label(new Rect(rect.x + 16f, y, rect.width - 72f, 18f), item.Label, bodyStyle);
+                GUI.Label(new Rect(rect.x + rect.width - 42f, y, 40f, 18f), $"x{item.Amount}", tinyLabelStyle);
+            }
+        }
+
         private void DrawGuideRow(Rect rect, string key, string action)
         {
             DrawChip(new Rect(rect.x, rect.y, 58f, 20f), key, new Color(0.88f, 0.74f, 0.33f));
@@ -508,8 +534,44 @@ namespace ArcaneAtelier.Workshop
             {
                 fontSize = 10,
                 wordWrap = true,
+                alignment = TextAnchor.UpperLeft,
                 normal = { textColor = new Color(0.67f, 0.72f, 0.79f) }
             };
+        }
+
+        private void ApplyCameraViewport()
+        {
+            var camera = Camera.main;
+            if (camera == null)
+            {
+                return;
+            }
+
+            var leftInset = 0f;
+            var rightInset = RightRailWidth + Margin;
+            var topInset = TopHudHeight;
+            var bottomInset = BottomDockHeight + Margin * 2f;
+
+            var x = leftInset / Screen.width;
+            var y = bottomInset / Screen.height;
+            var width = Mathf.Clamp01((Screen.width - leftInset - rightInset) / Screen.width);
+            var height = Mathf.Clamp01((Screen.height - topInset - bottomInset) / Screen.height);
+            camera.rect = new Rect(x, y, width, height);
+        }
+
+        private static string ShortItemName(string displayName)
+        {
+            if (displayName.EndsWith(" Essence"))
+            {
+                return displayName.Replace(" Essence", string.Empty);
+            }
+
+            if (displayName.StartsWith("Arcane "))
+            {
+                return displayName.Replace("Arcane ", string.Empty);
+            }
+
+            return displayName;
         }
 
         private static Color GetCategoryColor(WorkshopNodeCategory category, Color fallback)
