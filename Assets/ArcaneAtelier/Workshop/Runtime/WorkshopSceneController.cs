@@ -230,7 +230,6 @@ namespace ArcaneAtelier.Workshop
                 var cameraObject = new GameObject("Main Camera");
                 cameraObject.tag = "MainCamera";
                 activeCamera = cameraObject.AddComponent<Camera>();
-                cameraObject.AddComponent<AudioListener>();
             }
 
             activeCamera.orthographic = true;
@@ -238,6 +237,12 @@ namespace ArcaneAtelier.Workshop
             activeCamera.clearFlags = CameraClearFlags.SolidColor;
             activeCamera.backgroundColor = new Color(0.06f, 0.07f, 0.09f);
             activeCamera.transform.position = new Vector3(4.8f, 2.8f, -10f);
+
+            foreach (var light in FindObjectsByType<Light>(FindObjectsSortMode.None))
+            {
+                light.enabled = false;
+                light.gameObject.SetActive(false);
+            }
 
             if (gridView == null)
             {

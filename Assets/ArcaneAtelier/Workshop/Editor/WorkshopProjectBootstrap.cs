@@ -59,6 +59,10 @@ namespace ArcaneAtelier.Workshop.Editor
                     SceneView.lastActiveSceneView.in2DMode = true;
                 }
             }
+            else if (activeScene.path == ScenePath && SceneView.lastActiveSceneView != null)
+            {
+                SceneView.lastActiveSceneView.in2DMode = true;
+            }
         }
 
         private static void Run()
