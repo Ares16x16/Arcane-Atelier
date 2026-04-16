@@ -32,6 +32,8 @@ The architecture is optimized for rapid iteration, reproducible content generati
   - `WorkshopContentDatabase`
   - `SpellAssemblyScene`
 
+The generated content database and generated scene are the **authoritative content baseline** for the current slice.
+
 ### 2.2 Runtime layer
 
 - `WorkshopSceneController`
@@ -85,6 +87,7 @@ Database handling includes the following protections:
 - `WorkshopSceneController` requires a valid database at startup.
 - If missing, controller logs an error and disables itself (fail-fast runtime guard).
 - `WorkshopSimulation` reads grid bounds, unlock defaults, and seed layout from the database at initialization/reset.
+- A runtime fallback content path exists, but it is only a safety net and is not the primary authored ruleset.
 
 ---
 
@@ -110,7 +113,8 @@ Per step (`Step(deltaTime)`):
 2. Sort/iterate nodes in deterministic order.
 3. Execute first valid recipe per node with cycle progress.
 4. Run buffered transfer pass between adjacent nodes.
-5. Raise change notification when state mutates.
+5. Auto-collect spell cards that have reached the end of a valid line.
+6. Raise change notification when state mutates.
 
 Hot path instrumentation is provided by profiler markers for step, recipe, and transfer phases.
 
@@ -120,6 +124,8 @@ Hot path instrumentation is provided by profiler markers for step, recipe, and t
 - Capacity checks before acceptance.
 - Per-node transfer budget (`MaxTransferPerStep`).
 - Safe iteration through transfer buffer snapshots to avoid collection mutation hazards.
+- Spell cards can remain in the line if there is a valid downstream spell-consuming machine.
+- Spell cards are staged into prepared inventory when they no longer have a valid downstream destination.
 
 ### 4.4 Throughput telemetry
 
@@ -130,6 +136,23 @@ Simulation tracks cumulative totals and exposes:
 - Spell production rate
 
 Telemetry is surfaced through `WorkshopFlowStatsView` for HUD diagnostics.
+
+### 4.5 Current authored content model
+
+The generated workshop content currently supports:
+
+- 4 basic spirits: Fire, Water, Wind, Earth
+- 4 reward-unlocked secondary spirits: Ice, Thunder, Light, Dark
+- Element Fusion
+- Element Shaper
+- Spell Fusion I / II / III
+- Spell cards with metadata for:
+  - name
+  - element
+  - tier
+  - role
+  - rarity band
+  - effect values
 
 ---
 
@@ -162,6 +185,7 @@ The bounded catch-up policy prevents long-frame stalls during heavy frame hitche
 - Inventory + prepared card display
 - Debug reward controls
 - Throughput telemetry panel
+- In-game guide overlay for controls, starter-line explanation, and recipe reminders
 - Pause/resume and payload commit actions
 
 Current UI stack is IMGUI for rapid iteration and debug support.
@@ -213,10 +237,11 @@ This avoids hard references between battle systems and factory scene internals.
 - No save/load persistence yet.
 - IMGUI is not final production UX stack.
 - No deterministic multiplayer/network authority model.
+- Runtime fallback content is still legacy placeholder content and may not match the generated workshop database exactly.
 
 ---
 
-## 10) Recommended Next Milestones
+## 10) Recommended Next Milestones(?)
 
 1. Add automated playmode coverage for transfer and fusion edge-cases.
 2. Add serialization for run persistence and meta progression.
