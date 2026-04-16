@@ -389,7 +389,7 @@ namespace ArcaneAtelier.Workshop
         {
             var safeSeconds = Mathf.Max(0.01f, simulatedSeconds);
             return new WorkshopFlowStatsView(
-                safeSeconds,
+                simulatedSeconds,
                 totalElementProduced / safeSeconds,
                 totalElementConsumed / safeSeconds,
                 totalSpellsProduced / safeSeconds);
