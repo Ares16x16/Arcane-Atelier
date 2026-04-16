@@ -96,6 +96,17 @@ namespace ArcaneAtelier.Workshop
             return item != null && buffer.TryGetValue(item, out var amount) ? amount : 0;
         }
 
+        /// <summary>
+        /// Returns buffer entries in an unspecified order. Use in hot simulation paths to avoid LINQ sort overhead.
+        /// </summary>
+        public IEnumerable<KeyValuePair<WorkshopItemDefinition, int>> EnumerateBufferUnsorted()
+        {
+            return buffer;
+        }
+
+        /// <summary>
+        /// Returns buffer entries sorted by display name. Use only for UI/inspector views.
+        /// </summary>
         public IEnumerable<KeyValuePair<WorkshopItemDefinition, int>> EnumerateBuffer()
         {
             return buffer.OrderBy(pair => pair.Key.DisplayName);
@@ -368,7 +379,7 @@ namespace ArcaneAtelier.Workshop
 
             foreach (var nodeState in nodes.Values)
             {
-                foreach (var pair in nodeState.EnumerateBuffer())
+                foreach (var pair in nodeState.EnumerateBufferUnsorted())
                 {
                     if (!network.TryAdd(pair.Key, pair.Value))
                     {
@@ -497,7 +508,7 @@ namespace ArcaneAtelier.Workshop
                         }
 
                         transferBufferCache.Clear();
-                        transferBufferCache.AddRange(nodeState.EnumerateBuffer());
+                        transferBufferCache.AddRange(nodeState.EnumerateBufferUnsorted());
 
                         var transferredThisEdge = 0;
                         foreach (var pair in transferBufferCache)
