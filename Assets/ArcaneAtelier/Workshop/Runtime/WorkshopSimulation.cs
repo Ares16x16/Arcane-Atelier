@@ -346,9 +346,32 @@ namespace ArcaneAtelier.Workshop
 
                 foreach (var nodeState in stepNodeIterationCache)
                 {
+                    nodeState.CycleProgress += deltaTime * nodeState.SpeedMultiplier;
+
+                    // Cap progress so stalled nodes don't fire a burst of catch-up cycles
+                    // when inputs finally become available.
+                    var maxCycleSeconds = 0f;
+                    foreach (var r in nodeState.Definition.Recipes)
+                    {
+                        if (r != null && r.CycleSeconds > maxCycleSeconds)
+                        {
+                            maxCycleSeconds = r.CycleSeconds;
+                        }
+                    }
+
+                    if (maxCycleSeconds > 0f)
+                    {
+                        nodeState.CycleProgress = Mathf.Min(nodeState.CycleProgress, maxCycleSeconds);
+                    }
+
+                    var executedAny = false;
                     foreach (var recipe in nodeState.Definition.Recipes)
                     {
-                        nodeState.CycleProgress += deltaTime * nodeState.SpeedMultiplier;
+                        if (recipe == null)
+                        {
+                            continue;
+                        }
+
                         while (nodeState.CycleProgress >= recipe.CycleSeconds)
                         {
                             if (!TryExecuteRecipe(nodeState, recipe))
@@ -358,9 +381,13 @@ namespace ArcaneAtelier.Workshop
 
                             nodeState.CycleProgress -= recipe.CycleSeconds;
                             dirty = true;
+                            executedAny = true;
                         }
 
-                        break;
+                        if (executedAny)
+                        {
+                            break;
+                        }
                     }
                 }
 
