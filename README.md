@@ -34,3 +34,4 @@ Implemented in this slice:
 - [Spell Assembly Module](Documentation/SpellAssemblyModule.md)
 - [Factory Architecture](Documentation/FactoryArchitecture.md)
 - [Workshop ↔ Battle Contract](Documentation/WorkshopBattleContract.md)
+- [Workshop Code Review (Unity 6)](Documentation/WorkshopCodeReview.md)

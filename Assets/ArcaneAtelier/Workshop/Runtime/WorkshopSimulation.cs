@@ -96,6 +96,17 @@ namespace ArcaneAtelier.Workshop
             return item != null && buffer.TryGetValue(item, out var amount) ? amount : 0;
         }
 
+        /// <summary>
+        /// Returns buffer entries in an unspecified order. Use in hot simulation paths to avoid LINQ sort overhead.
+        /// </summary>
+        public IEnumerable<KeyValuePair<WorkshopItemDefinition, int>> EnumerateBufferUnsorted()
+        {
+            return buffer;
+        }
+
+        /// <summary>
+        /// Returns buffer entries sorted by display name. Use only for UI/inspector views.
+        /// </summary>
         public IEnumerable<KeyValuePair<WorkshopItemDefinition, int>> EnumerateBuffer()
         {
             return buffer.OrderBy(pair => pair.Key.DisplayName);
@@ -335,9 +346,32 @@ namespace ArcaneAtelier.Workshop
 
                 foreach (var nodeState in stepNodeIterationCache)
                 {
+                    nodeState.CycleProgress += deltaTime * nodeState.SpeedMultiplier;
+
+                    // Cap progress so stalled nodes don't fire a burst of catch-up cycles
+                    // when inputs finally become available.
+                    var maxCycleSeconds = 0f;
+                    foreach (var r in nodeState.Definition.Recipes)
+                    {
+                        if (r != null && r.CycleSeconds > maxCycleSeconds)
+                        {
+                            maxCycleSeconds = r.CycleSeconds;
+                        }
+                    }
+
+                    if (maxCycleSeconds > 0f)
+                    {
+                        nodeState.CycleProgress = Mathf.Min(nodeState.CycleProgress, maxCycleSeconds);
+                    }
+
+                    var executedAny = false;
                     foreach (var recipe in nodeState.Definition.Recipes)
                     {
-                        nodeState.CycleProgress += deltaTime * nodeState.SpeedMultiplier;
+                        if (recipe == null)
+                        {
+                            continue;
+                        }
+
                         while (nodeState.CycleProgress >= recipe.CycleSeconds)
                         {
                             if (!TryExecuteRecipe(nodeState, recipe))
@@ -347,9 +381,13 @@ namespace ArcaneAtelier.Workshop
 
                             nodeState.CycleProgress -= recipe.CycleSeconds;
                             dirty = true;
+                            executedAny = true;
                         }
 
-                        break;
+                        if (executedAny)
+                        {
+                            break;
+                        }
                     }
                 }
 
@@ -368,7 +406,7 @@ namespace ArcaneAtelier.Workshop
 
             foreach (var nodeState in nodes.Values)
             {
-                foreach (var pair in nodeState.EnumerateBuffer())
+                foreach (var pair in nodeState.EnumerateBufferUnsorted())
                 {
                     if (!network.TryAdd(pair.Key, pair.Value))
                     {
@@ -389,7 +427,7 @@ namespace ArcaneAtelier.Workshop
         {
             var safeSeconds = Mathf.Max(0.01f, simulatedSeconds);
             return new WorkshopFlowStatsView(
-                safeSeconds,
+                simulatedSeconds,
                 totalElementProduced / safeSeconds,
                 totalElementConsumed / safeSeconds,
                 totalSpellsProduced / safeSeconds);
@@ -497,7 +535,7 @@ namespace ArcaneAtelier.Workshop
                         }
 
                         transferBufferCache.Clear();
-                        transferBufferCache.AddRange(nodeState.EnumerateBuffer());
+                        transferBufferCache.AddRange(nodeState.EnumerateBufferUnsorted());
 
                         var transferredThisEdge = 0;
                         foreach (var pair in transferBufferCache)
@@ -512,19 +550,24 @@ namespace ArcaneAtelier.Workshop
                                 continue;
                             }
 
-                            if (nodeState.RemoveOne(pair.Key) == 0)
+                            var remainingBudget = nodeState.Definition.MaxTransferPerStep - transferredThisEdge;
+                            var transferCount = Math.Min(pair.Value, remainingBudget);
+                            for (var i = 0; i < transferCount; i++)
                             {
-                                continue;
-                            }
+                                if (nodeState.RemoveOne(pair.Key) == 0)
+                                {
+                                    break;
+                                }
 
-                            if (!targetNode.TryAddToBuffer(pair.Key, 1))
-                            {
-                                nodeState.TryAddToBuffer(pair.Key, 1);
-                                continue;
-                            }
+                                if (!targetNode.TryAddToBuffer(pair.Key, 1))
+                                {
+                                    nodeState.TryAddToBuffer(pair.Key, 1);
+                                    break;
+                                }
 
-                            transferredThisEdge++;
-                            dirty = true;
+                                transferredThisEdge++;
+                                dirty = true;
+                            }
                         }
                     }
                 }
