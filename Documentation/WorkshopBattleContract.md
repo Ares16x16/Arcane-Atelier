@@ -1,68 +1,98 @@
-# Workshop to Battle Contract
+# Workshop ↔ Battle Payload Contract
 
-## Ownership
-The workshop module owns production and card preparation.
-The battle module owns card consumption during combat.
+## 1) Ownership boundary
 
-The handoff surface is `Assets/ArcaneAtelier/Workshop/Runtime/WorkshopBattlePayload.cs`.
+- **Workshop module** owns card production and preparation.
+- **Battle module** owns combat-time card consumption.
 
-## Data Shape
-`WorkshopBattlePayload` contains a flat list of `WorkshopBattleCardEntry`.
+The integration surface is:
 
-Each entry includes:
+- `Assets/ArcaneAtelier/Workshop/Runtime/WorkshopBattlePayload.cs`
 
-- `CardId`
-- `DisplayName`
-- `Amount`
+This boundary is intentional and should be preserved to avoid scene-level coupling.
 
-`CardId` is the stable integration key. The battle team should map it to their combat card database.
+---
 
-Current exported IDs:
+## 2) Data contract
 
-- `combat.flame_bolt`
-- `combat.frost_sigil`
-- `combat.arcane_ward`
+`WorkshopBattlePayload`
 
-## Lifecycle
-### Commit
+- `List<WorkshopBattleCardEntry> Cards`
 
-The workshop scene calls:
+`WorkshopBattleCardEntry`
+
+- `CardId` (stable integration key)
+- `DisplayName` (UI/display only)
+- `Amount` (prepared quantity)
+
+Current exported ID families in slice content:
+
+- `combat.spell.basic.*`
+- `combat.spell.intermediate.*`
+- `combat.spell.advanced.*`
+
+---
+
+## 3) Lifecycle semantics
+
+### Commit (workshop side)
 
 ```csharp
 WorkshopBattlePayloadBridge.Commit(preparedCards);
 ```
 
-This snapshots the currently crafted cards into the bridge.
+- Takes a snapshot of currently prepared cards.
+- Filters null/empty entries.
+- Sorts by `CardId` for stable downstream ordering.
 
-### Read
-
-The battle scene should read once at scene entry:
+### Consume (battle side)
 
 ```csharp
 if (WorkshopBattlePayloadBridge.TryConsume(out var payload))
 {
-    // hydrate battle deck / hand / pre-combat loadout
+    // hydrate loadout / deck / opening hand
 }
 ```
 
-### Clear
+- Battle should read once at scene entry.
+- Successful consume clears bridge state.
 
-`TryConsume` clears the bridge after a successful read.
-`WorkshopBattlePayloadBridge.Clear()` is available for explicit cleanup.
+### Explicit clear
 
-## Integration Rules
+```csharp
+WorkshopBattlePayloadBridge.Clear();
+```
 
-- Treat the bridge as the single source of truth for produced combat cards.
-- Do not infer workshop output from scene objects or ScriptableObject asset counts.
-- Use `CardId` for lookup; `DisplayName` is display-only.
-- `Amount` is the count of prepared cards of that type for the next battle.
-- If the payload is empty, combat should fall back to its empty-loadout handling.
+Use for hard reset flows (e.g., returning to title, aborting run).
 
-## Extension Path
-When the battle system stabilizes, extend the payload with additional fields only if they are battle-facing and stable, for example:
+---
 
-- upgrade tier,
-- elemental tags,
-- generated modifiers.
+## 4) Integration rules
 
-Do not place workshop-only data such as grid coordinates or node identifiers into the battle payload.
+1. Treat the bridge payload as the **single source of truth** for workshop output.
+2. Resolve combat cards by `CardId`; do not key off display text.
+3. Handle empty payloads gracefully with battle fallback behavior.
+4. Do not infer card counts from workshop ScriptableObjects or scene objects.
+5. Keep workshop-only state (grid coords, node IDs, buffers) out of this contract.
+
+---
+
+## 5) Versioning guidance
+
+When extending the payload, only add fields that are battle-facing and stable. Good candidates:
+
+- Upgrade tier / rarity tier
+- Elemental tags
+- Generated combat modifiers
+
+Do **not** include workshop implementation details. If uncertain, add a new wrapper field and keep old fields backward compatible for one release cycle.
+
+---
+
+## 6) QA checklist for integration handoff
+
+- Commit with zero cards results in `TryConsume == false`.
+- Commit with valid cards results in `TryConsume == true` and expected counts.
+- Second consume without new commit returns empty.
+- `Clear()` empties state and broadcasts payload-changed event.
+- Combat lookup failures by `CardId` are logged and safely skipped.
