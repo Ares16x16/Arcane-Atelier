@@ -1,0 +1,19 @@
+{
+  "name": "ArcaneAtelier.Workshop.Editor",
+  "rootNamespace": "ArcaneAtelier.Workshop.Editor",
+  "references": [
+    "ArcaneAtelier.Workshop.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
+
