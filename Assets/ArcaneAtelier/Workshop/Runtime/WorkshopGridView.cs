@@ -57,6 +57,7 @@ namespace ArcaneAtelier.Workshop
             if (nextHoveredCell != hoveredCell)
             {
                 hoveredCell = nextHoveredCell;
+                controller.SetHoveredCell(hoveredCell);
                 RefreshVisuals();
             }
 

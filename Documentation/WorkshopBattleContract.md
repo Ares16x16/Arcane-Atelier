@@ -24,12 +24,23 @@ This boundary is intentional and should be preserved to avoid scene-level coupli
 - `CardId` (stable integration key)
 - `DisplayName` (UI/display only)
 - `Amount` (prepared quantity)
+- `Element`
+- `Tier`
+- `Role`
+- `Rarity`
+- `PrimaryValue`
+- `HitCount`
+- `SecondaryValue`
+- `EffectKeyword`
 
 Current exported ID families in slice content:
 
 - `combat.spell.basic.*`
 - `combat.spell.intermediate.*`
 - `combat.spell.advanced.*`
+
+Current payload metadata is authored from the generated workshop content database.
+If generated content and runtime fallback content ever diverge, battle integration should trust the generated workshop content path.
 
 ---
 

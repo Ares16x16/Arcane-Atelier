@@ -21,6 +21,44 @@ namespace ArcaneAtelier.Workshop
         Card = 1
     }
 
+    public enum WorkshopElementAttribute
+    {
+        None = 0,
+        Fire = 1,
+        Water = 2,
+        Wind = 3,
+        Earth = 4,
+        Ice = 5,
+        Thunder = 6,
+        Light = 7,
+        Dark = 8
+    }
+
+    public enum WorkshopSpellTier
+    {
+        None = 0,
+        Basic = 1,
+        Intermediate = 2,
+        Advanced = 3
+    }
+
+    public enum WorkshopSpellRole
+    {
+        None = 0,
+        Attack = 1,
+        Healing = 2,
+        Defense = 3
+    }
+
+    public enum WorkshopSpellRarity
+    {
+        None = 0,
+        Common = 1,
+        Rare = 2,
+        Epic = 3,
+        Legendary = 4
+    }
+
     public enum WorkshopNodeCategory
     {
         Source = 0,
@@ -103,4 +141,3 @@ namespace ArcaneAtelier.Workshop
         }
     }
 }
-

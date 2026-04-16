@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -22,6 +23,7 @@ namespace ArcaneAtelier.Workshop
         public WorkshopSimulation Simulation { get; private set; }
         public WorkshopNodeDefinition SelectedPaletteNode { get; private set; }
         public Vector2Int SelectedCell { get; private set; } = new(-1, -1);
+        public Vector2Int HoveredCell { get; private set; } = new(-1, -1);
         public int PlacementRotationQuarterTurns { get; private set; }
         public string StatusMessage => statusMessage;
         public bool IsPaused => isPaused;
@@ -29,6 +31,8 @@ namespace ArcaneAtelier.Workshop
 
         public WorkshopNodeState SelectedNode =>
             Simulation != null && Simulation.TryGetNode(SelectedCell, out var nodeState) ? nodeState : null;
+        public WorkshopNodeState HoveredNode =>
+            Simulation != null && Simulation.TryGetNode(HoveredCell, out var nodeState) ? nodeState : null;
 
         public WorkshopNodeDefinition[] PlaceableNodes =>
             contentDatabase == null ? new WorkshopNodeDefinition[0] : contentDatabase.PlaceableNodes;
@@ -133,6 +137,11 @@ namespace ArcaneAtelier.Workshop
             gridView.RefreshVisuals();
         }
 
+        public void SetHoveredCell(Vector2Int cell)
+        {
+            HoveredCell = Simulation != null && Simulation.IsInsideGrid(cell) ? cell : new Vector2Int(-1, -1);
+        }
+
         public void SetPaletteNode(WorkshopNodeDefinition definition)
         {
             if (definition != null && !Simulation.IsUnlocked(definition))
@@ -203,6 +212,12 @@ namespace ArcaneAtelier.Workshop
 
         public void CommitBattlePayload()
         {
+            if (Simulation == null)
+            {
+                statusMessage = "Workshop is still booting.";
+                return;
+            }
+
             Simulation.CommitBattlePayload();
             statusMessage = WorkshopBattlePayloadBridge.CurrentPayload.HasCards
                 ? "Battle payload committed."
@@ -211,12 +226,18 @@ namespace ArcaneAtelier.Workshop
 
         public WorkshopInventoryView BuildInventoryView()
         {
-            return Simulation.BuildInventoryView();
+            return Simulation != null
+                ? Simulation.BuildInventoryView()
+                : new WorkshopInventoryView(
+                    new Dictionary<WorkshopItemDefinition, int>(),
+                    new Dictionary<WorkshopItemDefinition, int>());
         }
 
         public WorkshopFlowStatsView BuildFlowStatsView()
         {
-            return Simulation.BuildFlowStatsView();
+            return Simulation != null
+                ? Simulation.BuildFlowStatsView()
+                : new WorkshopFlowStatsView(0f, 0f, 0f, 0f);
         }
 
         public void TogglePause()

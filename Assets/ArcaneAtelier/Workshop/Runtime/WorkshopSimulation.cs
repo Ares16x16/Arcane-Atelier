@@ -42,7 +42,7 @@ namespace ArcaneAtelier.Workshop
 
         public bool CanAccept(WorkshopItemDefinition item)
         {
-            if (item == null || item.Kind == WorkshopItemKind.Card || BufferedItemCount >= Definition.BufferCapacity)
+            if (item == null || BufferedItemCount >= Definition.BufferCapacity)
             {
                 return false;
             }
@@ -392,6 +392,7 @@ namespace ArcaneAtelier.Workshop
                 }
 
                 dirty |= TransferBufferedItems();
+                dirty |= AutoCollectBufferedCards();
 
                 if (dirty)
                 {
@@ -444,14 +445,19 @@ namespace ArcaneAtelier.Workshop
 
                 foreach (var input in recipe.Inputs)
                 {
-                    var available = nodeState.CountItem(input.Item) + GetReserveCount(input.Item);
+                    var available = nodeState.CountItem(input.Item);
+                    if (input.Item != null && input.Item.Kind == WorkshopItemKind.Resource)
+                    {
+                        available += GetReserveCount(input.Item);
+                    }
+
                     if (available < input.Amount)
                     {
                         return false;
                     }
                 }
 
-                foreach (var output in recipe.Outputs.Where(output => output.Item != null && output.Item.Kind == WorkshopItemKind.Resource))
+                foreach (var output in recipe.Outputs.Where(output => ShouldBufferOutput(nodeState, output)))
                 {
                     if (nodeState.BufferedItemCount + output.Amount > nodeState.Definition.BufferCapacity)
                     {
@@ -463,7 +469,7 @@ namespace ArcaneAtelier.Workshop
                 {
                     var remaining = input.Amount;
                     remaining -= RemoveFromBuffer(nodeState, input.Item, remaining);
-                    if (remaining > 0)
+                    if (remaining > 0 && input.Item != null && input.Item.Kind == WorkshopItemKind.Resource)
                     {
                         ConsumeReserveItems(input.Item, remaining);
                     }
@@ -483,18 +489,24 @@ namespace ArcaneAtelier.Workshop
 
                     if (output.Item.Kind == WorkshopItemKind.Card)
                     {
-                        if (!preparedCards.TryAdd(output.Item, output.Amount))
+                        if (ShouldBufferCardOutput(nodeState))
                         {
-                            preparedCards[output.Item] += output.Amount;
+                            nodeState.TryAddToBuffer(output.Item, output.Amount);
+                        }
+                        else
+                        {
+                            if (!preparedCards.TryAdd(output.Item, output.Amount))
+                            {
+                                preparedCards[output.Item] += output.Amount;
+                            }
                         }
 
                         totalSpellsProduced += output.Amount;
+                        continue;
                     }
-                    else
-                    {
-                        nodeState.TryAddToBuffer(output.Item, output.Amount);
-                        totalElementProduced += output.Amount;
-                    }
+
+                    nodeState.TryAddToBuffer(output.Item, output.Amount);
+                    totalElementProduced += output.Amount;
                 }
 
                 return true;
@@ -576,6 +588,39 @@ namespace ArcaneAtelier.Workshop
             }
         }
 
+        private bool AutoCollectBufferedCards()
+        {
+            var dirty = false;
+
+            foreach (var nodeState in nodes.Values)
+            {
+                transferBufferCache.Clear();
+                transferBufferCache.AddRange(nodeState.EnumerateBufferUnsorted().Where(pair => pair.Key != null && pair.Key.Kind == WorkshopItemKind.Card));
+                foreach (var pair in transferBufferCache)
+                {
+                    if (pair.Value <= 0 || HasConnectedTransferTarget(nodeState, pair.Key))
+                    {
+                        continue;
+                    }
+
+                    var moved = RemoveFromBuffer(nodeState, pair.Key, pair.Value);
+                    if (moved <= 0)
+                    {
+                        continue;
+                    }
+
+                    if (!preparedCards.TryAdd(pair.Key, moved))
+                    {
+                        preparedCards[pair.Key] += moved;
+                    }
+
+                    dirty = true;
+                }
+            }
+
+            return dirty;
+        }
+
         private void CacheNodesForStep()
         {
             stepNodeIterationCache.Clear();
@@ -622,6 +667,61 @@ namespace ArcaneAtelier.Workshop
         private int GetReserveCount(WorkshopItemDefinition item)
         {
             return item != null && reserveItems.TryGetValue(item, out var amount) ? amount : 0;
+        }
+
+        private static bool ShouldBufferOutput(WorkshopNodeState nodeState, WorkshopItemStack output)
+        {
+            return output?.Item != null && (output.Item.Kind == WorkshopItemKind.Resource || ShouldBufferCardOutput(nodeState));
+        }
+
+        private static bool ShouldBufferCardOutput(WorkshopNodeState nodeState)
+        {
+            return nodeState != null && nodeState.RotatedOutputPorts != NodePortMask.None && nodeState.Definition.MaxTransferPerStep > 0;
+        }
+
+        private bool HasConnectedTransferTarget(WorkshopNodeState nodeState, WorkshopItemDefinition item)
+        {
+            foreach (var direction in WorkshopDirectionUtility.CardinalDirections)
+            {
+                if ((nodeState.RotatedOutputPorts & direction) == 0)
+                {
+                    continue;
+                }
+
+                var targetCell = nodeState.Position + WorkshopDirectionUtility.ToOffset(direction);
+                if (!nodes.TryGetValue(targetCell, out var targetNode))
+                {
+                    continue;
+                }
+
+                var targetDirection = WorkshopDirectionUtility.Opposite(direction);
+                if ((targetNode.RotatedInputPorts & targetDirection) == 0)
+                {
+                    continue;
+                }
+
+                if (DefinitionAcceptsItem(targetNode.Definition, item))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool DefinitionAcceptsItem(WorkshopNodeDefinition definition, WorkshopItemDefinition item)
+        {
+            if (definition == null || item == null)
+            {
+                return false;
+            }
+
+            if (definition.AcceptsAnyResource || definition.Category == WorkshopNodeCategory.Storage)
+            {
+                return true;
+            }
+
+            return definition.Recipes.SelectMany(recipe => recipe.Inputs).Any(stack => stack.Item == item);
         }
 
         private void ConsumeReserveItems(WorkshopItemDefinition item, int amount)

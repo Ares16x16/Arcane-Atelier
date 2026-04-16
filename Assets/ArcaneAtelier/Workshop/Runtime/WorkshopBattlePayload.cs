@@ -10,6 +10,14 @@ namespace ArcaneAtelier.Workshop
         public string CardId;
         public string DisplayName;
         public int Amount;
+        public WorkshopElementAttribute Element;
+        public WorkshopSpellTier Tier;
+        public WorkshopSpellRole Role;
+        public WorkshopSpellRarity Rarity;
+        public int PrimaryValue;
+        public int HitCount;
+        public float SecondaryValue;
+        public string EffectKeyword;
     }
 
     [Serializable]
@@ -36,7 +44,15 @@ namespace ArcaneAtelier.Workshop
                 {
                     CardId = pair.Key.BattleCardId,
                     DisplayName = pair.Key.DisplayName,
-                    Amount = pair.Value
+                    Amount = pair.Value,
+                    Element = pair.Key.Element,
+                    Tier = pair.Key.SpellTier,
+                    Role = pair.Key.SpellRole,
+                    Rarity = pair.Key.Rarity,
+                    PrimaryValue = pair.Key.EffectPrimaryValue,
+                    HitCount = pair.Key.EffectHitCount,
+                    SecondaryValue = pair.Key.EffectSecondaryValue,
+                    EffectKeyword = pair.Key.EffectKeyword
                 });
             }
 

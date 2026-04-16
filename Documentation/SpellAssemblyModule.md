@@ -10,8 +10,15 @@ Player-facing loop in this slice:
 1. Assemble a production topology on a constrained grid.
 2. Route directional resource flow through placed nodes.
 3. Convert resources into battle cards via recipes.
-4. Apply reward effects (unlocks / throughput tuning / reserve recovery).
-5. Commit a battle payload for combat-scene consumption.
+4. Apply reward effects (factory unlocks / spirit unlocks / throughput tuning / reserve recovery).
+5. Commit a battle payload snapshot for combat-scene consumption.
+
+Produced spell cards now carry explicit factory-authored metadata:
+- element attribute
+- tier
+- role (attack / healing / defense)
+- rarity weight -> rarity band
+- primary / secondary effect values
 
 ---
 
@@ -71,7 +78,8 @@ Transfer across an edge succeeds only when **all** checks pass:
 - Simulation advances in fixed-time steps (`SimulationStepSeconds`).
 - Per-node recipe execution consumes inputs from local buffer first, then reserve inventory.
 - Resource outputs enter node buffers.
-- Card outputs increment `PreparedCards` (battle-facing inventory).
+- Spell cards travel through the line while a valid downstream receiver exists.
+- End-of-line spell cards auto-collect into `PreparedCards` (battle-facing inventory).
 
 ---
 
@@ -90,8 +98,14 @@ Transfer across an edge succeeds only when **all** checks pass:
    - Basic: same-element basic spell fusion -> intermediate spell.
    - Intermediate: non-opposing mixed basic spell fusion -> secondary intermediate spell.
    - Advanced: opposing intermediate spell fusion -> advanced spell card.
+5. **Reward-fed spirit expansion**
+   - Secondary spirit nodes can be unlocked as post-battle rewards and dropped into the same production network.
 
-Fusion factory unlocks are reward-gated to mirror the post-battle progression loop.
+Starter scene note:
+
+- The generated opening layout already produces `Cinder Dart` and `Frost Pin`.
+- `Element Fusion` is available from the start so players can immediately understand secondary-element crafting.
+- `Spell Fusion I / II / III` remain reward-gated.
 
 ---
 
@@ -127,6 +141,11 @@ Design intent:
 - **Idempotent generation** to minimize setup drift across machines.
 - Fast project onboarding for designers and gameplay programmers.
 
+Current source-of-truth note:
+
+- The generated assets under `Assets/ArcaneAtelier/Workshop/Generated/*` and the generated `SpellAssemblyScene` are the authoritative content for this slice.
+- The runtime fallback content path exists only as a safety net for empty / missing-content startup and should not be treated as the design baseline.
+
 ---
 
 ## 7) Integration guidance
@@ -144,8 +163,10 @@ Meta systems can call `WorkshopSimulation.ApplyReward` directly or replicate its
 
 ## 8) Known limits (intentional for slice stage)
 
-- UI stack is IMGUI/debug-oriented and not production UX.
+- UI stack is IMGUI-driven and still a prototype shell, not final production UI.
 - Node visuals are generated placeholders (no final art pipeline hookup).
+- Battle, boss, health, level-up, and passive-card systems are intentionally outside this factory-scene module.
+- Runtime fallback content is not yet fully equivalent to the generated content database.
 - No save/load persistence in this slice.
 - No deterministic multiplayer lockstep guarantees yet.
 
