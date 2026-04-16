@@ -512,19 +512,24 @@ namespace ArcaneAtelier.Workshop
                                 continue;
                             }
 
-                            if (nodeState.RemoveOne(pair.Key) == 0)
+                            var remainingBudget = nodeState.Definition.MaxTransferPerStep - transferredThisEdge;
+                            var transferCount = Math.Min(pair.Value, remainingBudget);
+                            for (var i = 0; i < transferCount; i++)
                             {
-                                continue;
-                            }
+                                if (nodeState.RemoveOne(pair.Key) == 0)
+                                {
+                                    break;
+                                }
 
-                            if (!targetNode.TryAddToBuffer(pair.Key, 1))
-                            {
-                                nodeState.TryAddToBuffer(pair.Key, 1);
-                                continue;
-                            }
+                                if (!targetNode.TryAddToBuffer(pair.Key, 1))
+                                {
+                                    nodeState.TryAddToBuffer(pair.Key, 1);
+                                    break;
+                                }
 
-                            transferredThisEdge++;
-                            dirty = true;
+                                transferredThisEdge++;
+                                dirty = true;
+                            }
                         }
                     }
                 }
