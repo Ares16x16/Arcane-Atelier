@@ -98,6 +98,8 @@ namespace ArcaneAtelier.Workshop
 
         private void Update()
         {
+            HandleGlobalShortcuts();
+
             if (Simulation == null || isPaused)
             {
                 return;
@@ -147,6 +149,13 @@ namespace ArcaneAtelier.Workshop
         public void RotatePlacementClockwise()
         {
             PlacementRotationQuarterTurns = (PlacementRotationQuarterTurns + 1) % 4;
+            statusMessage = $"Placement rotation: {PlacementRotationQuarterTurns * 90}°.";
+            gridView.RefreshVisuals();
+        }
+
+        public void RotatePlacementCounterClockwise()
+        {
+            PlacementRotationQuarterTurns = (PlacementRotationQuarterTurns + 3) % 4;
             statusMessage = $"Placement rotation: {PlacementRotationQuarterTurns * 90}°.";
             gridView.RefreshVisuals();
         }
@@ -220,6 +229,29 @@ namespace ArcaneAtelier.Workshop
         {
             gridView?.RefreshVisuals();
             hudPresenter?.Repaint();
+        }
+
+        private void HandleGlobalShortcuts()
+        {
+            if (Simulation == null)
+            {
+                return;
+            }
+
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                TogglePause();
+            }
+
+            if (Input.GetKeyDown(KeyCode.Q))
+            {
+                RotatePlacementCounterClockwise();
+            }
+
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                RotatePlacementClockwise();
+            }
         }
 
         private void EnsureSceneIs2DPlayable()
