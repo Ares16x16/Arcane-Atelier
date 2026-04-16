@@ -193,7 +193,8 @@ namespace ArcaneAtelier.Workshop
             {
                 var portGo = new GameObject(direction.ToString());
                 portGo.transform.SetParent(root.transform, false);
-                portGo.transform.localPosition = (Vector3)WorkshopDirectionUtility.ToOffset(direction) * 0.38f;
+                var offset = WorkshopDirectionUtility.ToOffset(direction);
+                portGo.transform.localPosition = new Vector3(offset.x, offset.y, 0f) * 0.38f;
                 portGo.transform.localScale = Vector3.one * 0.18f;
 
                 var portRenderer = portGo.AddComponent<SpriteRenderer>();

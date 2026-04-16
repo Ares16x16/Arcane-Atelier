@@ -17,6 +17,7 @@ namespace ArcaneAtelier.Workshop
         private float accumulatedSimulationTime;
         private string statusMessage = "Spell Assembly ready.";
         private bool isPaused;
+        private WorkshopContentDatabase ownedRuntimeDatabase;
 
         public WorkshopSimulation Simulation { get; private set; }
         public WorkshopNodeDefinition SelectedPaletteNode { get; private set; }
@@ -55,11 +56,11 @@ namespace ArcaneAtelier.Workshop
 
             if (contentDatabase == null)
             {
-                statusMessage = "Missing WorkshopContentDatabase reference on WorkshopSceneController.";
-                Debug.LogError(statusMessage, this);
-                enabled = false;
-                return;
+                ownedRuntimeDatabase = WorkshopDefaultContentFactory.CreateRuntimeDatabase();
+                contentDatabase = ownedRuntimeDatabase;
             }
+
+            EnsureSceneIs2DPlayable();
 
             var validationErrors = contentDatabase.ValidateContent();
             if (validationErrors.Count > 0)
@@ -87,6 +88,11 @@ namespace ArcaneAtelier.Workshop
             if (Simulation != null)
             {
                 Simulation.StateChanged -= HandleSimulationStateChanged;
+            }
+
+            if (ownedRuntimeDatabase != null)
+            {
+                Destroy(ownedRuntimeDatabase);
             }
         }
 
@@ -214,6 +220,34 @@ namespace ArcaneAtelier.Workshop
         {
             gridView?.RefreshVisuals();
             hudPresenter?.Repaint();
+        }
+
+        private void EnsureSceneIs2DPlayable()
+        {
+            var activeCamera = Camera.main;
+            if (activeCamera == null)
+            {
+                var cameraObject = new GameObject("Main Camera");
+                cameraObject.tag = "MainCamera";
+                activeCamera = cameraObject.AddComponent<Camera>();
+                cameraObject.AddComponent<AudioListener>();
+            }
+
+            activeCamera.orthographic = true;
+            activeCamera.orthographicSize = 4.8f;
+            activeCamera.clearFlags = CameraClearFlags.SolidColor;
+            activeCamera.backgroundColor = new Color(0.06f, 0.07f, 0.09f);
+            activeCamera.transform.position = new Vector3(4.8f, 2.8f, -10f);
+
+            if (gridView == null)
+            {
+                gridView = gameObject.AddComponent<WorkshopGridView>();
+            }
+
+            if (hudPresenter == null)
+            {
+                hudPresenter = gameObject.AddComponent<WorkshopHudPresenter>();
+            }
         }
     }
 }

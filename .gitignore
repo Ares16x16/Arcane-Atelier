@@ -34,3 +34,4 @@ Assets/AddressableAssetsData/*
 # OS files
 .DS_Store
 Thumbs.db
+.vsconfig
