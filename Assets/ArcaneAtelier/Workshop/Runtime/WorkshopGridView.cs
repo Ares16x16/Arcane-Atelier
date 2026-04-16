@@ -32,6 +32,8 @@ namespace ArcaneAtelier.Workshop
             public List<SpriteRenderer> PortMarkers = new();
         }
 
+        public float CellSize => cellSize;
+
         public void Initialize(WorkshopSceneController sceneController)
         {
             controller = sceneController;

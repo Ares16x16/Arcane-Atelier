@@ -25,6 +25,7 @@ namespace ArcaneAtelier.Workshop
         public int PlacementRotationQuarterTurns { get; private set; }
         public string StatusMessage => statusMessage;
         public bool IsPaused => isPaused;
+        public float GridCellSize => gridView != null ? gridView.CellSize : 1.22f;
 
         public WorkshopNodeState SelectedNode =>
             Simulation != null && Simulation.TryGetNode(SelectedCell, out var nodeState) ? nodeState : null;

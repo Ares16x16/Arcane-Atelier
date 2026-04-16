@@ -5,10 +5,10 @@ namespace ArcaneAtelier.Workshop
 {
     public sealed class WorkshopHudPresenter : MonoBehaviour
     {
-        private const float Margin = 18f;
-        private const float RightRailWidth = 272f;
-        private const float BottomDockHeight = 132f;
-        private const float TopHudHeight = 92f;
+        private const float Margin = 20f;
+        private const float RightRailWidth = 256f;
+        private const float BottomDockHeight = 156f;
+        private const float TopHudHeight = 94f;
 
         private Vector2 paletteScroll;
         private Vector2 rewardScroll;
@@ -72,14 +72,24 @@ namespace ArcaneAtelier.Workshop
             }
 
             EnsureTheme();
-            ApplyCameraViewport();
+            ApplyCameraLayout();
 
             DrawBackdrop();
 
-            var topLeftRect = new Rect(Margin, Margin, 286f, 84f);
-            var topCenterRect = new Rect(318f, Margin, Mathf.Max(240f, Screen.width - RightRailWidth - 560f), 60f);
-            var topRightRect = new Rect(Screen.width - 234f - Margin, Margin, 234f, 60f);
-            var rightRailRect = new Rect(Screen.width - RightRailWidth - Margin, 92f, RightRailWidth, Screen.height - BottomDockHeight - 110f);
+            const float throughputWidth = 252f;
+            const float controlWidth = 196f;
+            var topLeftRect = new Rect(Margin, Margin, throughputWidth, 88f);
+            var topCenterRect = new Rect(
+                topLeftRect.xMax + 16f,
+                Margin,
+                Mathf.Max(240f, Screen.width - topLeftRect.width - RightRailWidth - controlWidth - Margin * 4f - 16f),
+                60f);
+            var topRightRect = new Rect(Screen.width - controlWidth - Margin, Margin, controlWidth, 60f);
+            var rightRailRect = new Rect(
+                Screen.width - RightRailWidth - Margin,
+                TopHudHeight + 10f,
+                RightRailWidth,
+                Screen.height - BottomDockHeight - TopHudHeight - Margin * 2f);
             var paletteRect = new Rect(Margin, Screen.height - BottomDockHeight - Margin, Screen.width - Margin * 2f, BottomDockHeight);
 
             DrawThroughputPanel(topLeftRect);
@@ -101,8 +111,9 @@ namespace ArcaneAtelier.Workshop
 
         private void DrawBackdrop()
         {
-            DrawRect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0.03f, 0.04f, 0.06f, 0.34f));
-            DrawRect(new Rect(0f, Screen.height - BottomDockHeight - Margin * 2f, Screen.width, BottomDockHeight + Margin * 2f), new Color(0.01f, 0.02f, 0.03f, 0.65f));
+            DrawRect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0f, 0f, 0f, 0.08f));
+            DrawRect(new Rect(0f, 0f, Screen.width, TopHudHeight + Margin), new Color(0.02f, 0.03f, 0.05f, 0.42f));
+            DrawRect(new Rect(0f, Screen.height - BottomDockHeight - Margin * 2f, Screen.width, BottomDockHeight + Margin * 2f), new Color(0.01f, 0.02f, 0.03f, 0.74f));
         }
 
         private void DrawThroughputPanel(Rect rect)
@@ -114,10 +125,10 @@ namespace ArcaneAtelier.Workshop
             GUI.Label(new Rect(18f, 14f, 220f, 24f), "Arcane Atelier", titleStyle);
             GUI.Label(new Rect(18f, 38f, 220f, 20f), "Workshop", mutedStyle);
 
-            DrawMiniStat(new Rect(18f, 58f, 54f, 20f), $"{stats.ElapsedSeconds:0}s", "Run");
-            DrawMiniStat(new Rect(78f, 58f, 64f, 20f), $"{stats.ElementProductionPerSecond:0.0}", "Flow");
-            DrawMiniStat(new Rect(148f, 58f, 54f, 20f), $"{stats.SpellProductionPerSecond:0.0}", "Spell");
-            DrawMiniStat(new Rect(208f, 58f, 54f, 20f), $"{stats.ElementConsumptionPerSecond:0.0}", "Use");
+            DrawMiniStat(new Rect(18f, 56f, 54f, 20f), $"{stats.ElapsedSeconds:0}s", "Run");
+            DrawMiniStat(new Rect(78f, 56f, 64f, 20f), $"{stats.ElementProductionPerSecond:0.0}", "Flow");
+            DrawMiniStat(new Rect(148f, 56f, 54f, 20f), $"{stats.SpellProductionPerSecond:0.0}", "Spell");
+            DrawMiniStat(new Rect(208f, 56f, 54f, 20f), $"{stats.ElementConsumptionPerSecond:0.0}", "Use");
             GUI.EndGroup();
         }
 
@@ -136,33 +147,29 @@ namespace ArcaneAtelier.Workshop
             DrawPanelFrame(rect, new Color(0.92f, 0.45f, 0.24f));
 
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(14f, 12f, 110f, 18f), $"Ghost {controller.PlacementRotationQuarterTurns * 90}°", tinyLabelStyle);
+            DrawChip(new Rect(12f, 12f, 42f, 20f), "Q/E", new Color(0.31f, 0.63f, 0.94f));
+            GUI.Label(new Rect(60f, 13f, 34f, 16f), $"{controller.PlacementRotationQuarterTurns * 90}°", tinyLabelStyle);
 
-            if (GUI.Button(new Rect(rect.width - 210f, 10f, 40f, 40f), "?", smallButtonStyle))
+            if (GUI.Button(new Rect(rect.width - 178f, 10f, 36f, 36f), "?", smallButtonStyle))
             {
                 showGuide = !showGuide;
             }
 
-            if (GUI.Button(new Rect(rect.width - 162f, 10f, 40f, 40f), "✦", smallButtonStyle))
+            if (GUI.Button(new Rect(rect.width - 136f, 10f, 36f, 36f), "✦", smallButtonStyle))
             {
                 showRewards = !showRewards;
             }
 
             var pauseLabel = controller.IsPaused ? "▶" : "⏸";
-            if (GUI.Button(new Rect(rect.width - 114f, 10f, 40f, 40f), pauseLabel, smallButtonStyle))
+            if (GUI.Button(new Rect(rect.width - 94f, 10f, 36f, 36f), pauseLabel, smallButtonStyle))
             {
                 controller.TogglePause();
             }
 
-            if (GUI.Button(new Rect(rect.width - 66f, 10f, 40f, 40f), "↺", smallButtonStyle))
+            if (GUI.Button(new Rect(rect.width - 52f, 10f, 36f, 36f), "↺", smallButtonStyle))
             {
                 controller.ResetWorkshop();
             }
-
-            GUI.Label(new Rect(rect.width - 216f, 50f, 44f, 12f), "Guide", tinyLabelStyle);
-            GUI.Label(new Rect(rect.width - 168f, 50f, 44f, 12f), "Boons", tinyLabelStyle);
-            GUI.Label(new Rect(rect.width - 120f, 50f, 44f, 12f), "Time", tinyLabelStyle);
-            GUI.Label(new Rect(rect.width - 72f, 50f, 44f, 12f), "Reset", tinyLabelStyle);
             GUI.EndGroup();
         }
 
@@ -171,54 +178,63 @@ namespace ArcaneAtelier.Workshop
             DrawPanelFrame(rect, new Color(0.37f, 0.72f, 0.94f));
 
             GUI.BeginGroup(rect);
+            var contentWidth = rect.width - 36f;
             GUI.Label(new Rect(18f, 14f, rect.width - 36f, 20f), "Selected", sectionStyle);
             GUI.Label(new Rect(18f, 34f, rect.width - 36f, 18f), $"Cell {controller.SelectedCell.x}, {controller.SelectedCell.y}", tinyLabelStyle);
 
             var node = controller.SelectedNode;
+            var detailBottom = 118f;
             if (node == null)
             {
-                GUI.Label(new Rect(18f, 66f, rect.width - 36f, 34f), "Choose a tile to inspect a machine.", bodyStyle);
+                GUI.Label(new Rect(18f, 66f, contentWidth, 34f), "Choose a tile to inspect a machine.", bodyStyle);
             }
             else
             {
-                GUI.Label(new Rect(18f, 62f, rect.width - 36f, 22f), node.Definition.DisplayName, sectionStyle);
-                GUI.Label(new Rect(18f, 84f, rect.width - 36f, 18f), node.Definition.Category.ToString(), tinyLabelStyle);
-                GUI.Label(new Rect(18f, 104f, rect.width - 36f, 18f), $"Rot {node.RotationQuarterTurns * 90}°   Spd x{node.SpeedMultiplier:0.00}", mutedStyle);
+                GUI.Label(new Rect(18f, 62f, contentWidth, 22f), node.Definition.DisplayName, sectionStyle);
+                GUI.Label(new Rect(18f, 84f, contentWidth, 18f), node.Definition.Category.ToString(), tinyLabelStyle);
+                GUI.Label(new Rect(18f, 104f, contentWidth, 18f), $"Rot {node.RotationQuarterTurns * 90}°   Spd x{node.SpeedMultiplier:0.00}", mutedStyle);
 
-                var y = 134f;
-                foreach (var pair in node.EnumerateBuffer().Take(4))
+                var bufferRows = node.EnumerateBuffer()
+                    .Take(rect.height < 420f ? 2 : 3)
+                    .Select(pair => (ShortItemName(pair.Key.DisplayName), pair.Value, pair.Key.Tint))
+                    .ToArray();
+
+                var y = 132f;
+                if (bufferRows.Length > 0)
                 {
-                    DrawChip(new Rect(18f, y, rect.width - 36f, 22f), $"{pair.Key.DisplayName} x{pair.Value}", pair.Key.Tint);
-                    y += 26f;
+                    DrawCompactList(new Rect(18f, y, contentWidth, bufferRows.Length * 18f), bufferRows);
+                    y += bufferRows.Length * 18f + 8f;
+                }
+                else
+                {
+                    GUI.Label(new Rect(18f, y, contentWidth, 18f), "Buffer empty", tinyLabelStyle);
+                    y += 24f;
                 }
 
-                if (!node.EnumerateBuffer().Any())
-                {
-                    GUI.Label(new Rect(18f, 136f, rect.width - 36f, 18f), "Buffer empty", tinyLabelStyle);
-                }
-
-                if (GUI.Button(new Rect(18f, 246f, 112f, 28f), "Rotate", buttonStyle))
-                {
-                    controller.RotatePlacedNode(controller.SelectedCell);
-                }
-
-                if (GUI.Button(new Rect(rect.width - 130f, 246f, 112f, 28f), "Dismantle", buttonStyle))
-                {
-                    controller.TryRemoveNode(controller.SelectedCell);
-                }
+                GUI.Label(new Rect(18f, y + 2f, contentWidth, 18f), "R rotate   RMB remove", tinyLabelStyle);
+                detailBottom = y + 24f;
             }
 
             var inventory = controller.BuildInventoryView();
-            var dividerY = 296f;
-            DrawRect(new Rect(18f, dividerY, rect.width - 36f, 1f), new Color(0.22f, 0.24f, 0.28f));
+            var buttonY = rect.height - 42f;
+            var deckListY = buttonY - 58f;
+            var deckTitleY = deckListY - 22f;
+            var inventoryTitleY = detailBottom + 12f;
+            var inventoryListY = inventoryTitleY + 26f;
+            var inventoryListHeight = Mathf.Clamp(deckTitleY - inventoryListY - 14f, 18f, 54f);
 
-            GUI.Label(new Rect(18f, 308f, rect.width - 36f, 20f), "Inventory", sectionStyle);
-            DrawCompactList(new Rect(18f, 334f, rect.width - 36f, 84f), inventory.NetworkItems.OrderBy(pair => pair.Key.DisplayName).Select(pair => (ShortItemName(pair.Key.DisplayName), pair.Value, pair.Key.Tint)).ToArray());
+            DrawRect(new Rect(18f, detailBottom, contentWidth, 1f), new Color(0.22f, 0.24f, 0.28f));
+            GUI.Label(new Rect(18f, inventoryTitleY, contentWidth, 20f), "Inventory", sectionStyle);
+            DrawCompactList(
+                new Rect(18f, inventoryListY, contentWidth, inventoryListHeight),
+                inventory.NetworkItems.OrderBy(pair => pair.Key.DisplayName).Select(pair => (ShortItemName(pair.Key.DisplayName), pair.Value, pair.Key.Tint)).ToArray());
 
-            GUI.Label(new Rect(18f, rect.height - 114f, rect.width - 36f, 18f), "Battle Deck", sectionStyle);
-            DrawCompactList(new Rect(18f, rect.height - 88f, rect.width - 36f, 48f), inventory.PreparedCards.OrderBy(pair => pair.Key.DisplayName).Select(pair => (ShortItemName(pair.Key.DisplayName), pair.Value, pair.Key.Tint)).ToArray());
+            GUI.Label(new Rect(18f, deckTitleY, contentWidth, 18f), "Battle Deck", sectionStyle);
+            DrawCompactList(
+                new Rect(18f, deckListY, contentWidth, 42f),
+                inventory.PreparedCards.OrderBy(pair => pair.Key.DisplayName).Select(pair => (ShortItemName(pair.Key.DisplayName), pair.Value, pair.Key.Tint)).ToArray());
 
-            if (GUI.Button(new Rect(18f, rect.height - 42f, rect.width - 36f, 28f), "Forge Battle Deck", buttonStyle))
+            if (GUI.Button(new Rect(18f, buttonY, contentWidth, 28f), "Forge Battle Deck", buttonStyle))
             {
                 controller.CommitBattlePayload();
             }
@@ -286,12 +302,12 @@ namespace ArcaneAtelier.Workshop
 
             GUI.BeginGroup(rect);
             GUI.Label(new Rect(18f, 14f, 220f, 24f), "Workshop Palette", titleStyle);
-            GUI.Label(new Rect(18f, 38f, 360f, 18f), "Choose a blueprint for the floor.", mutedStyle);
+            GUI.Label(new Rect(18f, 38f, 360f, 18f), "Choose a blueprint.", mutedStyle);
 
             var contentRect = new Rect(14f, 58f, rect.width - 28f, rect.height - 66f);
             var nodes = controller.PlaceableNodes.Where(node => node != null).ToArray();
-            const float cardWidth = 148f;
-            const float cardHeight = 62f;
+            const float cardWidth = 156f;
+            const float cardHeight = 68f;
             const float spacing = 12f;
             var viewWidth = nodes.Length * (cardWidth + spacing) + spacing;
 
@@ -327,17 +343,12 @@ namespace ArcaneAtelier.Workshop
             }
 
             GUI.Label(new Rect(rect.x + 12f, rect.y + 14f, 28f, 28f), GetCategorySymbol(node.Category), iconStyle);
-            GUI.Label(new Rect(rect.x + 44f, rect.y + 14f, rect.width - 56f, 22f), node.DisplayName, cardTitleStyle);
-            GUI.Label(new Rect(rect.x + 44f, rect.y + 35f, rect.width - 56f, 16f), node.Category.ToString(), tinyLabelStyle);
+            GUI.Label(new Rect(rect.x + 44f, rect.y + 14f, rect.width - 56f, 20f), node.DisplayName, cardTitleStyle);
+            GUI.Label(new Rect(rect.x + 44f, rect.y + 36f, rect.width - 56f, 16f), node.Category.ToString(), tinyLabelStyle);
 
             if (!unlocked)
             {
                 DrawRect(rect, new Color(0f, 0f, 0f, 0.42f));
-                GUI.Label(new Rect(rect.x + rect.width - 64f, rect.y + 12f, 52f, 18f), "LOCK", tinyLabelStyle);
-            }
-            else if (selected)
-            {
-                DrawChip(new Rect(rect.x + rect.width - 68f, rect.y + 12f, 56f, 20f), $"{controller.PlacementRotationQuarterTurns * 90}°", accent);
             }
         }
 
@@ -389,13 +400,21 @@ namespace ArcaneAtelier.Workshop
             }
 
             var visibleCount = Mathf.Min(items.Length, Mathf.Max(1, Mathf.FloorToInt(rect.height / 18f)));
-            for (var index = 0; index < visibleCount; index++)
+            var hasOverflow = items.Length > visibleCount;
+            var itemCount = hasOverflow ? Mathf.Max(0, visibleCount - 1) : visibleCount;
+            for (var index = 0; index < itemCount; index++)
             {
                 var item = items[index];
                 var y = rect.y + index * 18f;
                 DrawRect(new Rect(rect.x, y + 3f, 10f, 10f), item.Tint);
                 GUI.Label(new Rect(rect.x + 16f, y, rect.width - 72f, 18f), item.Label, bodyStyle);
                 GUI.Label(new Rect(rect.x + rect.width - 42f, y, 40f, 18f), $"x{item.Amount}", tinyLabelStyle);
+            }
+
+            if (hasOverflow)
+            {
+                var overflowY = rect.y + (visibleCount - 1) * 18f;
+                GUI.Label(new Rect(rect.x, overflowY, rect.width, 18f), $"+{items.Length - itemCount} more", tinyLabelStyle);
             }
         }
 
@@ -517,9 +536,10 @@ namespace ArcaneAtelier.Workshop
 
             cardTitleStyle = new GUIStyle(GUI.skin.label)
             {
-                fontSize = 13,
+                fontSize = 12,
                 fontStyle = FontStyle.Bold,
-                wordWrap = true,
+                wordWrap = false,
+                clipping = TextClipping.Clip,
                 normal = { textColor = new Color(0.97f, 0.95f, 0.9f) }
             };
 
@@ -539,7 +559,7 @@ namespace ArcaneAtelier.Workshop
             };
         }
 
-        private void ApplyCameraViewport()
+        private void ApplyCameraLayout()
         {
             var camera = Camera.main;
             if (camera == null)
@@ -547,16 +567,38 @@ namespace ArcaneAtelier.Workshop
                 return;
             }
 
-            var leftInset = 0f;
-            var rightInset = RightRailWidth + Margin;
-            var topInset = TopHudHeight;
-            var bottomInset = BottomDockHeight + Margin * 2f;
+            camera.rect = new Rect(0f, 0f, 1f, 1f);
 
-            var x = leftInset / Screen.width;
-            var y = bottomInset / Screen.height;
-            var width = Mathf.Clamp01((Screen.width - leftInset - rightInset) / Screen.width);
-            var height = Mathf.Clamp01((Screen.height - topInset - bottomInset) / Screen.height);
-            camera.rect = new Rect(x, y, width, height);
+            var simulation = controller.Simulation;
+            if (simulation == null || !camera.orthographic)
+            {
+                return;
+            }
+
+            var safeArea = new Rect(
+                Margin,
+                BottomDockHeight + Margin * 1.5f,
+                Screen.width - RightRailWidth - Margin * 3f,
+                Screen.height - TopHudHeight - BottomDockHeight - Margin * 3f);
+
+            var safeWidthRatio = Mathf.Clamp(safeArea.width / Screen.width, 0.35f, 1f);
+            var safeHeightRatio = Mathf.Clamp(safeArea.height / Screen.height, 0.35f, 1f);
+            var boardWidth = Mathf.Max(1f, (simulation.GridSize.x - 1) * controller.GridCellSize + controller.GridCellSize * 1.9f);
+            var boardHeight = Mathf.Max(1f, (simulation.GridSize.y - 1) * controller.GridCellSize + controller.GridCellSize * 1.9f);
+            var fitHeight = boardHeight / (2f * safeHeightRatio);
+            var fitWidth = boardWidth / (2f * camera.aspect * safeWidthRatio);
+            camera.orthographicSize = Mathf.Max(4.7f, fitHeight, fitWidth);
+
+            var boardCenter = new Vector2(
+                (simulation.GridSize.x - 1) * controller.GridCellSize * 0.5f,
+                (simulation.GridSize.y - 1) * controller.GridCellSize * 0.5f);
+            var screenCenter = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+            var pixelOffset = safeArea.center - screenCenter;
+            var worldOffset = new Vector2(
+                pixelOffset.x / Screen.width * camera.orthographicSize * camera.aspect * 2f,
+                pixelOffset.y / Screen.height * camera.orthographicSize * 2f);
+
+            camera.transform.position = new Vector3(boardCenter.x - worldOffset.x, boardCenter.y - worldOffset.y, -10f);
         }
 
         private static string ShortItemName(string displayName)
