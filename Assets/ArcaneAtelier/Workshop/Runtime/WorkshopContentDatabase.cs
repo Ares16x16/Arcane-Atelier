@@ -30,7 +30,7 @@ namespace ArcaneAtelier.Workshop
     [CreateAssetMenu(menuName = "Arcane Atelier/Workshop/Content Database", fileName = "WorkshopContentDatabase")]
     public sealed class WorkshopContentDatabase : ScriptableObject
     {
-        [SerializeField] private Vector2Int gridSize = new(8, 6);
+        [SerializeField] private Vector2Int gridSize = new Vector2Int(8, 6);
         [SerializeField] private float simulationStepSeconds = 0.25f;
         [SerializeField] private WorkshopNodeDefinition[] placeableNodes;
         [SerializeField] private WorkshopRewardDefinition[] debugRewards;
