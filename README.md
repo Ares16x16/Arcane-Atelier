@@ -1,6 +1,6 @@
 # Arcane Atelier — Workshop Slice
 
-Unity 6 implementation of the **Factory Scene** gameplay loop for `Arcane Atelier`.
+Unity implementation of the **Factory Scene** gameplay loop for `Arcane Atelier`.
 
 This repository currently contains the **workshop / factory scene**, not the full game.
 It is the part where players build a production line that turns elemental resources into spell cards for later combat.
@@ -8,9 +8,10 @@ It is the part where players build a production line that turns elemental resour
 The **authoritative gameplay content** for this slice is the generated workshop database and generated scene created by `WorkshopProjectBootstrap`.
 If any runtime fallback content differs, treat the generated scene/database as correct.
 
-## Unity compatibility
+## Engine compatibility
 
-- **Target editor**: Unity `6000.4.0f1` (Unity 6 LTS).
+- **Original target editor**: Unity `6000.4.0f1` (Unity 6 LTS).
+- Runtime/editor C# source has been written with older C# compiler compatibility in mind (no target-typed `new` expressions), which improves portability to Unity forks based on older compiler stacks (including Tuanjie-derived workflows).
 - The project is assembly-definition based and organized into runtime/editor modules under `Assets/ArcaneAtelier/Workshop`.
 
 ## Quick start

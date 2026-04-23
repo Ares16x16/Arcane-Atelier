@@ -1,10 +1,12 @@
 {
-  "name": "ArcaneAtelier.Workshop.Runtime",
-  "rootNamespace": "ArcaneAtelier.Workshop",
+  "name": "ArcaneAtelier.Battle.Editor",
+  "rootNamespace": "ArcaneAtelier.Battle.Editor",
   "references": [
-    "UnityEngine.IMGUIModule"
+    "ArcaneAtelier.Battle.Runtime"
   ],
-  "includePlatforms": [],
+  "includePlatforms": [
+    "Editor"
+  ],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,
