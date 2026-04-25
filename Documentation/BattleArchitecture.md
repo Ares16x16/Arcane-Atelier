@@ -55,11 +55,11 @@ ArcaneAtelier/Battle/
 │  Orchestration (Phase 1 ✓)                                 │
 │  BattleSceneController — scene lifecycle, payload handoff   │
 ├─────────────────────────────────────────────────────────────┤
-│  Simulation (Phase 2)                                       │
-│  BattleSimulation — step loop, win/loss, action queue       │
-│  BattleCardPlayer — deck, hand, draw, play, discard         │
-│  BattleBossAI — fixed-pattern execution                     │
-│  BattleDamageCalculator — damage formula + elemental mod    │
+│  Simulation (Phase 2 ✓)                                    │
+│  BattleSimulation — turn state machine, win/loss detection  │
+│  BattleDeckController — deck / hand / draw / discard        │
+│  BattleBossAI — fixed-pattern cyclic execution              │
+│  BattleActionResolver — damage formula + elemental mod      │
 ├─────────────────────────────────────────────────────────────┤
 │  Data / Authoring (Phase 1 ✓)                              │
 │  BattleBossDefinition, BattleCardEffectTemplate,            │
@@ -187,7 +187,7 @@ Generates:
 | Phase | Deliverables | Status |
 |-------|-------------|--------|
 | **1** | Skeleton + data layer: enums, utilities, SO definitions, unit model, scene controller, result bridge | ✅ Complete |
-| **2** | Core combat loop: simulation step, card player (deck/hand/discard), boss AI executor, damage calculator | ⏳ Pending |
+| **2** | Core combat loop: simulation step, card player (deck/hand/discard), boss AI executor, damage calculator | ✅ Complete |
 | **3** | IMGUI battle UI: hand area, HP bars, buff/debuff display, damage numbers, win/loss screen | ⏳ Pending |
 | **4** | First boss polish + E2E: test scene, visual feedback hooks, post-battle handoff verification | ⏳ Pending |
 
@@ -195,12 +195,10 @@ Generates:
 
 ## 8. Known Limitations
 
-1. **No status effects** (Phase 1). `EffectKeyword` is parsed but ignored. Buff/debuff system deferred to Phase 2+.
-2. **No card-playing logic** yet. Payload cards are logged but not usable.
-3. **No combat simulation** yet. Boss does not act automatically.
-4. **No UI** yet. Only `Debug.Log` output.
-5. **No .unity scene file** yet. Phase 1 is code-only; scene created in Phase 4.
-6. **IMGUI for rapid iteration** — same as Workshop. Retained-mode UI migration TBD.
+1. **No status effects** (Phase 2+). `EffectKeyword` is parsed but ignored. Buff/debuff system deferred to Phase 3+.
+2. **No UI** yet. Combat is playable via keyboard input with `Debug.Log` output only.
+3. **No .unity scene file** yet. Scene created in Phase 4.
+4. **IMGUI for rapid iteration** — same as Workshop. Retained-mode UI migration TBD.
 
 ---
 

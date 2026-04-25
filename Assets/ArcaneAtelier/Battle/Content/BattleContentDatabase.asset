@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7f165e707e0842c58bdb3335efd1f4b, type: 3}
+  m_Name: BattleContentDatabase
+  m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattleContentDatabase
+  bosses:
+  - {fileID: 11400000, guid: 87a47f72c09e4dc9a972d28196f5410f, type: 2}
+  - {fileID: 11400000, guid: 1889f31f8f17440e965357f7a3b49299, type: 2}
+  - {fileID: 11400000, guid: 1c7f40b91d1a4f7f891ea90425a4fbd7, type: 2}
+  - {fileID: 11400000, guid: 5b6875370b85b44f79c892c729ae9f29, type: 2}
+  cardEffectTemplates:
+  - {fileID: 11400000, guid: effebfef0b67e42c99cf94b65395db9e, type: 2}
+  - {fileID: 11400000, guid: a6c0ac1505e36403da73e77c8c711ffa, type: 2}
+  - {fileID: 11400000, guid: 1ecacb0beb1ce455aa4552bb30e5a8c3, type: 2}
+  presentationProfiles:
+  - {fileID: 11400000, guid: c5296aeec0f14436804dc1ee742a8773, type: 2}
+  - {fileID: 11400000, guid: 2bac3fe4d0764345ad9e3fc8b6f4ec44, type: 2}
+  - {fileID: 11400000, guid: 68b093b1e59c4a4f9af97cab83ff3837, type: 2}
+  - {fileID: 11400000, guid: cbf37c3dbe694172b0f24d2a49131753, type: 2}

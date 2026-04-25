@@ -2,7 +2,8 @@
   "name": "ArcaneAtelier.Battle.Editor",
   "rootNamespace": "ArcaneAtelier.Battle.Editor",
   "references": [
-    "ArcaneAtelier.Battle.Runtime"
+    "ArcaneAtelier.Battle.Runtime",
+    "ArcaneAtelier.Workshop.Runtime"
   ],
   "includePlatforms": [
     "Editor"

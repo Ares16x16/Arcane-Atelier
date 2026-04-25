@@ -22,4 +22,18 @@ namespace ArcaneAtelier.Battle
         Victory = 1,
         Defeat = 2
     }
+
+    public enum BattleEncounterType
+    {
+        Enemy = 0,
+        Boss = 1
+    }
+
+    public enum BattleEnemyArchetype
+    {
+        None = 0,
+        Aggressive = 1,
+        Sustain = 2,
+        Defensive = 3
+    }
 }

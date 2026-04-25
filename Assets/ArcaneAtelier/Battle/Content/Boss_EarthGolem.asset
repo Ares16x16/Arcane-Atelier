@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77bee526265284c00b0edc200472c624, type: 3}
+  m_Name: Boss_EarthGolem
+  m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattleBossDefinition
+  bossId: boss.earth.golem
+  displayName: Corrupted Earth Golem
+  maxHealth: 150
+  element: 4
+  encounterType: 1
+  difficultyRank: 100
+  enemyArchetype: 0
+  lowHealthThresholdNormalized: 0.35
+  defensiveShieldThreshold: 16
+  preferredBurstTurnInterval: 3
+  actionPattern:
+  - ActionType: 1
+    Value: 15
+    SecondaryValue: 0
+    Description: Slams the ground
+  - ActionType: 3
+    Value: 10
+    SecondaryValue: 0
+    Description: Hardens its shell
+  - ActionType: 1
+    Value: 20
+    SecondaryValue: 0
+    Description: Heavy strike
+  - ActionType: 2
+    Value: 10
+    SecondaryValue: 0
+    Description: Absorbs earth energy
+  phase2ActionPattern:
+  - ActionType: 1
+    Value: 22
+    SecondaryValue: 0
+    Description: Raging slam
+  - ActionType: 1
+    Value: 30
+    SecondaryValue: 0
+    Description: Crushing blow
+  - ActionType: 2
+    Value: 15
+    SecondaryValue: 0
+    Description: Devours earth energy
+  phaseTransitionHealthPercent: 0.5
+  defeatRewardId: reward.spirit.earth
