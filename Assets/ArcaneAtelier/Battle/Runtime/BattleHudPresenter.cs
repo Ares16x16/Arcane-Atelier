@@ -6,10 +6,10 @@ namespace ArcaneAtelier.Battle
     public sealed class BattleHudPresenter : MonoBehaviour
     {
         private const float Margin = 18f;
-        private const float TopBarHeight = 88f;
-        private const float BottomPanelHeight = 188f;
-        private const float CardWidth = 176f;
-        private const float CardHeight = 118f;
+        private const float TopBarHeight = 104f;
+        private const float BottomPanelHeight = 214f;
+        private const float CardWidth = 188f;
+        private const float CardHeight = 144f;
         private const float CardSpacing = 14f;
         private const float DragThreshold = 10f;
 
@@ -26,6 +26,8 @@ namespace ArcaneAtelier.Battle
         private GUIStyle centeredMutedStyle;
         private GUIStyle centeredBodyStyle;
         private GUIStyle chipStyle;
+        private GUIStyle cardMetaStyle;
+        private GUIStyle cardSummaryStyle;
         private GUIStyle targetHintStyle;
         private Vector2 handScroll;
         private int selectedCardIndex = -1;
@@ -148,13 +150,14 @@ namespace ArcaneAtelier.Battle
             DrawPanelFrame(rect, new Color(0.84f, 0.62f, 0.28f), 0.88f);
             GUI.BeginGroup(rect);
 
-            Rect playerRect = new Rect(14f, 12f, rect.width * 0.32f, 60f);
-            Rect centerRect = new Rect(rect.width * 0.32f + 24f, 10f, rect.width * 0.36f - 48f, 64f);
-            Rect bossRect = new Rect(rect.width - rect.width * 0.32f - 14f, 12f, rect.width * 0.32f, 60f);
+            Rect playerRect = new Rect(14f, 14f, rect.width * 0.32f, 60f);
+            Rect centerRect = new Rect(rect.width * 0.32f + 24f, 12f, rect.width * 0.36f - 48f, 60f);
+            Rect bossRect = new Rect(rect.width - rect.width * 0.32f - 14f, 14f, rect.width * 0.32f, 60f);
 
             DrawUnitStatusBlock(playerRect, controller.Player, "Player", false);
             DrawCenterBattleStrip(centerRect);
             DrawUnitStatusBlock(bossRect, controller.Boss, "Enemy", true);
+            DrawActionPoints(new Rect(rect.width * 0.5f - 56f, 78f, 112f, 18f));
 
             GUI.EndGroup();
         }
@@ -189,6 +192,19 @@ namespace ArcaneAtelier.Battle
             DrawRect(new Rect(healthBarRect.x, healthBarRect.y, healthBarRect.width * ratio, healthBarRect.height), accent);
         }
 
+        private void DrawActionPoints(Rect rect)
+        {
+            if (controller.Simulation == null)
+            {
+                return;
+            }
+
+            string apText = $"AP {controller.Simulation.ActionPoints}/{controller.Simulation.MaxActionPoints}";
+            DrawRect(rect, new Color(0.08f, 0.11f, 0.15f, 0.9f));
+            DrawOutline(rect, new Color(0.85f, 0.72f, 0.35f, 0.7f));
+            GUI.Label(new Rect(rect.x + 4f, rect.y + 1f, rect.width - 8f, 16f), apText, chipStyle);
+        }
+
         private void DrawCenterBattleStrip(Rect rect)
         {
             DrawRect(rect, new Color(0.08f, 0.1f, 0.15f, 0.82f));
@@ -199,12 +215,12 @@ namespace ArcaneAtelier.Battle
             string intent = TruncateText(controller.BossIntentDescription, 42);
             GUI.Label(new Rect(rect.x + 14f, rect.y + 28f, rect.width - 28f, 18f), intent, centeredBodyStyle);
 
-            bool canSkip = controller.IsPlayerInputAllowed;
+            bool canEnd = controller.CanEndTurn;
             bool previousEnabled = GUI.enabled;
-            GUI.enabled = canSkip;
-            if (GUI.Button(new Rect(rect.x + rect.width * 0.5f - 64f, rect.y + 44f, 128f, 22f), "Skip Turn", GUI.skin.button))
+            GUI.enabled = canEnd;
+            if (GUI.Button(new Rect(rect.x + rect.width * 0.5f - 64f, rect.y + 44f, 128f, 22f), "End Turn", GUI.skin.button))
             {
-                controller.SkipTurnFromHud();
+                controller.EndTurnFromHud();
             }
             GUI.enabled = previousEnabled;
         }
@@ -247,7 +263,8 @@ namespace ArcaneAtelier.Battle
             bool isPressed = pressedCardIndex == index;
             bool isHover = rect.Contains(currentEvent.mousePosition);
 
-            if (currentEvent.type == EventType.MouseDown && currentEvent.button == 0 && rect.Contains(currentEvent.mousePosition) && controller.IsPlayerInputAllowed)
+            bool canAffordCard = controller.CanPlayCard(index);
+            if (currentEvent.type == EventType.MouseDown && currentEvent.button == 0 && rect.Contains(currentEvent.mousePosition) && controller.IsPlayerInputAllowed && canAffordCard)
             {
                 pressedCardIndex = index;
                 pressMousePosition = currentEvent.mousePosition;
@@ -256,25 +273,28 @@ namespace ArcaneAtelier.Battle
                 currentEvent.Use();
             }
 
+            int apCost = BattleDeckController.GetActionPointCost(card.Role);
+            bool canAfford = controller.Simulation.ActionPoints >= apCost;
             Color accent = GetElementColor(card.Element);
             Color outline = isSelected || isPressed
                 ? accent
                 : new Color(accent.r, accent.g, accent.b, 0.62f);
 
-            DrawRect(rect, new Color(0.08f, 0.11f, 0.15f, isHover ? 1f : 0.96f));
+            float cardAlpha = canAfford ? (isHover ? 1f : 0.96f) : 0.45f;
+            DrawRect(rect, new Color(0.08f, 0.11f, 0.15f, cardAlpha));
             DrawOutline(rect, outline);
             DrawRect(new Rect(rect.x, rect.y, rect.width, 5f), accent);
             DrawRect(new Rect(rect.x + 12f, rect.y + 12f, 28f, 22f), accent);
             GUI.Label(new Rect(rect.x + 12f, rect.y + 14f, 28f, 18f), index < 9 ? (index + 1).ToString() : "-", pillStyle);
 
-            GUI.Label(new Rect(rect.x + 48f, rect.y + 12f, rect.width - 60f, 20f), card.DisplayName, cardTitleStyle);
-            DrawTag(new Rect(rect.x + 12f, rect.y + 42f, 70f, 18f), card.Role.ToString(), new Color(0.24f, 0.29f, 0.36f, 0.92f));
-            DrawTag(new Rect(rect.x + 88f, rect.y + 42f, 70f, 18f), card.Element.ToString(), new Color(accent.r, accent.g, accent.b, 0.88f));
+            GUI.Label(new Rect(rect.x + 48f, rect.y + 12f, rect.width - 108f, 20f), TruncateText(card.DisplayName, 22), cardTitleStyle);
+            DrawTag(new Rect(rect.x + rect.width - 54f, rect.y + 12f, 42f, 20f), $"{apCost} AP", new Color(0.85f, 0.72f, 0.35f, 0.92f));
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 44f, rect.width - 24f, 16f), BuildCardMeta(card), cardMetaStyle);
+            DrawRect(new Rect(rect.x + 12f, rect.y + 68f, rect.width - 24f, 1f), new Color(0.18f, 0.22f, 0.28f, 0.9f));
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 78f, rect.width - 24f, 24f), BuildCardSummary(card), cardSummaryStyle);
 
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 68f, rect.width - 24f, 20f), BuildCardSummary(card), titleStyle);
-
-            string hint = BuildDragHint(card);
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 92f, rect.width - 24f, 16f), hint, mutedStyle);
+            string hint = canAfford ? BuildDragHint(card) : "Not enough AP";
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 108f, rect.width - 24f, 24f), hint, centeredMutedStyle);
         }
 
         private void DrawGhostCard(Rect rect)
@@ -302,11 +322,12 @@ namespace ArcaneAtelier.Battle
             DrawRect(new Rect(dragRect.x, dragRect.y, dragRect.width, 5f), accent);
             DrawRect(new Rect(dragRect.x + 12f, dragRect.y + 12f, 28f, 22f), accent);
             GUI.Label(new Rect(dragRect.x + 12f, dragRect.y + 14f, 28f, 18f), draggingCardIndex < 9 ? (draggingCardIndex + 1).ToString() : "-", pillStyle);
-            GUI.Label(new Rect(dragRect.x + 48f, dragRect.y + 12f, dragRect.width - 60f, 20f), card.DisplayName, cardTitleStyle);
-            DrawTag(new Rect(dragRect.x + 12f, dragRect.y + 42f, 70f, 18f), card.Role.ToString(), new Color(0.24f, 0.29f, 0.36f, 0.92f));
-            DrawTag(new Rect(dragRect.x + 88f, dragRect.y + 42f, 70f, 18f), card.Element.ToString(), new Color(accent.r, accent.g, accent.b, 0.88f));
-            GUI.Label(new Rect(dragRect.x + 12f, dragRect.y + 68f, dragRect.width - 24f, 20f), BuildCardSummary(card), titleStyle);
-            GUI.Label(new Rect(dragRect.x + 12f, dragRect.y + 92f, dragRect.width - 24f, 16f), BuildDragHint(card), mutedStyle);
+            GUI.Label(new Rect(dragRect.x + 48f, dragRect.y + 12f, dragRect.width - 108f, 20f), TruncateText(card.DisplayName, 22), cardTitleStyle);
+            DrawTag(new Rect(dragRect.x + dragRect.width - 54f, dragRect.y + 12f, 42f, 20f), $"{BattleDeckController.GetActionPointCost(card.Role)} AP", new Color(0.85f, 0.72f, 0.35f, 0.92f));
+            GUI.Label(new Rect(dragRect.x + 12f, dragRect.y + 44f, dragRect.width - 24f, 16f), BuildCardMeta(card), cardMetaStyle);
+            DrawRect(new Rect(dragRect.x + 12f, dragRect.y + 68f, dragRect.width - 24f, 1f), new Color(0.18f, 0.22f, 0.28f, 0.9f));
+            GUI.Label(new Rect(dragRect.x + 12f, dragRect.y + 78f, dragRect.width - 24f, 24f), BuildCardSummary(card), cardSummaryStyle);
+            GUI.Label(new Rect(dragRect.x + 12f, dragRect.y + 108f, dragRect.width - 24f, 24f), BuildDragHint(card), centeredMutedStyle);
         }
 
         private void DrawWorldTargetHighlights()
@@ -460,14 +481,26 @@ namespace ArcaneAtelier.Battle
             switch (card.Role)
             {
                 case WorkshopSpellRole.Attack:
-                    return $"Attack {card.PrimaryValue} x{Mathf.Max(1, card.HitCount)}";
+                    return Mathf.Max(1, card.HitCount) > 1
+                        ? $"Deal {card.PrimaryValue} x{Mathf.Max(1, card.HitCount)} damage"
+                        : $"Deal {card.PrimaryValue} damage";
                 case WorkshopSpellRole.Healing:
-                    return $"Heal {card.PrimaryValue}";
+                    return $"Restore {card.PrimaryValue} HP";
                 case WorkshopSpellRole.Defense:
-                    return $"Shield {card.PrimaryValue}";
+                    return $"Gain {card.PrimaryValue} shield";
                 default:
                     return "No effect data";
             }
+        }
+
+        private string BuildCardMeta(WorkshopBattleCardEntry card)
+        {
+            if (card.Element == WorkshopElementAttribute.None)
+            {
+                return card.Role.ToString();
+            }
+
+            return $"{card.Role}  •  {card.Element}";
         }
 
         private string BuildDragHint(WorkshopBattleCardEntry card)
@@ -604,11 +637,27 @@ namespace ArcaneAtelier.Battle
                 normal = { textColor = new Color(0.96f, 0.94f, 0.9f) }
             };
 
+            cardMetaStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 11,
+                alignment = TextAnchor.MiddleLeft,
+                normal = { textColor = new Color(0.78f, 0.82f, 0.88f) }
+            };
+
+            cardSummaryStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 12,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleLeft,
+                wordWrap = true,
+                normal = { textColor = new Color(0.97f, 0.95f, 0.9f) }
+            };
+
             cardTitleStyle = new GUIStyle(GUI.skin.label)
             {
-                fontSize = 14,
+                fontSize = 13,
                 fontStyle = FontStyle.Bold,
-                wordWrap = true,
+                wordWrap = false,
                 normal = { textColor = new Color(0.97f, 0.95f, 0.9f) }
             };
 

@@ -18,6 +18,8 @@ namespace ArcaneAtelier.Battle
         public BattleBossAI BossAI { get; }
         public BattleState State { get; private set; }
         public int TurnsElapsed { get; private set; }
+        public int ActionPoints { get; private set; }
+        public int MaxActionPoints { get; private set; }
 
         public int TotalDamageDealt { get; private set; }
         public int TotalHealingDone { get; private set; }
@@ -41,6 +43,8 @@ namespace ArcaneAtelier.Battle
             Deck = deck ?? throw new ArgumentNullException(nameof(deck));
             BossAI = bossAI ?? throw new ArgumentNullException(nameof(bossAI));
             State = BattleState.WaitingForPlayer;
+            MaxActionPoints = 3;
+            ActionPoints = MaxActionPoints;
         }
 
         public bool TryPlayCard(int handIndex)
@@ -51,11 +55,23 @@ namespace ArcaneAtelier.Battle
                 return false;
             }
 
+            if (!Deck.TryGetActionPointCost(handIndex, out int apCost))
+            {
+                return false;
+            }
+
+            if (ActionPoints < apCost)
+            {
+                Debug.LogWarning($"BattleSimulation: not enough AP ({ActionPoints}/{apCost}) to play card.");
+                return false;
+            }
+
             if (!Deck.TryPlayCard(handIndex, out BattleResolvedEffect effect))
             {
                 return false;
             }
 
+            ActionPoints -= apCost;
             CardsPlayed++;
 
             BattleActionResolution resolution = BattleActionResolver.ResolvePlayerEffect(effect, Player, Boss);
@@ -67,18 +83,22 @@ namespace ArcaneAtelier.Battle
                 return true;
             }
 
-            ResolveBossTurn();
+            if (ActionPoints <= 0)
+            {
+                ResolveBossTurn();
+            }
+
             return true;
         }
 
-        public void SkipTurn()
+        public void EndTurn()
         {
             if (State != BattleState.WaitingForPlayer)
             {
                 return;
             }
 
-            Deck.SkipTurn();
+            Deck.EndTurn();
             PlayerTurnSkipped?.Invoke();
 
             if (CheckBattleEnd())
@@ -102,6 +122,7 @@ namespace ArcaneAtelier.Battle
             {
                 TurnsElapsed++;
                 State = BattleState.WaitingForPlayer;
+                ActionPoints = MaxActionPoints;
                 TurnCycleComplete?.Invoke(TurnsElapsed);
             }
         }

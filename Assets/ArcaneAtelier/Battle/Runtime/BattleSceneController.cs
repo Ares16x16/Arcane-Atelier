@@ -26,6 +26,10 @@ namespace ArcaneAtelier.Battle
             Simulation != null &&
             Simulation.State == BattleState.WaitingForPlayer &&
             !inputBlocked;
+        public bool CanEndTurn =>
+            Simulation != null &&
+            Simulation.State == BattleState.WaitingForPlayer &&
+            !inputBlocked;
         public string BossIntentDescription
         {
             get
@@ -196,7 +200,7 @@ namespace ArcaneAtelier.Battle
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                Simulation.SkipTurn();
+                Simulation.EndTurn();
                 return;
             }
 
@@ -218,17 +222,46 @@ namespace ArcaneAtelier.Battle
                 return false;
             }
 
+            if (handIndex < 0 || handIndex >= Simulation.Deck.HandCount)
+            {
+                return false;
+            }
+
+            WorkshopBattleCardEntry card = Simulation.Deck.Hand[handIndex];
+            int apCost = BattleDeckController.GetActionPointCost(card.Role);
+            if (Simulation.ActionPoints < apCost)
+            {
+                return false;
+            }
+
             return Simulation.TryPlayCard(handIndex);
         }
 
-        public bool SkipTurnFromHud()
+        public bool CanPlayCard(int handIndex)
         {
             if (!IsPlayerInputAllowed)
             {
                 return false;
             }
 
-            Simulation.SkipTurn();
+            if (handIndex < 0 || handIndex >= Simulation.Deck.HandCount)
+            {
+                return false;
+            }
+
+            WorkshopBattleCardEntry card = Simulation.Deck.Hand[handIndex];
+            int apCost = BattleDeckController.GetActionPointCost(card.Role);
+            return Simulation.ActionPoints >= apCost;
+        }
+
+        public bool EndTurnFromHud()
+        {
+            if (!CanEndTurn)
+            {
+                return false;
+            }
+
+            Simulation.EndTurn();
             return true;
         }
 

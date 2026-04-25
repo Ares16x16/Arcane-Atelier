@@ -57,7 +57,7 @@ namespace ArcaneAtelier.Battle
                     Amount = 1,
                     Element = WorkshopElementAttribute.Fire,
                     Role = WorkshopSpellRole.Attack,
-                    PrimaryValue = 10,
+                    PrimaryValue = 15,
                     HitCount = 1
                 });
             }
@@ -71,7 +71,7 @@ namespace ArcaneAtelier.Battle
                     Amount = 1,
                     Element = WorkshopElementAttribute.Earth,
                     Role = WorkshopSpellRole.Defense,
-                    PrimaryValue = 8,
+                    PrimaryValue = 10,
                     HitCount = 1
                 });
             }
@@ -130,12 +130,39 @@ namespace ArcaneAtelier.Battle
             return true;
         }
 
-        public void SkipTurn()
+        public bool TryGetActionPointCost(int handIndex, out int actionPointCost)
+        {
+            actionPointCost = 0;
+
+            if (handIndex < 0 || handIndex >= hand.Count)
+            {
+                return false;
+            }
+
+            actionPointCost = GetActionPointCost(hand[handIndex].Role);
+            return true;
+        }
+
+        public void EndTurn()
         {
             // Move entire hand to discard and draw fresh hand
             discardPile.AddRange(hand);
             hand.Clear();
             DrawCards(5);
+        }
+
+        public static int GetActionPointCost(WorkshopSpellRole role)
+        {
+            switch (role)
+            {
+                case WorkshopSpellRole.Attack:
+                    return 2;
+                case WorkshopSpellRole.Defense:
+                case WorkshopSpellRole.Healing:
+                    return 1;
+                default:
+                    return 1;
+            }
         }
 
         private BattleCardEffectTemplate FindTemplate(WorkshopBattleCardEntry card)

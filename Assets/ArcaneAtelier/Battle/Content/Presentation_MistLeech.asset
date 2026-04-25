@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Presentation_MistLeech
   m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattlePresentationProfile
   bossId: enemy.mist.leech
-  bossSprite: {fileID: 0}
-  backgroundSprite: {fileID: 0}
-  bossPosition: {x: 3.5, y: 0, z: 0}
-  bossScale: {x: 2.2, y: 2.2, z: 1}
-  backgroundScale: {x: 6, y: 6, z: 1}
+  bossSprite: {fileID: 21300000, guid: fc8da8a85920a4c90a6c8610e3ed56e1, type: 3}
+  backgroundSprite: {fileID: 21300000, guid: 1d8dc8a3455d246aa8c9dbb5f27178df, type: 3}
+  bossPosition: {x: 3.5, y: 0.05, z: 0}
+  bossScale: {x: 2.1, y: 2.1, z: 1}
+  backgroundScale: {x: 7, y: 7, z: 1}

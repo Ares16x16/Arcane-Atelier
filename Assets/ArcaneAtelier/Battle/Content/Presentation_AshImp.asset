@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Presentation_AshImp
   m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattlePresentationProfile
   bossId: enemy.ash.imp
-  bossSprite: {fileID: 0}
-  backgroundSprite: {fileID: 0}
-  bossPosition: {x: 3.5, y: 0, z: 0}
-  bossScale: {x: 2, y: 2, z: 1}
-  backgroundScale: {x: 6, y: 6, z: 1}
+  bossSprite: {fileID: 21300000, guid: e69c5b7d615c64e55915282276356614, type: 3}
+  backgroundSprite: {fileID: 21300000, guid: 5d55a050a53a8408a899145e2542bbd0, type: 3}
+  bossPosition: {x: 3.35, y: -0.15, z: 0}
+  bossScale: {x: 2.15, y: 2.15, z: 1}
+  backgroundScale: {x: 7, y: 7, z: 1}

@@ -1,3 +1,4 @@
+<!-- From: /Users/helluin/Desktop/AA/Arcane-Atelier/AGENTS.md -->
 # AGENTS.md — Arcane Atelier
 
 > Current-state context for AI agents working in this Unity project.
@@ -8,7 +9,7 @@
 - **Engine**: Unity 6000.4.0f1 (Unity 6), Built-in Render Pipeline
 - **Language**: C# (.NET Standard 2.1)
 - **Genre**: 2D top-down hybrid of factory-building (`Workshop`) and single-enemy card combat (`Battle`)
-- **UI**: Workshop uses IMGUI; Battle still relies mostly on keyboard input and logs, with no full battle HUD yet
+- **UI**: IMGUI for both Workshop and Battle
 - **Core loop target**: Build cards in Workshop → enter Battle → defeat enemy/boss → return with rewards
 
 ## Module Boundaries
@@ -30,74 +31,16 @@ Battle ─────→ Workshop
 ### Workshop
 
 - Workshop runtime is present and playable as a factory simulation slice.
-- Core runtime pieces are:
-  - `WorkshopSceneController`
-  - `WorkshopSimulation`
-  - `WorkshopGridView`
-  - `WorkshopHudPresenter`
-  - `WorkshopContentDatabase`
+- Core runtime pieces: `WorkshopSceneController`, `WorkshopSimulation`, `WorkshopGridView`, `WorkshopHudPresenter`, `WorkshopContentDatabase`.
 - Workshop remains the producer of battle cards and commits them through `WorkshopBattlePayloadBridge`.
 
 ### Battle
 
-- Battle is no longer just a skeleton. A playable single-enemy combat loop is implemented.
-- Core runtime pieces are:
-  - `BattleSceneController`: scene entry, payload consumption, enemy init, keyboard input, result commit
-  - `BattleSimulation`: turn-state machine and battle-end handling
-  - `BattleDeckController`: draw / hand / discard / fallback deck
-  - `BattleBossAI`: fixed cyclic action pattern executor
-  - `BattleActionResolver`: player and enemy action resolution
-  - `BattleVisualManager` and `BattleUnitVisual`: basic visual setup and animation feedback
-  - `BattleContentDatabase`: enemy definitions, card templates, and presentation profiles
-  - `BattlePresentationProfile`: data-driven sprite/background/position/scale binding by `BossId`
+- Battle is a playable single-enemy combat prototype with a complete core loop and full IMGUI HUD.
+- See `Documentation/Battle/BattleCombatDesign.md` for combat logic details.
+- See `Documentation/Battle/BattleHudDesign.md` for HUD and interaction design.
 - The battle system is currently **single-enemy only**.
 - Runtime type names still use `Boss` terminology, but the same content path is now used for both true bosses and normal enemies.
-
-## Current Battle Content
-
-Current default content under `Assets/ArcaneAtelier/Battle/Content/` includes:
-
-- Boss:
-  - `Boss_EarthGolem`
-- Normal enemies:
-  - `Enemy_AshImp`
-  - `Enemy_MossShell`
-  - `Enemy_MistLeech`
-- Card templates:
-  - `CardEffectTemplate_Attack`
-  - `CardEffectTemplate_Heal`
-  - `CardEffectTemplate_Defend`
-- Presentation profiles:
-  - `Presentation_EarthGolem`
-  - `Presentation_AshImp`
-  - `Presentation_MossShell`
-  - `Presentation_MistLeech`
-
-Notes:
-
-- `BattleContentDatabase` now stores `presentationProfiles` in addition to enemy definitions and card templates.
-- Presentation profiles exist for the three normal enemies, but their sprite fields may still be unassigned; runtime will fall back to scene defaults or placeholders if art is missing.
-
-## Scene Status
-
-- `Assets/ArcaneAtelier/BattleScene.unity` exists.
-- Battle scene setup is still in progress; agents should treat scene wiring and art hookup as partially completed work, not a finished production scene.
-- `BattleVisualManager` can auto-create background/player/boss visuals if scene references are missing, but explicit scene references are preferred when building the final scene.
-
-## Combat Rules Implemented
-
-- Player and enemy take turns in a simple loop:
-  - player plays a card or skips
-  - enemy executes the next scripted action
-  - win/loss is checked after each resolution
-- `BattleBossAI` uses fixed cyclic patterns from `BattleBossDefinition`.
-- `BattleActionResolver` supports:
-  - attack
-  - healing
-  - defense / shield
-  - special actions on the enemy side, currently resolved like attack
-- Elemental advantage applies to **player attacks against enemies** using `BattleElementUtility`.
-- Enemy attacks are still flat damage and do **not** currently apply elemental modifiers.
 
 ## Assembly Definitions
 
@@ -120,13 +63,12 @@ Notes:
 
 ## Known Limitations
 
-1. No full Battle HUD yet; combat feedback is still largely logs plus basic animation.
-2. No status-effect system yet; parsed effect keywords are still ignored.
-3. No complete Workshop → Battle → Workshop scene flow has been finalized.
-4. No save/load persistence.
-5. Enemy attacks do not currently apply elemental advantage/disadvantage.
-6. Automated tests are still absent.
-7. Some documentation, especially `Documentation/BattleArchitecture.md`, is behind the codebase. Prefer runtime code and current assets as source of truth.
+1. No status-effect system yet; parsed effect keywords are still ignored.
+2. No complete Workshop → Battle → Workshop scene flow has been finalized.
+3. No save/load persistence.
+4. Enemy attacks do not currently apply elemental advantage/disadvantage.
+5. Automated tests are still absent.
+6. Documentation may lag behind rapid codebase iteration. Prefer runtime code and current assets as source of truth.
 
 ## Important Paths
 
@@ -137,6 +79,9 @@ Notes:
 | `Assets/ArcaneAtelier/Battle/Editor/` | Battle content generation/editor tools |
 | `Assets/ArcaneAtelier/Battle/Content/` | Bosses, normal enemies, templates, presentation profiles |
 | `Assets/ArcaneAtelier/BattleScene.unity` | Current battle scene |
+| `Documentation/Battle/BattleCombatDesign.md` | Battle combat logic design |
+| `Documentation/Battle/BattleHudDesign.md` | Battle HUD and interaction design |
+| `Documentation/BattleArchitecture.md` | Battle system architecture overview |
 | `Documentation/BattleWorkshopDependencies.md` | Stable module dependency reference |
 | `Documentation/WorkshopBattleContract.md` | Workshop ↔ Battle payload contract |
 
