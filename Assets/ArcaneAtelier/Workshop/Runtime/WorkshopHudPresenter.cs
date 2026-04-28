@@ -256,14 +256,11 @@ namespace ArcaneAtelier.Workshop
             if (GUI.Button(new Rect(18f, buttonY, contentWidth, 28f), "Forge Battle Deck", buttonStyle))
             {
                 controller.CommitBattlePayload();
-<<<<<<< HEAD
 
                 if (WorkshopBattlePayloadBridge.CurrentPayload.HasCards)
                 {
                     SceneManager.LoadScene("BattleScene");
                 }
-=======
->>>>>>> 189968d9b181e68f570d70c886f55324728fd270
             }
 
             GUI.EndGroup();
