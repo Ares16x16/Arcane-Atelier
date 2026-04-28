@@ -6,14 +6,14 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/MainMenuScene.scene
-    guid: 16d5ba4b94c899a48b80ed1db848f118
+    path: Assets/Scenes/MainMenuScene.unity
+    guid: 0a29ec4051765a41d04af232a01f8e99
   - enabled: 1
-    path: Assets/Scenes/WorkshopScene.scene
-    guid: 205639a00bb0e5448bfea65e90291e33
+    path: Assets/Scenes/WorkshopScene.unity
+    guid: fb75c5538e97632e9e2a3131cb33505f
   - enabled: 1
-    path: Assets/Scenes/BattleScene.scene
-    guid: e35d97fae8a1b694d8f5d1350746ce9e
+    path: Assets/Scenes/BattleScene.unity
+    guid: c25a51d65103041dda7db9c9a34e6025
   m_BuildProfiles: []
   m_configObjects: {}
   m_SlimFeaturesWeixinMiniGame:

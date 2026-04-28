@@ -1,11 +1,17 @@
+using ArcaneAtelier.Battle;
+using ArcaneAtelier.Workshop;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class MainMenuManager : MonoBehaviour
+public sealed class MainMenuManager : MonoBehaviour
 {
+    private const string WorkshopSceneName = "WorkshopScene";
+
     public void StartGame()
     {
-        SceneManager.LoadScene("WorkshopScene");
+        WorkshopBattlePayloadBridge.Clear();
+        BattleResultBridge.Clear();
+        SceneManager.LoadScene(WorkshopSceneName);
     }
 
     public void QuitGame()

@@ -56,6 +56,24 @@ namespace ArcaneAtelier.Workshop
             defaultLayout = layout ?? Array.Empty<WorkshopPlacedNodeSeed>();
         }
 
+        public WorkshopRewardDefinition FindReward(string rewardId)
+        {
+            if (string.IsNullOrWhiteSpace(rewardId))
+            {
+                return null;
+            }
+
+            foreach (var reward in DebugRewards)
+            {
+                if (reward != null && reward.Id == rewardId)
+                {
+                    return reward;
+                }
+            }
+
+            return null;
+        }
+
         public IReadOnlyList<string> ValidateContent()
         {
             var errors = new List<string>();

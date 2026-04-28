@@ -6,6 +6,8 @@ using ArcaneAtelier.Workshop;
 
 public class BattleUIPresenter : MonoBehaviour
 {
+    private const string WorkshopSceneName = "WorkshopScene";
+
     public BattleSceneController controller;
 
     [Header("Boss UI")]
@@ -111,6 +113,7 @@ public class BattleUIPresenter : MonoBehaviour
             BossDisplayName = controller.Boss.DisplayName,
             TotalDamageDealt = controller.Boss.MaxHealth,
             TurnsElapsed = 1,
+            DefeatRewardId = controller.CurrentBossDefinition != null ? controller.CurrentBossDefinition.DefeatRewardId : string.Empty,
         };
 
         BattleResultBridge.Commit(finalResult);
@@ -165,7 +168,7 @@ public class BattleUIPresenter : MonoBehaviour
 
     public void OnReturnToWorkshop()
     {
-        UnityEngine.SceneManagement.SceneManager.LoadScene("WorkshopScene");
+        UnityEngine.SceneManagement.SceneManager.LoadScene(WorkshopSceneName);
     }
 
 

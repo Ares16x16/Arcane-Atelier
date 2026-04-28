@@ -206,6 +206,28 @@ namespace ArcaneAtelier.Workshop
             statusMessage = $"Applied reward: {reward.DisplayName}.";
         }
 
+        public bool TryApplyRewardById(string rewardId, out WorkshopRewardDefinition reward)
+        {
+            reward = contentDatabase != null ? contentDatabase.FindReward(rewardId) : null;
+            if (reward == null)
+            {
+                return false;
+            }
+
+            ApplyReward(reward);
+            return true;
+        }
+
+        public void SetStatusMessage(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return;
+            }
+
+            statusMessage = message;
+        }
+
         public void ResetWorkshop()
         {
             Simulation.ResetToDefaultLayout();

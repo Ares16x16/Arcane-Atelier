@@ -17,4 +17,4 @@ MonoBehaviour:
   maxHealth: 100
   element: 4
   actionPattern: []
-  defeatRewardId: 
+  defeatRewardId: reward_unlock_crystal
