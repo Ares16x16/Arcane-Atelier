@@ -25,13 +25,8 @@ namespace ArcaneAtelier.Workshop
 
         public WorkshopSimulation Simulation { get; private set; }
         public WorkshopNodeDefinition SelectedPaletteNode { get; private set; }
-<<<<<<< HEAD
         public Vector2Int SelectedCell { get; private set; } = new Vector2Int(-1, -1);
         public Vector2Int HoveredCell { get; private set; } = new Vector2Int(-1, -1);
-=======
-        public Vector2Int SelectedCell { get; private set; } = new(-1, -1);
-        public Vector2Int HoveredCell { get; private set; } = new(-1, -1);
->>>>>>> 189968d9b181e68f570d70c886f55324728fd270
         public int PlacementRotationQuarterTurns { get; private set; }
         public string StatusMessage => statusMessage;
         public bool IsPaused => isPaused;

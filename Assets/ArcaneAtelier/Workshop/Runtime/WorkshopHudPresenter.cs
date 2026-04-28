@@ -1,9 +1,6 @@
 using System.Linq;
 using UnityEngine;
-<<<<<<< HEAD
 using UnityEngine.SceneManagement;
-=======
->>>>>>> 189968d9b181e68f570d70c886f55324728fd270
 
 namespace ArcaneAtelier.Workshop
 {

@@ -1,9 +1,5 @@
 %YAML 1.1
-<<<<<<< HEAD
 %TAG !u! tag:yousandi.cn,2023:
-=======
-%TAG !u! tag:unity3d.com,2011:
->>>>>>> 189968d9b181e68f570d70c886f55324728fd270
 --- !u!114 &1
 MonoBehaviour:
   m_ObjectHideFlags: 53
@@ -22,40 +18,19 @@ MonoBehaviour:
   m_SeeAllPackageVersions: 0
   m_DismissPreviewPackagesInUse: 0
   oneTimeWarningShown: 0
-<<<<<<< HEAD
   m_Registries:
   - m_Id: main
     m_Name: 
     m_Url: https://packages.tuanjie.cn
-=======
-  oneTimePackageErrorsPopUpShown: 0
-  m_Registries:
-  - m_Id: main
-    m_Name: 
-    m_Url: https://packages.unity.com
->>>>>>> 189968d9b181e68f570d70c886f55324728fd270
     m_Scopes: []
     m_IsDefault: 1
     m_Capabilities: 7
     m_ConfigSource: 0
-<<<<<<< HEAD
-=======
-    m_Compliance:
-      m_Status: 0
-      m_Violations: []
->>>>>>> 189968d9b181e68f570d70c886f55324728fd270
   m_UserSelectedRegistryName: 
   m_UserAddingNewScopedRegistry: 0
   m_RegistryInfoDraft:
     m_Modified: 0
     m_ErrorMessage: 
-<<<<<<< HEAD
     m_UserModificationsInstanceId: -866
     m_OriginalInstanceId: -868
-=======
-    m_UserModificationsEntityId:
-      m_Data: -978
-    m_OriginalEntityId:
-      m_Data: -980
->>>>>>> 189968d9b181e68f570d70c886f55324728fd270
   m_LoadAssets: 0

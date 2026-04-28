@@ -7,7 +7,6 @@ namespace ArcaneAtelier.Workshop
     public sealed class WorkshopGridView : MonoBehaviour
     {
         [SerializeField] private float cellSize = 1.22f;
-<<<<<<< HEAD
         [SerializeField] private Color gridTintA = new Color(0.12f, 0.14f, 0.18f);
         [SerializeField] private Color gridTintB = new Color(0.16f, 0.18f, 0.22f);
         [SerializeField] private Color selectedTint = new Color(0.88f, 0.75f, 0.34f);
@@ -16,27 +15,13 @@ namespace ArcaneAtelier.Workshop
 
         private readonly Dictionary<Vector2Int, SpriteRenderer> cellRenderers = new Dictionary<Vector2Int, SpriteRenderer>();
         private readonly Dictionary<Vector2Int, NodeVisual> nodeVisuals = new Dictionary<Vector2Int, NodeVisual>();
-=======
-        [SerializeField] private Color gridTintA = new(0.12f, 0.14f, 0.18f);
-        [SerializeField] private Color gridTintB = new(0.16f, 0.18f, 0.22f);
-        [SerializeField] private Color selectedTint = new(0.88f, 0.75f, 0.34f);
-        [SerializeField] private Color hoverTint = new(0.36f, 0.48f, 0.64f);
-        [SerializeField] private Color boardTint = new(0.06f, 0.07f, 0.1f);
-
-        private readonly Dictionary<Vector2Int, SpriteRenderer> cellRenderers = new();
-        private readonly Dictionary<Vector2Int, NodeVisual> nodeVisuals = new();
->>>>>>> 189968d9b181e68f570d70c886f55324728fd270
 
         private Camera cachedCamera;
         private WorkshopSceneController controller;
         private Sprite sharedSprite;
         private Transform gridRoot;
         private Transform nodeRoot;
-<<<<<<< HEAD
         private Vector2Int hoveredCell = new Vector2Int(-1, -1);
-=======
-        private Vector2Int hoveredCell = new(-1, -1);
->>>>>>> 189968d9b181e68f570d70c886f55324728fd270
 
         private sealed class NodeVisual
         {
@@ -44,11 +29,7 @@ namespace ArcaneAtelier.Workshop
             public SpriteRenderer Shadow;
             public SpriteRenderer Frame;
             public SpriteRenderer Body;
-<<<<<<< HEAD
             public List<SpriteRenderer> PortMarkers = new List<SpriteRenderer>();
-=======
-            public List<SpriteRenderer> PortMarkers = new();
->>>>>>> 189968d9b181e68f570d70c886f55324728fd270
         }
 
         public float CellSize => cellSize;
