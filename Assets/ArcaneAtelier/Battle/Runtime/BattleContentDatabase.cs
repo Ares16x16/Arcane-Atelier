@@ -11,6 +11,8 @@ namespace ArcaneAtelier.Battle
         [SerializeField] private BattleBossDefinition[] bosses;
         [SerializeField] private BattleCardEffectTemplate[] cardEffectTemplates;
         [SerializeField] private BattlePresentationProfile[] presentationProfiles;
+        [SerializeField] private BattleCardDefinition[] cardDefinitions;
+        [SerializeField] private BattleStatusEffectDefinition[] statusEffectDefinitions;
 
         public IReadOnlyList<BattleBossDefinition> Bosses
         {
@@ -45,6 +47,30 @@ namespace ArcaneAtelier.Battle
                     return Array.Empty<BattlePresentationProfile>();
                 }
                 return presentationProfiles;
+            }
+        }
+
+        public IReadOnlyList<BattleCardDefinition> CardDefinitions
+        {
+            get
+            {
+                if (cardDefinitions == null)
+                {
+                    return Array.Empty<BattleCardDefinition>();
+                }
+                return cardDefinitions;
+            }
+        }
+
+        public IReadOnlyList<BattleStatusEffectDefinition> StatusEffectDefinitions
+        {
+            get
+            {
+                if (statusEffectDefinitions == null)
+                {
+                    return Array.Empty<BattleStatusEffectDefinition>();
+                }
+                return statusEffectDefinitions;
             }
         }
 
@@ -134,14 +160,42 @@ namespace ArcaneAtelier.Battle
             return null;
         }
 
+        public BattleCardDefinition FindCardDefinition(string battleCardId)
+        {
+            foreach (BattleCardDefinition definition in CardDefinitions)
+            {
+                if (definition != null && definition.BattleCardId == battleCardId)
+                {
+                    return definition;
+                }
+            }
+            return null;
+        }
+
+        public BattleStatusEffectDefinition FindStatusEffectDefinition(string statusId)
+        {
+            foreach (BattleStatusEffectDefinition definition in StatusEffectDefinitions)
+            {
+                if (definition != null && definition.StatusId == statusId)
+                {
+                    return definition;
+                }
+            }
+            return null;
+        }
+
         public void Configure(
             BattleBossDefinition[] bossList,
             BattleCardEffectTemplate[] templateList,
-            BattlePresentationProfile[] profileList)
+            BattlePresentationProfile[] profileList,
+            BattleCardDefinition[] definitionList = null,
+            BattleStatusEffectDefinition[] statusList = null)
         {
             bosses = bossList ?? Array.Empty<BattleBossDefinition>();
             cardEffectTemplates = templateList ?? Array.Empty<BattleCardEffectTemplate>();
             presentationProfiles = profileList ?? Array.Empty<BattlePresentationProfile>();
+            cardDefinitions = definitionList ?? Array.Empty<BattleCardDefinition>();
+            statusEffectDefinitions = statusList ?? Array.Empty<BattleStatusEffectDefinition>();
         }
 
         public IReadOnlyList<string> ValidateContent()
@@ -204,6 +258,42 @@ namespace ArcaneAtelier.Battle
                 else if (!presentationBossIds.Add(profile.BossId))
                 {
                     errors.Add($"Duplicate BossId in presentation profiles: '{profile.BossId}'.");
+                }
+            }
+
+            HashSet<string> definitionIds = new HashSet<string>();
+            foreach (BattleCardDefinition definition in CardDefinitions)
+            {
+                if (definition == null)
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(definition.BattleCardId))
+                {
+                    errors.Add($"Card definition '{definition.name}' has an empty BattleCardId.");
+                }
+                else if (!definitionIds.Add(definition.BattleCardId))
+                {
+                    errors.Add($"Duplicate BattleCardId in definitions: '{definition.BattleCardId}'.");
+                }
+            }
+
+            HashSet<string> statusIds = new HashSet<string>();
+            foreach (BattleStatusEffectDefinition status in StatusEffectDefinitions)
+            {
+                if (status == null)
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(status.StatusId))
+                {
+                    errors.Add($"Status effect definition '{status.name}' has an empty StatusId.");
+                }
+                else if (!statusIds.Add(status.StatusId))
+                {
+                    errors.Add($"Duplicate StatusId in status definitions: '{status.StatusId}'.");
                 }
             }
 

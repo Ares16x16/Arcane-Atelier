@@ -17,6 +17,7 @@ namespace ArcaneAtelier.Battle
         public int HandCount => hand.Count;
         public int DrawPileCount => drawPile.Count;
         public int DiscardPileCount => discardPile.Count;
+        public BattleCardDefinition LastPlayedDefinition { get; private set; }
 
         public BattleDeckController(BattleContentDatabase database, WorkshopBattlePayload payload)
         {
@@ -48,45 +49,54 @@ namespace ArcaneAtelier.Battle
 
         private void BuildFallbackDeck()
         {
+            // Attack: Cinder Dart (Fire, 8 dmg, Burn)
             for (int i = 0; i < 5; i++)
             {
                 drawPile.Add(new WorkshopBattleCardEntry
                 {
-                    CardId = "fallback.attack",
-                    DisplayName = "Fire Strike",
+                    CardId = "combat.spell.basic.fire",
+                    DisplayName = "Cinder Dart",
                     Amount = 1,
                     Element = WorkshopElementAttribute.Fire,
                     Role = WorkshopSpellRole.Attack,
-                    PrimaryValue = 15,
-                    HitCount = 1
+                    PrimaryValue = 8,
+                    HitCount = 1,
+                    SecondaryValue = 1f,
+                    EffectKeyword = "Burn"
                 });
             }
 
+            // Defense: Stoneguard Sigil (Earth, 7 shield, Bulwark)
             for (int i = 0; i < 3; i++)
             {
                 drawPile.Add(new WorkshopBattleCardEntry
                 {
-                    CardId = "fallback.defense",
-                    DisplayName = "Earth Guard",
+                    CardId = "combat.spell.basic.earth",
+                    DisplayName = "Stoneguard Sigil",
                     Amount = 1,
                     Element = WorkshopElementAttribute.Earth,
                     Role = WorkshopSpellRole.Defense,
-                    PrimaryValue = 10,
-                    HitCount = 1
+                    PrimaryValue = 7,
+                    HitCount = 1,
+                    SecondaryValue = 18f,
+                    EffectKeyword = "Bulwark"
                 });
             }
 
+            // Healing: Tidal Mend (Water, 6 HP, Regen)
             for (int i = 0; i < 2; i++)
             {
                 drawPile.Add(new WorkshopBattleCardEntry
                 {
-                    CardId = "fallback.heal",
-                    DisplayName = "Water Mend",
+                    CardId = "combat.spell.basic.water",
+                    DisplayName = "Tidal Mend",
                     Amount = 1,
                     Element = WorkshopElementAttribute.Water,
                     Role = WorkshopSpellRole.Healing,
-                    PrimaryValue = 8,
-                    HitCount = 1
+                    PrimaryValue = 6,
+                    HitCount = 1,
+                    SecondaryValue = 8f,
+                    EffectKeyword = "Regen"
                 });
             }
         }
@@ -107,6 +117,7 @@ namespace ArcaneAtelier.Battle
         public bool TryPlayCard(int handIndex, out BattleResolvedEffect effect)
         {
             effect = new BattleResolvedEffect();
+            LastPlayedDefinition = null;
 
             if (handIndex < 0 || handIndex >= hand.Count)
             {
@@ -114,15 +125,47 @@ namespace ArcaneAtelier.Battle
             }
 
             WorkshopBattleCardEntry card = hand[handIndex];
-            BattleCardEffectTemplate template = FindTemplate(card);
+            object source = FindCardSource(card);
 
-            if (template == null)
+            if (source is BattleCardDefinition definition)
             {
-                Debug.LogWarning($"BattleDeckController: no template found for card '{card.DisplayName}' (ID: {card.CardId}, Role: {card.Role}).");
+                LastPlayedDefinition = definition;
+
+                // Phase 2 compatibility: synthesize a BattleResolvedEffect from instructions
+                // so basic damage/heal/shield works even before Phase 3 EffectExecutor.
+                int primaryValue = 0;
+                int hitCount = 1;
+                foreach (BattleEffectInstruction instruction in definition.Instructions)
+                {
+                    if (instruction.Type == BattleEffectType.Damage ||
+                        instruction.Type == BattleEffectType.Heal ||
+                        instruction.Type == BattleEffectType.Shield)
+                    {
+                        primaryValue = instruction.Value;
+                        hitCount = instruction.HitCount;
+                        break;
+                    }
+                }
+
+                effect = new BattleResolvedEffect
+                {
+                    Role = card.Role,
+                    Element = card.Element,
+                    PrimaryValue = primaryValue,
+                    HitCount = hitCount,
+                    SecondaryValue = card.SecondaryValue
+                };
+            }
+            else if (source is BattleCardEffectTemplate template)
+            {
+                effect = template.Resolve(card);
+            }
+            else
+            {
+                Debug.LogWarning($"BattleDeckController: no source found for card '{card.DisplayName}' (ID: {card.CardId}, Role: {card.Role}).");
                 return false;
             }
 
-            effect = template.Resolve(card);
             discardPile.Add(card);
             hand.RemoveAt(handIndex);
             DrawCards(1);
@@ -163,6 +206,26 @@ namespace ArcaneAtelier.Battle
                 default:
                     return 1;
             }
+        }
+
+        private object FindCardSource(WorkshopBattleCardEntry card)
+        {
+            if (contentDatabase == null)
+            {
+                return null;
+            }
+
+            // Path A/B: per-card definition lookup
+            BattleCardDefinition definition = contentDatabase.FindCardDefinition(card.CardId);
+            if (definition != null)
+            {
+                return definition;
+            }
+
+            // Path C: fallback template lookup by Role (safety net)
+            Debug.LogWarning($"BattleDeckController: no BattleCardDefinition found for '{card.CardId}' ({card.DisplayName}). " +
+                             "Falling back to legacy template lookup by Role. This should not happen for properly configured cards.");
+            return FindTemplate(card);
         }
 
         private BattleCardEffectTemplate FindTemplate(WorkshopBattleCardEntry card)

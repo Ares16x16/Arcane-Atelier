@@ -57,6 +57,15 @@ namespace ArcaneAtelier.Battle
 
         public BattleBossAction ExecuteNextAction()
         {
+            if (selfUnit != null && selfUnit.StatusEffectController != null)
+            {
+                if (selfUnit.StatusEffectController.ConsumeStatus(selfUnit, "Freeze") ||
+                    selfUnit.StatusEffectController.ConsumeStatus(selfUnit, "Stun"))
+                {
+                    return CreateNoAction();
+                }
+            }
+
             if (definition != null && definition.IsEnemy)
             {
                 return SelectEnemyAction(previewOnly: false);

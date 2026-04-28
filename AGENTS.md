@@ -37,10 +37,12 @@ Battle ─────→ Workshop
 ### Battle
 
 - Battle is a playable single-enemy combat prototype with a complete core loop and full IMGUI HUD.
-- See `Documentation/Battle/BattleCombatDesign.md` for combat logic details.
-- See `Documentation/Battle/BattleHudDesign.md` for HUD and interaction design.
+- See `Documentation/Battle/BattleCoreArchitecture.md` for combat logic details.
+- See `Documentation/Battle/BattlePresentationAndInteraction.md` for HUD and interaction design.
 - The battle system is currently **single-enemy only**.
 - Runtime type names still use `Boss` terminology, but the same content path is now used for both true bosses and normal enemies.
+- Battle now supports **per-card effect instructions** via `BattleCardDefinition` (22 definitions mapping to Workshop cards).
+- A **status effect framework** is in place (`BattleStatusEffectController` + `BattleStatusEffectDefinition`), with 16 status definitions generated. Complex keyword behaviors (Freeze, Stun, Expose, etc.) are currently stubbed and require further iteration.
 
 ## Assembly Definitions
 
@@ -63,7 +65,7 @@ Battle ─────→ Workshop
 
 ## Known Limitations
 
-1. No status-effect system yet; parsed effect keywords are still ignored.
+1. Status effect framework exists but complex keyword behaviors (Freeze skip-turn, Expose vulnerability, Stun, etc.) are still stubbed / placeholder.
 2. No complete Workshop → Battle → Workshop scene flow has been finalized.
 3. No save/load persistence.
 4. Enemy attacks do not currently apply elemental advantage/disadvantage.
@@ -77,11 +79,10 @@ Battle ─────→ Workshop
 | `Assets/ArcaneAtelier/Workshop/Runtime/` | Workshop runtime code |
 | `Assets/ArcaneAtelier/Battle/Runtime/` | Battle runtime code |
 | `Assets/ArcaneAtelier/Battle/Editor/` | Battle content generation/editor tools |
-| `Assets/ArcaneAtelier/Battle/Content/` | Bosses, normal enemies, templates, presentation profiles |
+| `Assets/ArcaneAtelier/Battle/Content/` | Bosses, normal enemies, card definitions, status effect definitions, templates, presentation profiles |
 | `Assets/ArcaneAtelier/BattleScene.unity` | Current battle scene |
-| `Documentation/Battle/BattleCombatDesign.md` | Battle combat logic design |
-| `Documentation/Battle/BattleHudDesign.md` | Battle HUD and interaction design |
-| `Documentation/BattleArchitecture.md` | Battle system architecture overview |
+| `Documentation/Battle/BattleCoreArchitecture.md` | Battle combat logic and architecture |
+| `Documentation/Battle/BattlePresentationAndInteraction.md` | Battle HUD and interaction design |
 | `Documentation/BattleWorkshopDependencies.md` | Stable module dependency reference |
 | `Documentation/WorkshopBattleContract.md` | Workshop ↔ Battle payload contract |
 

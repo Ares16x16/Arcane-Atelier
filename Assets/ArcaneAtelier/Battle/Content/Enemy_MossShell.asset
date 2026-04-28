@@ -35,4 +35,6 @@ MonoBehaviour:
     Value: 12
     SecondaryValue: 0
     Description: Roots tighten into armor
+  phase2ActionPattern: []
+  phaseTransitionHealthPercent: 0.5
   defeatRewardId: reward.enemy.earth.minor

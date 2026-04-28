@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Presentation_EarthGolem
   m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattlePresentationProfile
   bossId: boss.earth.golem
-  bossSprite: {fileID: 21300000, guid: b09d3975eb7d04b0493839313024a05b, type: 3}
-  backgroundSprite: {fileID: 21300000, guid: 348d43b96c42443019eb18e0b8b51944, type: 3}
-  bossPosition: {x: 3.6, y: -0.15, z: 0}
-  bossScale: {x: 3.1, y: 3.1, z: 1}
-  backgroundScale: {x: 7, y: 7, z: 1}
+  bossSprite: {fileID: 0}
+  backgroundSprite: {fileID: 0}
+  bossPosition: {x: 3.5, y: 0, z: 0}
+  bossScale: {x: 2.8, y: 2.8, z: 1}
+  backgroundScale: {x: 6, y: 6, z: 1}

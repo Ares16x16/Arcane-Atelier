@@ -157,7 +157,7 @@ namespace ArcaneAtelier.Battle
             BattleBossAI bossAI = new BattleBossAI(CurrentBossDefinition);
             bossAI.BindUnits(Boss, Player);
 
-            Simulation = new BattleSimulation(Player, Boss, deck, bossAI);
+            Simulation = new BattleSimulation(Player, Boss, deck, bossAI, contentDatabase);
             CurrentResult = null;
             recentEvents.Clear();
             Simulation.PlayerActionResolved += OnPlayerActionResolved;
@@ -263,6 +263,16 @@ namespace ArcaneAtelier.Battle
 
             Simulation.EndTurn();
             return true;
+        }
+
+        public BattleCardDefinition GetCardDefinition(string cardId)
+        {
+            if (contentDatabase == null || string.IsNullOrWhiteSpace(cardId))
+            {
+                return null;
+            }
+
+            return contentDatabase.FindCardDefinition(cardId);
         }
 
         private void OnPlayerActionResolved(BattleActionResolution resolution)

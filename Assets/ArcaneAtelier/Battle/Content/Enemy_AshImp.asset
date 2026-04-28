@@ -35,4 +35,6 @@ MonoBehaviour:
     Value: 10
     SecondaryValue: 0
     Description: Ignites the air
+  phase2ActionPattern: []
+  phaseTransitionHealthPercent: 0.5
   defeatRewardId: reward.enemy.fire.minor

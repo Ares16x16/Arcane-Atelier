@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ArcaneAtelier.Battle
@@ -16,6 +17,7 @@ namespace ArcaneAtelier.Battle
         public BattleUnit Boss { get; }
         public BattleDeckController Deck { get; }
         public BattleBossAI BossAI { get; }
+        public BattleStatusEffectController StatusController { get; }
         public BattleState State { get; private set; }
         public int TurnsElapsed { get; private set; }
         public int ActionPoints { get; private set; }
@@ -36,12 +38,16 @@ namespace ArcaneAtelier.Battle
             BattleUnit player,
             BattleUnit boss,
             BattleDeckController deck,
-            BattleBossAI bossAI)
+            BattleBossAI bossAI,
+            BattleContentDatabase contentDatabase = null)
         {
             Player = player ?? throw new ArgumentNullException(nameof(player));
             Boss = boss ?? throw new ArgumentNullException(nameof(boss));
             Deck = deck ?? throw new ArgumentNullException(nameof(deck));
             BossAI = bossAI ?? throw new ArgumentNullException(nameof(bossAI));
+            StatusController = new BattleStatusEffectController(contentDatabase);
+            Player.StatusEffectController = StatusController;
+            Boss.StatusEffectController = StatusController;
             State = BattleState.WaitingForPlayer;
             MaxActionPoints = 3;
             ActionPoints = MaxActionPoints;
@@ -74,9 +80,18 @@ namespace ArcaneAtelier.Battle
             ActionPoints -= apCost;
             CardsPlayed++;
 
-            BattleActionResolution resolution = BattleActionResolver.ResolvePlayerEffect(effect, Player, Boss);
-            AccumulateStats(resolution);
-            PlayerActionResolved?.Invoke(resolution);
+            if (Deck.LastPlayedDefinition != null)
+            {
+                // Path A/B: new per-card effect executor
+                List<BattleActionResolution> resolutions = BattleEffectExecutor.Execute(Deck.LastPlayedDefinition, Player, Boss);
+                PublishPlayerResolutions(resolutions);
+            }
+            else
+            {
+                // Path C: fallback template resolver
+                BattleActionResolution resolution = BattleActionResolver.ResolvePlayerEffect(effect, Player, Boss);
+                PublishPlayerResolutions(new List<BattleActionResolution> { resolution });
+            }
 
             if (CheckBattleEnd())
             {
@@ -98,6 +113,8 @@ namespace ArcaneAtelier.Battle
                 return;
             }
 
+            TickStatusEffects(BattleStatusTrigger.OnTurnEnd, Player);
+
             Deck.EndTurn();
             PlayerTurnSkipped?.Invoke();
 
@@ -113,6 +130,12 @@ namespace ArcaneAtelier.Battle
         {
             State = BattleState.ResolvingBoss;
 
+            TickStatusEffects(BattleStatusTrigger.OnTurnStart, Boss);
+            if (CheckBattleEnd())
+            {
+                return;
+            }
+
             BattleBossAction action = BossAI.ExecuteNextAction();
             BattleActionResolution resolution = BattleActionResolver.ResolveBossAction(action, Boss, Player);
             AccumulateStats(resolution);
@@ -120,6 +143,14 @@ namespace ArcaneAtelier.Battle
 
             if (!CheckBattleEnd())
             {
+                TickStatusEffects(BattleStatusTrigger.OnTurnEnd, Boss);
+                TickStatusEffects(BattleStatusTrigger.OnTurnStart, Player);
+
+                if (CheckBattleEnd())
+                {
+                    return;
+                }
+
                 TurnsElapsed++;
                 State = BattleState.WaitingForPlayer;
                 ActionPoints = MaxActionPoints;
@@ -132,6 +163,37 @@ namespace ArcaneAtelier.Battle
             TotalDamageDealt += resolution.DamageDealt;
             TotalHealingDone += resolution.HealingDone;
             TotalShieldGained += resolution.ShieldGained;
+        }
+
+        private void TickStatusEffects(BattleStatusTrigger trigger, BattleUnit unit)
+        {
+            if (StatusController == null || unit == null)
+            {
+                return;
+            }
+
+            List<BattleActionResolution> resolutions = StatusController.Tick(trigger, unit);
+            foreach (BattleActionResolution resolution in resolutions)
+            {
+                AccumulateStats(resolution);
+                if (unit == Player)
+                {
+                    PlayerActionResolved?.Invoke(resolution);
+                }
+                else
+                {
+                    BossActionResolved?.Invoke(resolution);
+                }
+            }
+        }
+
+        private void PublishPlayerResolutions(List<BattleActionResolution> resolutions)
+        {
+            foreach (BattleActionResolution resolution in resolutions)
+            {
+                AccumulateStats(resolution);
+                PlayerActionResolved?.Invoke(resolution);
+            }
         }
 
         private bool CheckBattleEnd()

@@ -35,4 +35,6 @@ MonoBehaviour:
     Value: 9
     SecondaryValue: 0
     Description: Lashes with a liquid tendril
+  phase2ActionPattern: []
+  phaseTransitionHealthPercent: 0.5
   defeatRewardId: reward.enemy.water.minor
