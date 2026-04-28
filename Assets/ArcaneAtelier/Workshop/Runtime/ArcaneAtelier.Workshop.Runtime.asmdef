@@ -1,0 +1,16 @@
+{
+  "name": "ArcaneAtelier.Workshop.Runtime",
+  "rootNamespace": "ArcaneAtelier.Workshop",
+  "references": [
+    "UnityEngine.IMGUIModule"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
