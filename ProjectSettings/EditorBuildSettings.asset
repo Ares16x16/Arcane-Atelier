@@ -1,9 +1,14 @@
 %YAML 1.1
+<<<<<<< HEAD
 %TAG !u! tag:yousandi.cn,2023:
+=======
+%TAG !u! tag:unity3d.com,2011:
+>>>>>>> 189968d9b181e68f570d70c886f55324728fd270
 --- !u!1045 &1
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
+<<<<<<< HEAD
   m_Scenes:
   - enabled: 1
     path: Assets/Scenes/MainMenuScene.scene
@@ -26,3 +31,7 @@ EditorBuildSettings:
     LightProbe: 2
     RootMotion: 0
     UseStringInternPool: 2
+=======
+  m_Scenes: []
+  m_configObjects: {}
+>>>>>>> 189968d9b181e68f570d70c886f55324728fd270
