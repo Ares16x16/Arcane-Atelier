@@ -128,7 +128,7 @@ namespace ArcaneAtelier.Workshop
             GUI.Label(new Rect(18f, 14f, 220f, 24f), "Arcane Atelier", titleStyle);
             GUI.Label(new Rect(18f, 38f, 220f, 20f), "Workshop", mutedStyle);
 
-            DrawMiniStat(new Rect(18f, 62f, 54f, 30f), $"{stats.ElapsedSeconds:0}s", "Run");
+            DrawMiniStat(new Rect(18f, 62f, 54f, 30f), $"{controller.RemainingPreparationTicks}", "Ticks");
             DrawMiniStat(new Rect(78f, 62f, 64f, 30f), $"{stats.ElementProductionPerSecond:0.0}", "Flow");
             DrawMiniStat(new Rect(148f, 62f, 54f, 30f), $"{stats.SpellProductionPerSecond:0.0}", "Spell");
             DrawMiniStat(new Rect(208f, 62f, 54f, 30f), $"{stats.ElementConsumptionPerSecond:0.0}", "Use");
@@ -185,26 +185,27 @@ namespace ArcaneAtelier.Workshop
             GUI.BeginGroup(rect);
             var contentWidth = rect.width - 36f;
             GUI.Label(new Rect(18f, 14f, rect.width - 36f, 20f), "Selected", sectionStyle);
-            GUI.Label(new Rect(18f, 34f, rect.width - 36f, 18f), $"Cell {controller.SelectedCell.x}, {controller.SelectedCell.y}", tinyLabelStyle);
+            GUI.Label(new Rect(18f, 34f, rect.width - 36f, 18f), $"{controller.EncounterLabel}  {controller.RemainingPreparationTicks}/{controller.TotalPreparationTicks} ticks", tinyLabelStyle);
+            GUI.Label(new Rect(18f, 50f, rect.width - 36f, 18f), $"Cell {controller.SelectedCell.x}, {controller.SelectedCell.y}", tinyLabelStyle);
 
             var node = controller.SelectedNode;
-            var detailBottom = 118f;
+            var detailBottom = 126f;
             if (node == null)
             {
-                GUI.Label(new Rect(18f, 66f, contentWidth, 34f), "Choose a tile to inspect a machine.", bodyStyle);
+                GUI.Label(new Rect(18f, 74f, contentWidth, 34f), "Choose a tile to inspect a machine.", bodyStyle);
             }
             else
             {
-                GUI.Label(new Rect(18f, 62f, contentWidth, 22f), node.Definition.DisplayName, sectionStyle);
-                GUI.Label(new Rect(18f, 84f, contentWidth, 18f), node.Definition.Category.ToString(), tinyLabelStyle);
-                GUI.Label(new Rect(18f, 104f, contentWidth, 18f), $"Rot {node.RotationQuarterTurns * 90}°   Spd x{node.SpeedMultiplier:0.00}", mutedStyle);
+                GUI.Label(new Rect(18f, 70f, contentWidth, 22f), node.Definition.DisplayName, sectionStyle);
+                GUI.Label(new Rect(18f, 92f, contentWidth, 18f), node.Definition.Category.ToString(), tinyLabelStyle);
+                GUI.Label(new Rect(18f, 112f, contentWidth, 18f), $"Rot {node.RotationQuarterTurns * 90}°   Spd x{node.SpeedMultiplier:0.00}", mutedStyle);
 
                 var bufferRows = node.EnumerateBuffer()
                     .Take(rect.height < 420f ? 2 : 3)
                     .Select(pair => (ShortItemName(pair.Key.DisplayName), pair.Value, pair.Key.Tint))
                     .ToArray();
 
-                var y = 132f;
+                var y = 140f;
                 if (bufferRows.Length > 0)
                 {
                     DrawCompactList(new Rect(18f, y, contentWidth, bufferRows.Length * 18f), bufferRows);
@@ -221,8 +222,9 @@ namespace ArcaneAtelier.Workshop
             }
 
             var inventory = controller.BuildInventoryView();
-            var buttonY = rect.height - 42f;
-            var deckListY = buttonY - 58f;
+            var deployButtonY = rect.height - 42f;
+            var stepButtonY = deployButtonY - 34f;
+            var deckListY = stepButtonY - 58f;
             var deckTitleY = deckListY - 22f;
             var inventoryItems = inventory.NetworkItems
                 .OrderBy(pair => pair.Key.DisplayName)
@@ -252,9 +254,14 @@ namespace ArcaneAtelier.Workshop
                 new Rect(18f, deckListY, contentWidth, 42f),
                 inventory.PreparedCards.OrderBy(pair => pair.Key.DisplayName).Select(pair => (ShortItemName(pair.Key.DisplayName), pair.Value, pair.Key.Tint)).ToArray());
 
-            if (GUI.Button(new Rect(18f, buttonY, contentWidth, 28f), "Forge Battle Deck", buttonStyle))
+            if (GUI.Button(new Rect(18f, stepButtonY, contentWidth, 28f), "Advance 1 Prep Tick", buttonStyle))
             {
-                controller.CommitBattlePayload();
+                controller.StepPreparationOnce();
+            }
+
+            if (GUI.Button(new Rect(18f, deployButtonY, contentWidth, 28f), "Forge And Deploy", buttonStyle))
+            {
+                controller.DeployToBattle();
             }
 
             GUI.EndGroup();
