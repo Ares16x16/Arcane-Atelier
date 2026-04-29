@@ -292,8 +292,15 @@ namespace ArcaneAtelier.Workshop
             }
 
             Simulation.CommitBattlePayload();
+            int openingShieldBonus = remainingPreparationTicks > 0 ? 4 : 0;
+            RunProgressBridge.RegisterPreparation(
+                UsedPreparationTicks,
+                WorkshopBattlePayloadBridge.CurrentPayload,
+                openingShieldBonus);
             statusMessage = WorkshopBattlePayloadBridge.CurrentPayload.HasCards
-                ? "Battle payload committed."
+                ? openingShieldBonus > 0
+                    ? $"Battle payload committed. Early deploy grants +{openingShieldBonus} opening shield."
+                    : "Battle payload committed."
                 : "No crafted cards to commit.";
         }
 

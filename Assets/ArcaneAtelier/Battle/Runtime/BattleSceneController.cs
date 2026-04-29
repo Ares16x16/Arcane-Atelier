@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using ArcaneAtelier.Workshop;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -9,6 +10,8 @@ namespace ArcaneAtelier.Battle
     public sealed class BattleSceneController : MonoBehaviour
     {
         private const string WorkshopSceneName = "WorkshopScene";
+        private const int DefaultOpeningHandSize = 5;
+        private const int DefaultMaxHandSize = 10;
 
         [SerializeField] private BattleContentDatabase contentDatabase;
         [SerializeField] private string startingBossId = "boss.earth.golem";
@@ -17,10 +20,14 @@ namespace ArcaneAtelier.Battle
         [SerializeField] private bool useEmergencyDeckWhenEmpty = true;
         [SerializeField] private bool showFallbackGui = true;
 
+        private readonly List<WorkshopBattleCardEntry> preparedDeck = new List<WorkshopBattleCardEntry>();
+        private readonly List<WorkshopBattleCardEntry> drawPile = new List<WorkshopBattleCardEntry>();
+        private readonly List<WorkshopBattleCardEntry> discardPile = new List<WorkshopBattleCardEntry>();
+
         public BattleUnit Player { get; private set; }
         public BattleUnit Boss { get; private set; }
         public BattleBossDefinition CurrentBossDefinition { get; private set; }
-        public List<WorkshopBattleCardEntry> Cards { get; private set; } = new List<WorkshopBattleCardEntry>();
+        public List<WorkshopBattleCardEntry> Cards { get; } = new List<WorkshopBattleCardEntry>();
         public int CurrentEnergy { get; private set; }
         public int TurnNumber { get; private set; } = 1;
         public int CardsPlayed { get; private set; }
@@ -31,15 +38,28 @@ namespace ArcaneAtelier.Battle
         public bool BattleEnded { get; private set; }
         public string LastActionMessage { get; private set; } = "Battle started.";
         public string CurrentBossIntent => FormatBossIntent(PeekBossAction());
+        public int DrawPileCount => drawPile.Count;
+        public int DiscardPileCount => discardPile.Count;
+        public bool WillShuffleOnNextDraw => drawPile.Count == 0 && discardPile.Count > 0;
+        public int TotalDeckCardCount => preparedDeck.Sum(entry => Mathf.Max(1, entry.Amount));
+        public int CardsDrawPerTurn => Mathf.Clamp(Mathf.CeilToInt(TotalDeckCardCount * 0.4f), 1, 4);
+        public int OpeningHandSize => CardsDrawPerTurn;
+        public int MaxHandSize => DefaultMaxHandSize;
+        public int EnergyPerTurn => Mathf.Max(1, playerEnergyPerTurn);
+        public string EncounterLabel => RunProgressBridge.CurrentEncounter?.EncounterLabel ?? "Breach";
+        public string EncounterDescription => RunProgressBridge.CurrentEncounter?.EncounterDescription ?? string.Empty;
+        public bool CurrentEncounterIsBoss => RunProgressBridge.CurrentEncounter?.IsBoss ?? false;
 
         private int bossActionIndex;
 
         private void Awake()
         {
+            showFallbackGui = showFallbackGui && GetComponent<BattleUIPresenter>() == null;
             InitializePlayer();
             LoadWorkshopPayload();
             InitializeBoss();
             EnsurePlayableDeck();
+            BuildDrawPile();
             BeginPlayerTurn();
         }
 
@@ -47,39 +67,57 @@ namespace ArcaneAtelier.Battle
         {
             Player = new BattleUnit
             {
-                DisplayName = "Player",
+                DisplayName = string.Empty,
                 MaxHealth = playerMaxHealth,
                 CurrentHealth = playerMaxHealth,
                 Shield = 0,
                 Element = WorkshopElementAttribute.None
             };
+
+            if (RunProgressBridge.PendingStartingShieldBonus > 0)
+            {
+                Player.AddShield(RunProgressBridge.PendingStartingShieldBonus);
+            }
         }
 
         private void LoadWorkshopPayload()
         {
-            if (WorkshopBattlePayloadBridge.TryConsume(out WorkshopBattlePayload payload))
-            {
-                Cards = payload.Cards ?? new List<WorkshopBattleCardEntry>();
+            preparedDeck.Clear();
 
-                Debug.Log($"BattleScene: loaded {payload.Cards.Count} card type(s) from workshop.");
-                foreach (WorkshopBattleCardEntry card in payload.Cards)
-                {
-                    Debug.Log($"  - {card.DisplayName} x{card.Amount} ({card.Role}, {card.Element})");
-                }
-            }
-            else
+            if (!WorkshopBattlePayloadBridge.TryConsume(out WorkshopBattlePayload payload))
             {
-                Debug.LogWarning("BattleScene: no workshop payload found. Running with empty deck.");
+                Debug.LogWarning("BattleScene: no workshop payload found. Running with fallback behavior.");
+                return;
+            }
+
+            if (payload.Cards == null)
+            {
+                return;
+            }
+
+            foreach (WorkshopBattleCardEntry card in payload.Cards)
+            {
+                if (string.IsNullOrWhiteSpace(card.CardId) || card.Amount <= 0)
+                {
+                    continue;
+                }
+
+                preparedDeck.Add(NormalizeCardEntry(card));
+                Debug.Log($"BattleScene: loaded {card.DisplayName} x{card.Amount} ({card.Role}, {card.Element}).");
             }
         }
 
         private void InitializeBoss()
         {
-            CurrentBossDefinition = contentDatabase != null ? contentDatabase.FindBoss(startingBossId) : null;
+            string encounterBossId = string.IsNullOrWhiteSpace(RunProgressBridge.CurrentEncounter?.BossId)
+                ? startingBossId
+                : RunProgressBridge.CurrentEncounter.BossId;
+
+            CurrentBossDefinition = contentDatabase != null ? contentDatabase.FindBoss(encounterBossId) : null;
             if (CurrentBossDefinition == null)
             {
-                Debug.LogWarning($"BattleSceneController: boss '{startingBossId}' not found. Using runtime fallback boss.");
-                CurrentBossDefinition = CreateFallbackBoss();
+                Debug.LogWarning($"BattleSceneController: boss '{encounterBossId}' not found. Using runtime fallback boss.");
+                CurrentBossDefinition = CreateFallbackBoss(encounterBossId);
             }
 
             Boss = new BattleUnit
@@ -101,10 +139,19 @@ namespace ArcaneAtelier.Battle
                 && Player.IsAlive
                 && Boss != null
                 && Boss.IsAlive
-                && CurrentEnergy > 0
                 && cardIndex >= 0
                 && cardIndex < Cards.Count
-                && Cards[cardIndex].Amount > 0;
+                && CurrentEnergy >= GetCardEnergyCost(Cards[cardIndex]);
+        }
+
+        public int GetCardEnergyCost(int cardIndex)
+        {
+            if (cardIndex < 0 || cardIndex >= Cards.Count)
+            {
+                return 1;
+            }
+
+            return GetCardEnergyCost(Cards[cardIndex]);
         }
 
         public void PlayCard(int cardIndex)
@@ -117,8 +164,12 @@ namespace ArcaneAtelier.Battle
 
             WorkshopBattleCardEntry card = Cards[cardIndex];
             BattleResolvedEffect effect = ResolveCard(card);
-            CurrentEnergy--;
+            CurrentEnergy -= GetCardEnergyCost(card);
             CardsPlayed++;
+
+            Cards.RemoveAt(cardIndex);
+            discardPile.Add(card);
+            MarkHandDirty();
 
             switch (effect.Role)
             {
@@ -146,6 +197,7 @@ namespace ArcaneAtelier.Battle
                 return;
             }
 
+            DiscardHand();
             ResolveBossAction();
             CheckBattleEnd();
 
@@ -158,7 +210,7 @@ namespace ArcaneAtelier.Battle
 
         public void ReturnToWorkshop()
         {
-            SceneManager.LoadScene(WorkshopSceneName);
+            SceneManager.LoadScene(RunProgressBridge.CurrentSummary.RunEnded ? "MainMenuScene" : WorkshopSceneName);
         }
 
         public string GetCardSummary(WorkshopBattleCardEntry card)
@@ -168,24 +220,135 @@ namespace ArcaneAtelier.Battle
 
         private void BeginPlayerTurn()
         {
-            CurrentEnergy = Mathf.Max(1, playerEnergyPerTurn);
-            if (!BattleEnded)
-            {
-                LastActionMessage = $"Turn {TurnNumber}. Enemy intent: {CurrentBossIntent}";
-            }
-        }
-
-        private void EnsurePlayableDeck()
-        {
-            if (!useEmergencyDeckWhenEmpty || Cards.Count > 0)
+            if (BattleEnded)
             {
                 return;
             }
 
-            Cards.Add(CreateEmergencyCard("combat.emergency.arcane_bolt", "Arcane Bolt", WorkshopSpellRole.Attack, 8, 1, WorkshopElementAttribute.None));
-            Cards.Add(CreateEmergencyCard("combat.emergency.guard_thread", "Guard Thread", WorkshopSpellRole.Defense, 8, 1, WorkshopElementAttribute.None));
-            HandVersion++;
-            LastActionMessage = "No workshop payload found. Emergency cards supplied.";
+            Player.Shield = 0;
+            CurrentEnergy = EnergyPerTurn;
+            int cardsDrawn = DrawCards(OpeningHandSize);
+            LastActionMessage = cardsDrawn > 0
+                ? $"Turn {TurnNumber}. Drew {cardsDrawn} card(s). Enemy intent: {CurrentBossIntent}"
+                : $"Turn {TurnNumber}. No cards left to draw. Enemy intent: {CurrentBossIntent}";
+        }
+
+        private void EnsurePlayableDeck()
+        {
+            if (!useEmergencyDeckWhenEmpty || preparedDeck.Count > 0)
+            {
+                return;
+            }
+
+            preparedDeck.Add(CreateEmergencyCard("combat.emergency.arcane_bolt", "Arcane Bolt", WorkshopSpellRole.Attack, 8, 2, WorkshopElementAttribute.None));
+            preparedDeck.Add(CreateEmergencyCard("combat.emergency.guard_thread", "Guard Thread", WorkshopSpellRole.Defense, 8, 2, WorkshopElementAttribute.None));
+            LastActionMessage = "No workshop payload found. Emergency deck supplied.";
+        }
+
+        private void BuildDrawPile()
+        {
+            drawPile.Clear();
+            discardPile.Clear();
+            Cards.Clear();
+
+            foreach (WorkshopBattleCardEntry entry in preparedDeck)
+            {
+                int copies = Mathf.Max(1, entry.Amount);
+                for (int index = 0; index < copies; index++)
+                {
+                    drawPile.Add(CreateBattleCopy(entry));
+                }
+            }
+
+            Shuffle(drawPile);
+            MarkHandDirty();
+        }
+
+        private int DrawCards(int amount)
+        {
+            int drawn = 0;
+            while (drawn < amount && Cards.Count < MaxHandSize)
+            {
+                if (drawPile.Count == 0)
+                {
+                    ReshuffleDiscardIntoDrawPile();
+                }
+
+                if (drawPile.Count == 0)
+                {
+                    break;
+                }
+
+                int lastIndex = drawPile.Count - 1;
+                Cards.Add(drawPile[lastIndex]);
+                drawPile.RemoveAt(lastIndex);
+                drawn++;
+            }
+
+            if (drawn > 0)
+            {
+                MarkHandDirty();
+            }
+
+            return drawn;
+        }
+
+        private void DiscardHand()
+        {
+            if (Cards.Count == 0)
+            {
+                return;
+            }
+
+            discardPile.AddRange(Cards);
+            Cards.Clear();
+            MarkHandDirty();
+        }
+
+        private void ReshuffleDiscardIntoDrawPile()
+        {
+            if (discardPile.Count == 0)
+            {
+                return;
+            }
+
+            drawPile.AddRange(discardPile);
+            discardPile.Clear();
+            Shuffle(drawPile);
+        }
+
+        private static void Shuffle(List<WorkshopBattleCardEntry> cards)
+        {
+            for (int index = cards.Count - 1; index > 0; index--)
+            {
+                int swapIndex = UnityEngine.Random.Range(0, index + 1);
+                (cards[index], cards[swapIndex]) = (cards[swapIndex], cards[index]);
+            }
+        }
+
+        private static WorkshopBattleCardEntry CreateBattleCopy(WorkshopBattleCardEntry entry)
+        {
+            return new WorkshopBattleCardEntry
+            {
+                CardId = entry.CardId,
+                DisplayName = entry.DisplayName,
+                Amount = 1,
+                Element = entry.Element,
+                Tier = entry.Tier,
+                Role = entry.Role,
+                Rarity = entry.Rarity,
+                PrimaryValue = entry.PrimaryValue,
+                HitCount = entry.HitCount,
+                SecondaryValue = entry.SecondaryValue,
+                EffectKeyword = entry.EffectKeyword
+            };
+        }
+
+        private static WorkshopBattleCardEntry NormalizeCardEntry(WorkshopBattleCardEntry card)
+        {
+            card.Amount = Mathf.Max(1, card.Amount);
+            card.HitCount = Mathf.Max(1, card.HitCount);
+            return card;
         }
 
         private static WorkshopBattleCardEntry CreateEmergencyCard(
@@ -210,6 +373,11 @@ namespace ArcaneAtelier.Battle
                 SecondaryValue = 0f,
                 EffectKeyword = string.Empty
             };
+        }
+
+        private int GetCardEnergyCost(WorkshopBattleCardEntry card)
+        {
+            return 1;
         }
 
         private BattleResolvedEffect ResolveCard(WorkshopBattleCardEntry card)
@@ -282,14 +450,8 @@ namespace ArcaneAtelier.Battle
 
         private void ResolveAttack(WorkshopBattleCardEntry card, BattleResolvedEffect effect)
         {
-            int totalDamage = 0;
-            for (int hit = 0; hit < effect.HitCount; hit++)
-            {
-                BattleElementRelation relation = BattleElementUtility.GetRelation(effect.Element, Boss.Element);
-                int damage = Mathf.Max(1, Mathf.RoundToInt(BattleElementUtility.ApplyMultiplier(effect.PrimaryValue, relation)));
-                Boss.TakeDamage(damage);
-                totalDamage += damage;
-            }
+            int totalDamage = Mathf.Max(1, effect.PrimaryValue) * Mathf.Max(1, effect.HitCount);
+            Boss.TakeDamage(totalDamage);
 
             TotalDamageDealt += totalDamage;
             LastActionMessage = $"{card.DisplayName} dealt {totalDamage} damage.";
@@ -315,6 +477,7 @@ namespace ArcaneAtelier.Battle
 
         private void ResolveBossAction()
         {
+            Boss.Shield = 0;
             BattleBossAction action = PeekBossAction();
             bossActionIndex++;
 
@@ -396,6 +559,7 @@ namespace ArcaneAtelier.Battle
         {
             BattleEnded = true;
             CurrentEnergy = 0;
+            DiscardHand();
             LastActionMessage = resultType == BattleResultType.Victory
                 ? $"Victory over {Boss.DisplayName}."
                 : $"Defeated by {Boss.DisplayName}.";
@@ -414,36 +578,108 @@ namespace ArcaneAtelier.Battle
                     ? CurrentBossDefinition.DefeatRewardId
                     : string.Empty
             });
+
+            RunProgressBridge.RecordBattleResult(
+                Boss != null ? Boss.DisplayName : "Enemy",
+                resultType == BattleResultType.Victory,
+                TurnNumber,
+                CardsPlayed,
+                TotalDamageDealt,
+                TotalHealingDone,
+                TotalShieldGained,
+                resultType == BattleResultType.Victory
+                    ? "Run Complete"
+                    : "Run Failed",
+                resultType == BattleResultType.Victory
+                    ? CurrentEncounterIsBoss
+                        ? "The breach has been sealed. The atelier survives this siege and its legacy grows stronger."
+                        : $"Victory at {EncounterLabel}. Return to the atelier and refine the next forged loadout."
+                    : $"The projection collapsed against {Boss?.DisplayName ?? "the enemy"}.",
+                resultType == BattleResultType.Victory && CurrentEncounterIsBoss ? "Kindled Start" : string.Empty);
         }
 
-        private static BattleBossDefinition CreateFallbackBoss()
+        private void MarkHandDirty()
+        {
+            HandVersion++;
+        }
+
+        private static BattleBossDefinition CreateFallbackBoss(string bossId)
         {
             BattleBossDefinition fallback = ScriptableObject.CreateInstance<BattleBossDefinition>();
             fallback.hideFlags = HideFlags.HideAndDontSave;
-            fallback.Configure(
-                "boss.earth.golem",
-                "Earth Golem",
-                80,
-                WorkshopElementAttribute.Earth,
-                new[]
-                {
-                    new BattleBossAction
-                    {
-                        ActionType = BattleActionType.Attack,
-                        Value = 12,
-                        SecondaryValue = 0f,
-                        Description = "Stone Slam"
-                    },
-                    new BattleBossAction
-                    {
-                        ActionType = BattleActionType.Defend,
-                        Value = 8,
-                        SecondaryValue = 0f,
-                        Description = "Rock Guard"
-                    }
-                },
-                "reward_unlock_crystal");
+            switch (bossId)
+            {
+                case "enemy.ember.wisp":
+                    fallback.Configure(
+                        bossId,
+                        "Ember Wisp",
+                        44,
+                        WorkshopElementAttribute.Fire,
+                        new[]
+                        {
+                            CreateBossAction(BattleActionType.Attack, 8, "Spark Jab"),
+                            CreateBossAction(BattleActionType.Attack, 10, "Ash Burst"),
+                            CreateBossAction(BattleActionType.Defend, 6, "Ember Veil")
+                        },
+                        "reward.unlock.spell_fusion_basic");
+                    break;
+                case "enemy.hollow.cleric":
+                    fallback.Configure(
+                        bossId,
+                        "Hollow Cleric",
+                        56,
+                        WorkshopElementAttribute.Water,
+                        new[]
+                        {
+                            CreateBossAction(BattleActionType.Heal, 8, "Tide Benediction"),
+                            CreateBossAction(BattleActionType.Attack, 11, "Mist Lance"),
+                            CreateBossAction(BattleActionType.Defend, 8, "Prayer Ward")
+                        },
+                        "reward.boost.shaping");
+                    break;
+                case "enemy.glass.knight":
+                    fallback.Configure(
+                        bossId,
+                        "Glass Knight",
+                        68,
+                        WorkshopElementAttribute.Earth,
+                        new[]
+                        {
+                            CreateBossAction(BattleActionType.Defend, 10, "Mirror Guard"),
+                            CreateBossAction(BattleActionType.Attack, 12, "Shard Thrust"),
+                            CreateBossAction(BattleActionType.Attack, 14, "Refraction Cleave")
+                        },
+                        "reward.unlock.spell_fusion_intermediate");
+                    break;
+                default:
+                    fallback.Configure(
+                        "boss.earth.golem",
+                        "Corrupted Earth Golem",
+                        132,
+                        WorkshopElementAttribute.Earth,
+                        new[]
+                        {
+                            CreateBossAction(BattleActionType.Attack, 14, "Stone Slam"),
+                            CreateBossAction(BattleActionType.Defend, 10, "Rock Guard"),
+                            CreateBossAction(BattleActionType.Attack, 18, "Faultline Crush"),
+                            CreateBossAction(BattleActionType.Heal, 10, "Earthbound Renewal")
+                        },
+                        "legacy.kindled_start");
+                    break;
+            }
+
             return fallback;
+        }
+
+        private static BattleBossAction CreateBossAction(BattleActionType type, int value, string description)
+        {
+            return new BattleBossAction
+            {
+                ActionType = type,
+                Value = value,
+                SecondaryValue = 0f,
+                Description = description
+            };
         }
 
         private void OnGUI()
@@ -453,14 +689,15 @@ namespace ArcaneAtelier.Battle
                 return;
             }
 
-            const float width = 360f;
-            float height = BattleEnded ? 280f : 340f;
+            const float width = 400f;
+            float height = BattleEnded ? 320f : 420f;
             Rect rect = new Rect(16f, 16f, width, height);
             GUILayout.BeginArea(rect, GUI.skin.box);
             GUILayout.Label("Battle");
             GUILayout.Label($"Player: {Player.CurrentHealth}/{Player.MaxHealth} HP  Shield {Player.Shield}");
             GUILayout.Label($"Enemy: {Boss.DisplayName}  {Boss.CurrentHealth}/{Boss.MaxHealth} HP  Shield {Boss.Shield}");
-            GUILayout.Label($"Turn {TurnNumber}  Energy {CurrentEnergy}/{playerEnergyPerTurn}");
+            GUILayout.Label($"Turn {TurnNumber}  Energy {CurrentEnergy}/{EnergyPerTurn}");
+            GUILayout.Label($"Draw {DrawPileCount}  Discard {DiscardPileCount}");
             GUILayout.Label($"Intent: {CurrentBossIntent}");
             GUILayout.Space(6f);
             GUILayout.Label(LastActionMessage);
@@ -471,16 +708,16 @@ namespace ArcaneAtelier.Battle
                 for (int index = 0; index < Cards.Count; index++)
                 {
                     WorkshopBattleCardEntry card = Cards[index];
-                    string label = $"{card.DisplayName} x{card.Amount} - {DescribeCard(card)}";
+                    string label = $"[{GetCardEnergyCost(card)}] {card.DisplayName} - {DescribeCard(card)}";
                     GUI.enabled = CanPlayCard(index);
-                    if (GUILayout.Button(label, GUILayout.Height(30f)))
+                    if (GUILayout.Button(label, GUILayout.Height(36f)))
                     {
                         PlayCard(index);
                     }
                 }
 
                 GUI.enabled = !BattleEnded;
-                if (GUILayout.Button("End Turn", GUILayout.Height(30f)))
+                if (GUILayout.Button("End Turn", GUILayout.Height(34f)))
                 {
                     EndPlayerTurn();
                 }
@@ -490,6 +727,8 @@ namespace ArcaneAtelier.Battle
             {
                 GUILayout.Label($"Cards played: {CardsPlayed}");
                 GUILayout.Label($"Damage dealt: {TotalDamageDealt}");
+                GUILayout.Label($"Healing done: {TotalHealingDone}");
+                GUILayout.Label($"Shield gained: {TotalShieldGained}");
                 if (GUILayout.Button("Return To Workshop", GUILayout.Height(34f)))
                 {
                     ReturnToWorkshop();
@@ -503,14 +742,15 @@ namespace ArcaneAtelier.Battle
         private string DescribeCard(WorkshopBattleCardEntry card)
         {
             BattleResolvedEffect effect = ResolveCard(card);
+            int totalValue = effect.PrimaryValue * effect.HitCount;
             switch (effect.Role)
             {
                 case WorkshopSpellRole.Defense:
-                    return $"Gain {effect.PrimaryValue * effect.HitCount} shield";
+                    return $"Gain {totalValue} shield";
                 case WorkshopSpellRole.Healing:
-                    return $"Heal {effect.PrimaryValue * effect.HitCount}";
+                    return $"Heal {totalValue}";
                 default:
-                    return $"Deal {effect.PrimaryValue * effect.HitCount} damage";
+                    return $"Deal {totalValue} damage";
             }
         }
 

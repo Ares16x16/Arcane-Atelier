@@ -1,5 +1,6 @@
 using ArcaneAtelier.Battle;
 using ArcaneAtelier.Workshop;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -10,14 +11,43 @@ namespace ArcaneAtelier.Integration
         private const string MainMenuSceneName = "MainMenuScene";
         private const string WorkshopSceneName = "WorkshopScene";
         private const string BattleSceneName = "BattleScene";
-        private const int ActOneCombatThreshold = 4;
-        private const int ActTwoCombatThreshold = 5;
-        private const int ActThreeCombatThreshold = 6;
+        private const int NormalEncountersBeforeBoss = 3;
 
-        private static int currentAct = 1;
-        private static int clearedCombatsInAct;
-        private static bool bossPending;
-        private static bool activeBattleIsBoss;
+        private static readonly EncounterPlan[] EncounterPlans =
+        {
+            new EncounterPlan(
+                "encounter.ember.wisp",
+                "Breach 1: Ember Wisp",
+                "A fast outer-ward scout that pressures early attack production.",
+                "enemy.ember.wisp",
+                120,
+                "reward.unlock.spell_fusion_basic"),
+            new EncounterPlan(
+                "encounter.hollow.cleric",
+                "Breach 2: Hollow Cleric",
+                "A sustain-heavy foe that rewards cleaner shaping throughput and healing answers.",
+                "enemy.hollow.cleric",
+                110,
+                "reward.boost.shaping"),
+            new EncounterPlan(
+                "encounter.glass.knight",
+                "Breach 3: Glass Knight",
+                "A shielded duelist that asks for stronger forged spells before the final siege.",
+                "enemy.glass.knight",
+                100,
+                "reward.unlock.spell_fusion_intermediate")
+        };
+
+        private static readonly EncounterPlan FinalBossPlan = new EncounterPlan(
+            "encounter.final.earth_golem",
+            "Final Boss: Corrupted Earth Golem",
+            "The atelier core is under direct assault. Bring your strongest forged loadout into the final breach.",
+            "boss.earth.golem",
+            140,
+            string.Empty);
+
+        private static int clearedNormalEncounters;
+        private static bool currentBattleIsBoss;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void RegisterSceneCallbacks()
@@ -49,157 +79,108 @@ namespace ArcaneAtelier.Integration
                 return;
             }
 
-            if (scene.name != WorkshopSceneName && scene.name != BattleSceneName)
-            {
-                return;
-            }
-
             if (scene.name == BattleSceneName)
             {
-                activeBattleIsBoss = bossPending;
+                currentBattleIsBoss = RunProgressBridge.CurrentEncounter.IsBoss;
                 return;
             }
 
-            string postBattleStatus = string.Empty;
-
-            if (!BattleResultBridge.TryConsume(out BattleResult result))
+            if (scene.name != WorkshopSceneName)
             {
-                ConfigureWorkshopPreparation(Object.FindAnyObjectByType<WorkshopSceneController>(), postBattleStatus);
                 return;
             }
 
             WorkshopSceneController controller = Object.FindAnyObjectByType<WorkshopSceneController>();
             if (controller == null)
             {
-                Debug.LogWarning("GameFlowRuntime: WorkshopScene loaded without a WorkshopSceneController; battle result could not be applied.");
+                Debug.LogWarning("GameFlowRuntime: WorkshopScene loaded without a WorkshopSceneController.");
                 return;
             }
 
-            if (result.ResultType == BattleResultType.Victory)
+            if (!BattleResultBridge.TryConsume(out BattleResult result))
             {
-                bool defeatedBoss = activeBattleIsBoss;
-                UpdateProgressAfterVictory(defeatedBoss);
-
-                if (controller.TryApplyRewardById(result.DefeatRewardId, out WorkshopRewardDefinition reward))
-                {
-                    postBattleStatus = $"Victory over {FormatBossName(result)}. Reward applied: {reward.DisplayName}.";
-                    ConfigureWorkshopPreparation(controller, postBattleStatus);
-                    return;
-                }
-
-                if (!string.IsNullOrWhiteSpace(result.DefeatRewardId))
-                {
-                    postBattleStatus = $"Victory over {FormatBossName(result)}. Reward '{result.DefeatRewardId}' was not found.";
-                    ConfigureWorkshopPreparation(controller, postBattleStatus);
-                    return;
-                }
-
-                postBattleStatus = $"Victory over {FormatBossName(result)}. No battle reward is configured yet.";
-                ConfigureWorkshopPreparation(controller, postBattleStatus);
+                ConfigureNextEncounter(controller, "The atelier is online. Forge your first breach response.");
                 return;
             }
 
-            if (result.ResultType == BattleResultType.Defeat)
+            if (result.ResultType != BattleResultType.Victory)
             {
-                activeBattleIsBoss = false;
-                postBattleStatus = $"Defeated by {FormatBossName(result)}. Rebuild your deck and try again.";
-                ConfigureWorkshopPreparation(controller, postBattleStatus);
                 return;
             }
 
-            ConfigureWorkshopPreparation(controller, "Returned from battle.");
+            if (currentBattleIsBoss)
+            {
+                currentBattleIsBoss = false;
+                return;
+            }
+
+            clearedNormalEncounters = Mathf.Min(NormalEncountersBeforeBoss, clearedNormalEncounters + 1);
+            string rewardMessage = ApplyConfiguredReward(controller, GetCompletedEncounterPlan(), result);
+            ConfigureNextEncounter(controller, rewardMessage);
         }
 
         private static void ResetRunState()
         {
-            currentAct = 1;
-            clearedCombatsInAct = 0;
-            bossPending = false;
-            activeBattleIsBoss = false;
+            clearedNormalEncounters = 0;
+            currentBattleIsBoss = false;
+            RunProgressBridge.Reset();
         }
 
-        private static void UpdateProgressAfterVictory(bool defeatedBoss)
+        private static void ConfigureNextEncounter(WorkshopSceneController controller, string postBattleStatus)
         {
-            activeBattleIsBoss = false;
+            EncounterPlan plan = GetNextEncounterPlan();
+            bool isBoss = clearedNormalEncounters >= NormalEncountersBeforeBoss;
+            WorkshopRewardDefinition reward = controller.DebugRewards.FirstOrDefault(item => item != null && item.Id == plan.RewardId);
+            string rewardDisplayName = reward != null ? reward.DisplayName : string.Empty;
+            string rewardDescription = reward != null ? reward.Description : string.Empty;
 
-            if (defeatedBoss)
-            {
-                currentAct = Mathf.Min(3, currentAct + 1);
-                clearedCombatsInAct = 0;
-                bossPending = false;
-                return;
-            }
+            RunProgressBridge.ConfigureEncounter(
+                clearedNormalEncounters + 1,
+                NormalEncountersBeforeBoss,
+                plan.EncounterId,
+                plan.Label,
+                plan.Description,
+                plan.BossId,
+                isBoss,
+                plan.RewardId,
+                rewardDisplayName,
+                rewardDescription);
 
-            clearedCombatsInAct++;
-            if (clearedCombatsInAct >= GetCombatThresholdForAct(currentAct))
-            {
-                bossPending = true;
-            }
+            controller.SetPreparationBudget(plan.PreparationBudget, plan.Label);
+            controller.SetStatusMessage(string.IsNullOrWhiteSpace(postBattleStatus)
+                ? $"{plan.Label}. {plan.Description}"
+                : $"{postBattleStatus} Next: {plan.Label}. {plan.Description}");
         }
 
-        private static void ConfigureWorkshopPreparation(WorkshopSceneController controller, string postBattleStatus)
+        private static string ApplyConfiguredReward(WorkshopSceneController controller, EncounterPlan plan, BattleResult result)
         {
-            if (controller == null)
+            if (string.IsNullOrWhiteSpace(plan.RewardId))
             {
-                return;
+                return $"Victory over {FormatBossName(result)}. No workshop reward configured.";
             }
 
-            int budget = bossPending ? GetBossPrepBudgetForAct(currentAct) : GetSkirmishPrepBudgetForAct(currentAct);
-            string label = bossPending
-                ? $"Act {currentAct} Boss"
-                : $"Act {currentAct} Skirmish {clearedCombatsInAct + 1}/{GetCombatThresholdForAct(currentAct)}";
-
-            controller.SetPreparationBudget(budget, label);
-
-            if (!string.IsNullOrWhiteSpace(postBattleStatus))
+            if (controller.TryApplyRewardById(plan.RewardId, out WorkshopRewardDefinition reward))
             {
-                controller.SetStatusMessage($"{postBattleStatus} Next: {label}, {budget} prep ticks.");
+                return $"Victory over {FormatBossName(result)}. Reward applied: {reward.DisplayName}. {reward.Description}";
             }
+
+            return $"Victory over {FormatBossName(result)}. Reward '{plan.RewardId}' was not found.";
         }
 
-        private static int GetCombatThresholdForAct(int act)
+        private static EncounterPlan GetCompletedEncounterPlan()
         {
-            switch (act)
-            {
-                case 1:
-                    return ActOneCombatThreshold;
-                case 2:
-                    return ActTwoCombatThreshold;
-                default:
-                    return ActThreeCombatThreshold;
-            }
+            int index = Mathf.Clamp(clearedNormalEncounters - 1, 0, EncounterPlans.Length - 1);
+            return EncounterPlans[index];
         }
 
-        private static int GetSkirmishPrepBudgetForAct(int act)
+        private static EncounterPlan GetNextEncounterPlan()
         {
-            int baseBudget;
-            switch (act)
+            if (clearedNormalEncounters >= NormalEncountersBeforeBoss)
             {
-                case 1:
-                    baseBudget = 120;
-                    break;
-                case 2:
-                    baseBudget = 95;
-                    break;
-                default:
-                    baseBudget = 75;
-                    break;
+                return FinalBossPlan;
             }
 
-            return Mathf.Max(45, baseBudget - clearedCombatsInAct * 5);
-        }
-
-        private static int GetBossPrepBudgetForAct(int act)
-        {
-            switch (act)
-            {
-                case 1:
-                    return 150;
-                case 2:
-                    return 125;
-                default:
-                    return 105;
-            }
+            return EncounterPlans[Mathf.Clamp(clearedNormalEncounters, 0, EncounterPlans.Length - 1)];
         }
 
         private static string FormatBossName(BattleResult result)
@@ -210,6 +191,26 @@ namespace ArcaneAtelier.Integration
             }
 
             return result.BossDisplayName;
+        }
+
+        private readonly struct EncounterPlan
+        {
+            public EncounterPlan(string encounterId, string label, string description, string bossId, int preparationBudget, string rewardId)
+            {
+                EncounterId = encounterId;
+                Label = label;
+                Description = description;
+                BossId = bossId;
+                PreparationBudget = preparationBudget;
+                RewardId = rewardId;
+            }
+
+            public string EncounterId { get; }
+            public string Label { get; }
+            public string Description { get; }
+            public string BossId { get; }
+            public int PreparationBudget { get; }
+            public string RewardId { get; }
         }
     }
 }
