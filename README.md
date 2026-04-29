@@ -92,3 +92,4 @@ The stable assumption teammates should use is:
 - [Spell Assembly Module](Documentation/SpellAssemblyModule.md)
 - [Factory Architecture](Documentation/FactoryArchitecture.md)
 - [Workshop ↔ Battle Contract](Documentation/WorkshopBattleContract.md)
+- [Asset and Audio Production Checklist](Documentation/AssetAndAudioProductionChecklist.md)
