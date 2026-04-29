@@ -32,9 +32,14 @@ public class BattleUIPresenter : MonoBehaviour
     public Transform handContentParent; // Drag the 'Content' object here
     public GameObject cardPrefab;
 
+    private int knownHandVersion = -1;
+
     void Start()
     {
-        resultsPanel.SetActive(false);
+        if (resultsPanel != null)
+        {
+            resultsPanel.SetActive(false);
+        }
         // We wait a frame for the controller's Awake to finish
         Invoke(nameof(UpdateUI), 0.1f);
         Invoke(nameof(PopulateHand), 0.1f);
@@ -43,6 +48,10 @@ public class BattleUIPresenter : MonoBehaviour
     void Update()
     {
         UpdateUI();
+        if (controller != null && knownHandVersion != controller.HandVersion)
+        {
+            PopulateHand();
+        }
     }
 
     public void PopulateHand()
@@ -67,18 +76,33 @@ public class BattleUIPresenter : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        // Check 3: Does the controller actually have cards?
         if (controller == null || controller.Cards == null) return;
 
-        foreach (var cardEntry in controller.Cards)
+        for (int index = 0; index < controller.Cards.Count; index++)
         {
+            var cardEntry = controller.Cards[index];
             GameObject newCard = Instantiate(cardPrefab, handContentParent);
             var txt = newCard.GetComponentInChildren<TextMeshProUGUI>();
             if (txt != null)
             {
-                txt.text = $"{cardEntry.DisplayName}\nx{cardEntry.Amount}";
+                txt.text = $"{cardEntry.DisplayName}\nx{cardEntry.Amount}\n{controller.GetCardSummary(cardEntry)}";
+            }
+
+            Button button = newCard.GetComponent<Button>();
+            if (button == null)
+            {
+                button = newCard.GetComponentInChildren<Button>();
+            }
+
+            if (button != null)
+            {
+                int capturedIndex = index;
+                button.onClick.RemoveAllListeners();
+                button.onClick.AddListener(() => controller.PlayCard(capturedIndex));
             }
         }
+
+        knownHandVersion = controller.HandVersion;
     }
 
     public void UpdateUI()
@@ -86,16 +110,34 @@ public class BattleUIPresenter : MonoBehaviour
         if (controller == null || controller.Player == null || controller.Boss == null) return;
 
         // Update Boss
-        bossNameText.text = controller.Boss.DisplayName;
-        bossHealthSlider.maxValue = controller.Boss.MaxHealth;
-        bossHealthSlider.value = controller.Boss.CurrentHealth;
-        bossHealthValueText.text = $"{controller.Boss.CurrentHealth} / {controller.Boss.MaxHealth}";
+        if (bossNameText != null)
+        {
+            bossNameText.text = controller.Boss.DisplayName;
+        }
+        if (bossHealthSlider != null)
+        {
+            bossHealthSlider.maxValue = controller.Boss.MaxHealth;
+            bossHealthSlider.value = controller.Boss.CurrentHealth;
+        }
+        if (bossHealthValueText != null)
+        {
+            bossHealthValueText.text = $"{controller.Boss.CurrentHealth} / {controller.Boss.MaxHealth}";
+        }
 
         // Update Player
-        playerNameText.text = controller.Player.DisplayName;
-        playerHealthSlider.maxValue = controller.Player.MaxHealth;
-        playerHealthSlider.value = controller.Player.CurrentHealth;
-        playerHealthValueText.text = $"{controller.Player.CurrentHealth} / {controller.Player.MaxHealth}";
+        if (playerNameText != null)
+        {
+            playerNameText.text = controller.Player.DisplayName;
+        }
+        if (playerHealthSlider != null)
+        {
+            playerHealthSlider.maxValue = controller.Player.MaxHealth;
+            playerHealthSlider.value = controller.Player.CurrentHealth;
+        }
+        if (playerHealthValueText != null)
+        {
+            playerHealthValueText.text = $"{controller.Player.CurrentHealth} / {controller.Player.MaxHealth}";
+        }
 
     }
 
@@ -152,14 +194,29 @@ public class BattleUIPresenter : MonoBehaviour
         var result = BattleResultBridge.CurrentResult;
         if (result == null) return;
 
-        resultsPanel.SetActive(true);
+        if (resultsPanel != null)
+        {
+            resultsPanel.SetActive(true);
+        }
 
-        titleText.text = result.ResultType.ToString().ToUpper();
-        bossNameResultText.text = $"Enemy: {result.BossDisplayName}";
-        turnsText.text = $"Turns: {result.TurnsElapsed}";
-        damageText.text = $"Total Damage Dealt: {result.TotalDamageDealt}";
+        if (titleText != null)
+        {
+            titleText.text = result.ResultType.ToString().ToUpper();
+        }
+        if (bossNameResultText != null)
+        {
+            bossNameResultText.text = $"Enemy: {result.BossDisplayName}";
+        }
+        if (turnsText != null)
+        {
+            turnsText.text = $"Turns: {result.TurnsElapsed}";
+        }
+        if (damageText != null)
+        {
+            damageText.text = $"Total Damage Dealt: {result.TotalDamageDealt}";
+        }
 
-        if (!string.IsNullOrEmpty(result.DefeatRewardId))
+        if (rewardText != null && !string.IsNullOrEmpty(result.DefeatRewardId))
         {
             rewardText.text = $"Battle Reward: {result.DefeatRewardId}";
         }

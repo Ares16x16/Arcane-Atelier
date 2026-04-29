@@ -77,6 +77,13 @@ When prep ticks reach zero:
 - the current prepared card snapshot is taken automatically if the player has not already deployed
 - battle starts immediately
 
+Current runnable prototype behavior:
+
+- `Forge And Deploy` commits the current payload and enters battle immediately
+- `Advance 1 Prep Tick` runs exactly one workshop simulation step and consumes one preparation tick
+- live workshop time automatically advances preparation ticks while unpaused
+- if the payload is empty when battle starts, battle supplies the emergency deck described below
+
 ### 4.3 Early deploy reward
 
 If the player deploys before the timer ends, grant one small benefit:

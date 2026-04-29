@@ -128,7 +128,7 @@ namespace ArcaneAtelier.Battle.Editor
                 150,
                 WorkshopElementAttribute.Earth,
                 pattern,
-                "reward.spirit.earth");
+                "reward_unlock_crystal");
 
             AssetDatabase.CreateAsset(asset, path);
             return asset;

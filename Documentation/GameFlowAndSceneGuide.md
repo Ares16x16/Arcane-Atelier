@@ -132,6 +132,12 @@ Rules:
 - non-combat route nodes do not count
 - once the threshold is reached, the next workshop return goes to `BossPreparation` instead of `RouteBoard`
 
+Current runnable prototype behavior:
+
+- every non-boss victory increments the current act combat clear count by `1`
+- when the threshold is reached, the next preparation label becomes `Act X Boss`
+- boss victories reset the act clear count and advance to the next act
+
 ---
 
 ## 6. Preparation tick system
