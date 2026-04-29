@@ -23,14 +23,14 @@ namespace ArcaneAtelier.Workshop
     [Serializable]
     public sealed class WorkshopBattlePayload
     {
-        public List<WorkshopBattleCardEntry> Cards = new();
+        public List<WorkshopBattleCardEntry> Cards = new List<WorkshopBattleCardEntry>();
 
         public bool HasCards => Cards.Count > 0;
     }
 
     public static class WorkshopBattlePayloadBridge
     {
-        public static WorkshopBattlePayload CurrentPayload { get; private set; } = new();
+        public static WorkshopBattlePayload CurrentPayload { get; private set; } = new WorkshopBattlePayload();
 
         public static event Action PayloadCommitted;
 

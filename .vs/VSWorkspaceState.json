@@ -1,0 +1,14 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\Assets",
+    "\\Assets\\ArcaneAtelier",
+    "\\Assets\\ArcaneAtelier\\Battle",
+    "\\Assets\\ArcaneAtelier\\Battle\\Editor",
+    "\\Assets\\ArcaneAtelier\\Battle\\Runtime",
+    "\\Assets\\ArcaneAtelier\\Workshop",
+    "\\Assets\\ArcaneAtelier\\Workshop\\Runtime"
+  ],
+  "SelectedNode": "\\Assets\\ArcaneAtelier\\Battle\\Runtime\\BattleResult.cs",
+  "PreviewInSolutionExplorer": false
+}

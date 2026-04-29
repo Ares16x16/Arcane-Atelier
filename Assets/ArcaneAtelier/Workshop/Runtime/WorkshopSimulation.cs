@@ -8,7 +8,7 @@ namespace ArcaneAtelier.Workshop
 {
     public sealed class WorkshopNodeState
     {
-        private readonly Dictionary<WorkshopItemDefinition, int> buffer = new();
+        private readonly Dictionary<WorkshopItemDefinition, int> buffer = new Dictionary<WorkshopItemDefinition, int>();
         private int bufferedItemCount;
 
         public WorkshopNodeState(WorkshopNodeDefinition definition, Vector2Int position, int rotationQuarterTurns)
@@ -160,18 +160,18 @@ namespace ArcaneAtelier.Workshop
 
     public sealed class WorkshopSimulation
     {
-        private static readonly ProfilerMarker StepMarker = new("ArcaneAtelier.Workshop.Step");
-        private static readonly ProfilerMarker TransferMarker = new("ArcaneAtelier.Workshop.TransferBufferedItems");
-        private static readonly ProfilerMarker RecipeMarker = new("ArcaneAtelier.Workshop.ExecuteRecipe");
+        private static readonly ProfilerMarker StepMarker = new ProfilerMarker("ArcaneAtelier.Workshop.Step");
+        private static readonly ProfilerMarker TransferMarker = new ProfilerMarker("ArcaneAtelier.Workshop.TransferBufferedItems");
+        private static readonly ProfilerMarker RecipeMarker = new ProfilerMarker("ArcaneAtelier.Workshop.ExecuteRecipe");
 
-        private readonly Dictionary<Vector2Int, WorkshopNodeState> nodes = new();
-        private readonly Dictionary<WorkshopItemDefinition, int> preparedCards = new();
-        private readonly Dictionary<WorkshopItemDefinition, int> reserveItems = new();
-        private readonly HashSet<string> unlockedNodeIds = new();
+        private readonly Dictionary<Vector2Int, WorkshopNodeState> nodes = new Dictionary<Vector2Int, WorkshopNodeState>();
+        private readonly Dictionary<WorkshopItemDefinition, int> preparedCards = new Dictionary<WorkshopItemDefinition, int>();
+        private readonly Dictionary<WorkshopItemDefinition, int> reserveItems = new Dictionary<WorkshopItemDefinition, int>();
+        private readonly HashSet<string> unlockedNodeIds = new HashSet<string>();
         private readonly Vector2Int gridSize;
-        private readonly List<WorkshopNodeState> stepNodeIterationCache = new();
-        private readonly List<WorkshopNodeState> transferNodeIterationCache = new();
-        private readonly List<KeyValuePair<WorkshopItemDefinition, int>> transferBufferCache = new();
+        private readonly List<WorkshopNodeState> stepNodeIterationCache = new List<WorkshopNodeState>();
+        private readonly List<WorkshopNodeState> transferNodeIterationCache = new List<WorkshopNodeState>();
+        private readonly List<KeyValuePair<WorkshopItemDefinition, int>> transferBufferCache = new List<KeyValuePair<WorkshopItemDefinition, int>>();
         private float simulatedSeconds;
         private int totalElementProduced;
         private int totalElementConsumed;
