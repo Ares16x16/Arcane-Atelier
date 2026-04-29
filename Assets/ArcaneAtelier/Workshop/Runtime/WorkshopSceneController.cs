@@ -25,8 +25,8 @@ namespace ArcaneAtelier.Workshop
 
         public WorkshopSimulation Simulation { get; private set; }
         public WorkshopNodeDefinition SelectedPaletteNode { get; private set; }
-        public Vector2Int SelectedCell { get; private set; } = new(-1, -1);
-        public Vector2Int HoveredCell { get; private set; } = new(-1, -1);
+        public Vector2Int SelectedCell { get; private set; } = new Vector2Int(-1, -1);
+        public Vector2Int HoveredCell { get; private set; } = new Vector2Int(-1, -1);
         public int PlacementRotationQuarterTurns { get; private set; }
         public string StatusMessage => statusMessage;
         public bool IsPaused => isPaused;
@@ -204,6 +204,28 @@ namespace ArcaneAtelier.Workshop
 
             Simulation.ApplyReward(reward);
             statusMessage = $"Applied reward: {reward.DisplayName}.";
+        }
+
+        public bool TryApplyRewardById(string rewardId, out WorkshopRewardDefinition reward)
+        {
+            reward = contentDatabase != null ? contentDatabase.FindReward(rewardId) : null;
+            if (reward == null)
+            {
+                return false;
+            }
+
+            ApplyReward(reward);
+            return true;
+        }
+
+        public void SetStatusMessage(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return;
+            }
+
+            statusMessage = message;
         }
 
         public void ResetWorkshop()

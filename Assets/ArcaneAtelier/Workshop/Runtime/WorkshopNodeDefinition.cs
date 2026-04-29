@@ -11,8 +11,8 @@ namespace ArcaneAtelier.Workshop
         [SerializeField] private string id = "recipe.id";
         [SerializeField] private string displayName = "Recipe";
         [SerializeField] private float cycleSeconds = 1.5f;
-        [SerializeField] private List<WorkshopItemStack> inputs = new();
-        [SerializeField] private List<WorkshopItemStack> outputs = new();
+        [SerializeField] private List<WorkshopItemStack> inputs = new List<WorkshopItemStack>();
+        [SerializeField] private List<WorkshopItemStack> outputs = new List<WorkshopItemStack>();
 
         public string Id => id;
         public string DisplayName => displayName;
@@ -46,13 +46,13 @@ namespace ArcaneAtelier.Workshop
         [SerializeField, TextArea] private string description = "Placeholder workshop node.";
         [SerializeField] private WorkshopNodeCategory category = WorkshopNodeCategory.Source;
         [SerializeField] private bool unlockedByDefault = true;
-        [SerializeField] private Color tint = new(0.32f, 0.36f, 0.42f);
+        [SerializeField] private Color tint = new Color(0.32f, 0.36f, 0.42f);
         [SerializeField] private NodePortMask inputPorts = NodePortMask.None;
         [SerializeField] private NodePortMask outputPorts = NodePortMask.East;
         [SerializeField] private int bufferCapacity = 8;
         [SerializeField] private int maxTransferPerStep = 1;
         [SerializeField] private bool acceptsAnyResource;
-        [SerializeField] private List<WorkshopProductionRecipe> recipes = new();
+        [SerializeField] private List<WorkshopProductionRecipe> recipes = new List<WorkshopProductionRecipe>();
 
         public string Id => id;
         public string DisplayName => displayName;

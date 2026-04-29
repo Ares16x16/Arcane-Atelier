@@ -4,7 +4,6 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace ArcaneAtelier.Workshop.Editor
 {
@@ -12,7 +11,7 @@ namespace ArcaneAtelier.Workshop.Editor
     {
         private const string GeneratedRoot = "Assets/ArcaneAtelier/Workshop/Generated";
         private const string DataRoot = GeneratedRoot + "/Data";
-        private const string ScenePath = "Assets/Scenes/SpellAssemblyScene.unity";
+        private const string ScenePath = "Assets/Scenes/WorkshopScene.unity";
 
         static WorkshopProjectBootstrap()
         {
@@ -38,30 +37,9 @@ namespace ArcaneAtelier.Workshop.Editor
             }
 
             var sceneExists = AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null;
-            var databaseExists = AssetDatabase.LoadAssetAtPath<WorkshopContentDatabase>($"{DataRoot}/WorkshopContentDatabase.asset") != null;
-            if (!sceneExists || !databaseExists)
-            {
-                Run();
-                sceneExists = AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null;
-            }
-
             if (!sceneExists)
             {
-                return;
-            }
-
-            var activeScene = SceneManager.GetActiveScene();
-            if (string.IsNullOrEmpty(activeScene.path))
-            {
-                EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-                if (SceneView.lastActiveSceneView != null)
-                {
-                    SceneView.lastActiveSceneView.in2DMode = true;
-                }
-            }
-            else if (activeScene.path == ScenePath && SceneView.lastActiveSceneView != null)
-            {
-                SceneView.lastActiveSceneView.in2DMode = true;
+                Run();
             }
         }
 

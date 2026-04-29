@@ -1,5 +1,6 @@
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace ArcaneAtelier.Workshop
 {
@@ -255,6 +256,11 @@ namespace ArcaneAtelier.Workshop
             if (GUI.Button(new Rect(18f, buttonY, contentWidth, 28f), "Forge Battle Deck", buttonStyle))
             {
                 controller.CommitBattlePayload();
+
+                if (WorkshopBattlePayloadBridge.CurrentPayload.HasCards)
+                {
+                    SceneManager.LoadScene("BattleScene");
+                }
             }
 
             GUI.EndGroup();
