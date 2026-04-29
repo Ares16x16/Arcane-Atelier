@@ -63,4 +63,8 @@ Referenced by the new design docs, but sourced from the `integration` branch:
 - `BattleScene`
 - menu -> workshop -> battle return flow
 
-Use [Implementation Reference](Documentation/ImplementationReference.md) for the exact file-level mapping.
+- [Factory Scene Guide](Documentation/FactoryHowToPlay.md)
+- [Spell Assembly Module](Documentation/SpellAssemblyModule.md)
+- [Factory Architecture](Documentation/FactoryArchitecture.md)
+- [Workshop ↔ Battle Contract](Documentation/WorkshopBattleContract.md)
+- [Asset and Audio Production Checklist](Documentation/AssetAndAudioProductionChecklist.md)
