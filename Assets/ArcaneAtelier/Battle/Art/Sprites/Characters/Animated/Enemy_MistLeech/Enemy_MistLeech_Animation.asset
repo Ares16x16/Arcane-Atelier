@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4ec0d4bfc40481bb6b4a71a47f5892d, type: 3}
+  m_Name: Enemy_MistLeech_Animation
+  m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattleUnitAnimationProfile
+  previewSprite: {fileID: 21300000, guid: fc8da8a85920a4c90a6c8610e3ed56e1, type: 3}
+  idleSequence:
+    frames:
+    - {fileID: 21300000, guid: b943e009f2d7644dda029963c3e9abe9, type: 3}
+    - {fileID: 21300000, guid: 9388e5c59bdfd4066a9f975385776cd2, type: 3}
+    - {fileID: 21300000, guid: 63310180a7cb74acab066986b46a7139, type: 3}
+    - {fileID: 21300000, guid: 055c5ad680a8f47718e69a22e80c83c2, type: 3}
+    framesPerSecond: 5
+    loop: 1
+  attackSequence:
+    frames:
+    - {fileID: 21300000, guid: c220f7790ba1a42a2975f58717fa4590, type: 3}
+    - {fileID: 21300000, guid: 393dd58dc23b641d6862845d29867f93, type: 3}
+    - {fileID: 21300000, guid: b9c721b67209e4c33baaa31c3d8b6d45, type: 3}
+    - {fileID: 21300000, guid: ab2773fb2988b4823b5c20a5938cbf1b, type: 3}
+    framesPerSecond: 10
+    loop: 0
+  hurtSequence:
+    frames:
+    - {fileID: 21300000, guid: 63702b4d81a024d4f83920f9a065742b, type: 3}
+    - {fileID: 21300000, guid: d3433546f4512412d827793a9c86af10, type: 3}
+    - {fileID: 21300000, guid: 97a13f04897034d4a9b1dc1b6660e846, type: 3}
+    - {fileID: 21300000, guid: 6ea7d29a662f547f59aedce0b910a5ce, type: 3}
+    framesPerSecond: 10
+    loop: 0

@@ -23,6 +23,7 @@ namespace ArcaneAtelier.Battle
         [SerializeField] private Sprite playerSprite;
         [SerializeField] private Sprite bossSprite;
         [SerializeField] private Sprite backgroundSprite;
+        [SerializeField] private BattleUnitAnimationProfile playerAnimationProfile;
 
         [Header("Camera & Effects")]
         [SerializeField] private Camera battleCamera;
@@ -121,12 +122,14 @@ namespace ArcaneAtelier.Battle
 
         private void EnsurePlayerVisual()
         {
+            BattleUnitAnimationProfile resolvedPlayerAnimationProfile = playerAnimationProfile;
+
             if (playerVisual != null)
             {
-                if (playerSprite != null)
+                if (playerSprite != null || resolvedPlayerAnimationProfile != null)
                 {
                     playerVisual.transform.position = DefaultPlayerPosition;
-                    playerVisual.Setup(playerSprite, playerColor, DefaultPlayerScale);
+                    playerVisual.Setup(playerSprite, resolvedPlayerAnimationProfile, playerColor, DefaultPlayerScale);
                 }
                 else
                 {
@@ -141,21 +144,22 @@ namespace ArcaneAtelier.Battle
             Sprite sprite = playerSprite != null
                 ? playerSprite
                 : CreateSolidSprite(playerColor, 64, 64, "PlayerPlaceholder");
-            playerVisual.Setup(sprite, playerColor, DefaultPlayerScale);
+            playerVisual.Setup(sprite, resolvedPlayerAnimationProfile, playerColor, DefaultPlayerScale);
         }
 
         private void EnsureBossVisual()
         {
             Sprite resolvedBossSprite = ResolveBossSprite();
+            BattleUnitAnimationProfile resolvedBossAnimationProfile = ResolveBossAnimationProfile();
             Vector3 bossPosition = ResolveBossPosition();
             Vector3 bossScale = ResolveBossScale();
 
             if (bossVisual != null)
             {
                 bossVisual.transform.position = bossPosition;
-                if (resolvedBossSprite != null)
+                if (resolvedBossSprite != null || resolvedBossAnimationProfile != null)
                 {
-                    bossVisual.Setup(resolvedBossSprite, bossColor, bossScale);
+                    bossVisual.Setup(resolvedBossSprite, resolvedBossAnimationProfile, bossColor, bossScale);
                 }
                 else
                 {
@@ -171,7 +175,7 @@ namespace ArcaneAtelier.Battle
             Sprite sprite = resolvedBossSprite != null
                 ? resolvedBossSprite
                 : CreateSolidSprite(bossColor, 64, 64, "BossPlaceholder");
-            bossVisual.Setup(sprite, bossColor, bossScale);
+            bossVisual.Setup(sprite, resolvedBossAnimationProfile, bossColor, bossScale);
         }
 
         private void EnsureAnchors()
@@ -221,6 +225,16 @@ namespace ArcaneAtelier.Battle
             }
 
             return backgroundSprite;
+        }
+
+        private BattleUnitAnimationProfile ResolveBossAnimationProfile()
+        {
+            if (activePresentationProfile != null && activePresentationProfile.BossAnimationProfile != null)
+            {
+                return activePresentationProfile.BossAnimationProfile;
+            }
+
+            return null;
         }
 
         private Vector3 ResolveBossPosition()

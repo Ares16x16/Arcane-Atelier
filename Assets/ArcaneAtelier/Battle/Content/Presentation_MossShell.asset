@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattlePresentationProfile
   bossId: enemy.moss.shell
   bossSprite: {fileID: 21300000, guid: 0270c186485394c00a3e9710edf71171, type: 3}
+  bossAnimationProfile: {fileID: 11400000, guid: 5c23c40814256463693a2fcfa1389b84, type: 2}
   backgroundSprite: {fileID: 21300000, guid: 348d43b96c42443019eb18e0b8b51944, type: 3}
   bossPosition: {x: 3.5, y: 0, z: 0}
   bossScale: {x: 2.6, y: 2.6, z: 1}

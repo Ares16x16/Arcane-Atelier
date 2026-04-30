@@ -156,6 +156,7 @@ MonoBehaviour:
   attackDuration: 0.25
   hurtDuration: 0.3
   deathDuration: 0.8
+  heavyHurtScalePulse: 0.08
 --- !u!212 &733382185
 SpriteRenderer:
   serializedVersion: 2
@@ -264,8 +265,14 @@ MonoBehaviour:
   contentDatabase: {fileID: 11400000, guid: df53b0eda9ada45e3b559a9495ba208f, type: 2}
   visualManager: {fileID: 860823089}
   hudPresenter: {fileID: 860823088}
+  feedbackPresenter: {fileID: 0}
   startingBossId: enemy.ash.imp
   playerMaxHealth: 100
+  encounterSequence:
+  - enemy.ash.imp
+  - enemy.mist.leech
+  - enemy.moss.shell
+  - boss.earth.golem
 --- !u!4 &860823087
 Transform:
   m_ObjectHideFlags: 0
@@ -308,9 +315,12 @@ MonoBehaviour:
   playerVisual: {fileID: 2034777171}
   bossVisual: {fileID: 733382184}
   backgroundRenderer: {fileID: 1404755038}
+  playerAnchor: {fileID: 0}
+  bossAnchor: {fileID: 0}
   playerSprite: {fileID: 21300000, guid: 79b9be081114e4159acf5867465f4072, type: 3}
   bossSprite: {fileID: 21300000, guid: e69c5b7d615c64e55915282276356614, type: 3}
   backgroundSprite: {fileID: 21300000, guid: 5d55a050a53a8408a899145e2542bbd0, type: 3}
+  playerAnimationProfile: {fileID: 11400000, guid: 70a7ec078f1d742e0978dac3c7f19847, type: 2}
   battleCamera: {fileID: 2144608361}
   screenShakeMagnitude: 0.12
   screenShakeDuration: 0.18
@@ -445,6 +455,7 @@ MonoBehaviour:
   attackDuration: 0.25
   hurtDuration: 0.3
   deathDuration: 0.8
+  heavyHurtScalePulse: 0.08
 --- !u!212 &2034777172
 SpriteRenderer:
   serializedVersion: 2

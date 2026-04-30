@@ -5,6 +5,13 @@ namespace ArcaneAtelier.Battle
 {
     public sealed class BattleUnitVisual : MonoBehaviour
     {
+        private enum VisualAnimationState
+        {
+            Idle,
+            Attack,
+            Hurt
+        }
+
         [SerializeField] private SpriteRenderer spriteRenderer;
 
         [SerializeField] private float idleAmplitude = 0.08f;
@@ -20,6 +27,9 @@ namespace ArcaneAtelier.Battle
         private Color originalColor;
         private bool isAnimating;
         private Coroutine idleCoroutine;
+        private Coroutine spriteAnimationCoroutine;
+        private BattleUnitAnimationProfile animationProfile;
+        private Sprite fallbackSprite;
 
         public SpriteRenderer SpriteRenderer => spriteRenderer;
 
@@ -45,12 +55,19 @@ namespace ArcaneAtelier.Battle
 
         public void Setup(Sprite sprite, Color color, Vector3 scale)
         {
+            Setup(sprite, null, color, scale);
+        }
+
+        public void Setup(Sprite sprite, BattleUnitAnimationProfile resolvedAnimationProfile, Color color, Vector3 scale)
+        {
             if (spriteRenderer == null)
             {
                 spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
             }
 
-            spriteRenderer.sprite = sprite;
+            animationProfile = resolvedAnimationProfile;
+            fallbackSprite = sprite;
+            spriteRenderer.sprite = ResolvePreviewSprite(sprite);
             spriteRenderer.color = color;
             transform.localScale = scale;
 
@@ -63,6 +80,7 @@ namespace ArcaneAtelier.Battle
         public void StartIdle()
         {
             StopIdle();
+            ApplySpriteState(VisualAnimationState.Idle);
             idleCoroutine = StartCoroutine(IdleRoutine());
         }
 
@@ -73,6 +91,8 @@ namespace ArcaneAtelier.Battle
                 StopCoroutine(idleCoroutine);
                 idleCoroutine = null;
             }
+
+            StopSpriteAnimation();
         }
 
         public void PlayAttack(Vector3 direction, bool emphasize)
@@ -83,6 +103,7 @@ namespace ArcaneAtelier.Battle
             }
 
             StopIdle();
+            ApplySpriteState(VisualAnimationState.Attack);
             StartCoroutine(AttackRoutine(direction, emphasize));
         }
 
@@ -94,6 +115,7 @@ namespace ArcaneAtelier.Battle
             }
 
             StopIdle();
+            ApplySpriteState(VisualAnimationState.Hurt);
             StartCoroutine(HurtRoutine(heavy));
         }
 
@@ -161,6 +183,7 @@ namespace ArcaneAtelier.Battle
             transform.position = originalPosition;
             transform.localScale = originalScale;
             isAnimating = false;
+            ApplySpriteState(VisualAnimationState.Idle);
             StartIdle();
         }
 
@@ -195,6 +218,7 @@ namespace ArcaneAtelier.Battle
             }
 
             isAnimating = false;
+            ApplySpriteState(VisualAnimationState.Idle);
             StartIdle();
         }
 
@@ -225,6 +249,7 @@ namespace ArcaneAtelier.Battle
             }
 
             isAnimating = false;
+            ApplySpriteState(VisualAnimationState.Idle);
             StartIdle();
         }
 
@@ -252,6 +277,112 @@ namespace ArcaneAtelier.Battle
             transform.localScale = Vector3.zero;
             gameObject.SetActive(false);
             isAnimating = false;
+        }
+
+        private Sprite ResolvePreviewSprite(Sprite sprite)
+        {
+            if (animationProfile != null && animationProfile.PreviewSprite != null)
+            {
+                return animationProfile.PreviewSprite;
+            }
+
+            if (sprite != null)
+            {
+                return sprite;
+            }
+
+            if (animationProfile != null && animationProfile.IdleSequence.IsConfigured)
+            {
+                return animationProfile.IdleSequence.Frames[0];
+            }
+
+            return null;
+        }
+
+        private void ApplySpriteState(VisualAnimationState state)
+        {
+            StopSpriteAnimation();
+
+            BattleUnitAnimationProfile.AnimationSequence sequence = ResolveSequence(state);
+            if (sequence.IsConfigured)
+            {
+                spriteAnimationCoroutine = StartCoroutine(PlaySpriteSequence(sequence));
+                return;
+            }
+
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.sprite = ResolvePreviewSprite(fallbackSprite);
+            }
+        }
+
+        private BattleUnitAnimationProfile.AnimationSequence ResolveSequence(VisualAnimationState state)
+        {
+            if (animationProfile == null)
+            {
+                return default;
+            }
+
+            switch (state)
+            {
+                case VisualAnimationState.Attack:
+                    return animationProfile.AttackSequence;
+                case VisualAnimationState.Hurt:
+                    return animationProfile.HurtSequence;
+                default:
+                    return animationProfile.IdleSequence;
+            }
+        }
+
+        private IEnumerator PlaySpriteSequence(BattleUnitAnimationProfile.AnimationSequence sequence)
+        {
+            int frameIndex = 0;
+            float frameDuration = sequence.FrameDuration;
+
+            while (true)
+            {
+                if (spriteRenderer != null && sequence.Frames.Length > 0)
+                {
+                    spriteRenderer.sprite = sequence.Frames[frameIndex];
+                }
+
+                yield return new WaitForSeconds(frameDuration);
+
+                if (sequence.Frames.Length <= 1)
+                {
+                    if (!sequence.Loop)
+                    {
+                        yield break;
+                    }
+
+                    continue;
+                }
+
+                frameIndex++;
+                if (frameIndex >= sequence.Frames.Length)
+                {
+                    if (!sequence.Loop)
+                    {
+                        frameIndex = sequence.Frames.Length - 1;
+                        if (spriteRenderer != null)
+                        {
+                            spriteRenderer.sprite = sequence.Frames[frameIndex];
+                        }
+                        yield break;
+                    }
+
+                    frameIndex = 0;
+                }
+            }
+        }
+
+        private void StopSpriteAnimation()
+        {
+            if (spriteAnimationCoroutine != null)
+            {
+                StopCoroutine(spriteAnimationCoroutine);
+                spriteAnimationCoroutine = null;
+            }
         }
     }
 }

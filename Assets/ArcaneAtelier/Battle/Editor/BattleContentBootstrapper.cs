@@ -10,6 +10,7 @@ namespace ArcaneAtelier.Battle.Editor
     {
         private const string ContentPath = "Assets/ArcaneAtelier/Battle/Content";
         private const string CharacterSpritePath = "Assets/ArcaneAtelier/Battle/Art/Sprites/Characters/";
+        private const string CharacterAnimationPath = "Assets/ArcaneAtelier/Battle/Art/Sprites/Characters/Animated/";
         private const string BackgroundSpritePath = "Assets/ArcaneAtelier/Battle/Art/Sprites/Backgrounds/";
 
         [MenuItem("Arcane Atelier/Battle/Generate Default Content")]
@@ -28,6 +29,10 @@ namespace ArcaneAtelier.Battle.Editor
             BattleBossDefinition mossShell = CreateMossShellEnemy();
             BattleBossDefinition mistLeech = CreateMistLeechEnemy();
             BattleBossDefinition earthGolem = CreateEarthGolemBoss();
+            BattleUnitAnimationProfile ashImpAnimation = CreateEnemyAnimationProfile("Enemy_AshImp", "Enemy_AshImp");
+            BattleUnitAnimationProfile mossShellAnimation = CreateEnemyAnimationProfile("Enemy_MossShell", "Enemy_MossShell");
+            BattleUnitAnimationProfile mistLeechAnimation = CreateEnemyAnimationProfile("Enemy_MistLeech", "Enemy_MistLeech");
+            BattleUnitAnimationProfile earthGolemAnimation = CreateEnemyAnimationProfile("Boss_EarthGolem", "Boss_EarthGolem");
             BattlePresentationProfile ashImpPresentation = CreateAshImpPresentation();
             BattlePresentationProfile mossShellPresentation = CreateMossShellPresentation();
             BattlePresentationProfile mistLeechPresentation = CreateMistLeechPresentation();
@@ -334,6 +339,7 @@ namespace ArcaneAtelier.Battle.Editor
             asset.Configure(
                 "boss.earth.golem",
                 LoadSprite(CharacterSpritePath + "Boss_EarthGolem.png"),
+                LoadAnimationProfile(CharacterAnimationPath + "Boss_EarthGolem/Boss_EarthGolem_Animation.asset"),
                 LoadSprite(BackgroundSpritePath + "BG_EarthGolem.png"),
                 new Vector3(3.5f, 0f, 0f),
                 new Vector3(2.8f, 2.8f, 1f),
@@ -349,6 +355,7 @@ namespace ArcaneAtelier.Battle.Editor
             asset.Configure(
                 "enemy.ash.imp",
                 LoadSprite(CharacterSpritePath + "Enemy_AshImp.png"),
+                LoadAnimationProfile(CharacterAnimationPath + "Enemy_AshImp/Enemy_AshImp_Animation.asset"),
                 LoadSprite(BackgroundSpritePath + "BG_AshImp.png"),
                 new Vector3(3.5f, 0f, 0f),
                 new Vector3(2.0f, 2.0f, 1f),
@@ -364,6 +371,7 @@ namespace ArcaneAtelier.Battle.Editor
             asset.Configure(
                 "enemy.moss.shell",
                 LoadSprite(CharacterSpritePath + "Enemy_MossShell.png"),
+                LoadAnimationProfile(CharacterAnimationPath + "Enemy_MossShell/Enemy_MossShell_Animation.asset"),
                 LoadSprite(BackgroundSpritePath + "BG_MossShell.png"),
                 new Vector3(3.5f, 0f, 0f),
                 new Vector3(2.6f, 2.6f, 1f),
@@ -379,6 +387,7 @@ namespace ArcaneAtelier.Battle.Editor
             asset.Configure(
                 "enemy.mist.leech",
                 LoadSprite(CharacterSpritePath + "Enemy_MistLeech.png"),
+                LoadAnimationProfile(CharacterAnimationPath + "Enemy_MistLeech/Enemy_MistLeech_Animation.asset"),
                 LoadSprite(BackgroundSpritePath + "BG_MistLeech.png"),
                 new Vector3(3.5f, 0f, 0f),
                 new Vector3(2.2f, 2.2f, 1f),
@@ -387,9 +396,62 @@ namespace ArcaneAtelier.Battle.Editor
             return asset;
         }
 
+        private static BattleUnitAnimationProfile CreateEnemyAnimationProfile(string assetSlug, string spriteBaseName)
+        {
+            EnsureDirectory(CharacterAnimationPath.TrimEnd('/'));
+            EnsureDirectory(CharacterAnimationPath + assetSlug);
+
+            string assetPath = CharacterAnimationPath + assetSlug + "/" + assetSlug + "_Animation.asset";
+            BattleUnitAnimationProfile asset = AssetDatabase.LoadAssetAtPath<BattleUnitAnimationProfile>(assetPath);
+            if (asset == null)
+            {
+                asset = ScriptableObject.CreateInstance<BattleUnitAnimationProfile>();
+                AssetDatabase.CreateAsset(asset, assetPath);
+            }
+
+            Sprite[] idleFrames = LoadAnimationFrames(assetSlug, spriteBaseName, "Idle");
+            Sprite[] attackFrames = LoadAnimationFrames(assetSlug, spriteBaseName, "Attack");
+            Sprite[] hurtFrames = LoadAnimationFrames(assetSlug, spriteBaseName, "Hurt");
+
+            BattleUnitAnimationProfile.AnimationSequence idleSequence = new BattleUnitAnimationProfile.AnimationSequence();
+            idleSequence.Configure(idleFrames, 5f, true);
+
+            BattleUnitAnimationProfile.AnimationSequence attackSequence = new BattleUnitAnimationProfile.AnimationSequence();
+            attackSequence.Configure(attackFrames, 10f, false);
+
+            BattleUnitAnimationProfile.AnimationSequence hurtSequence = new BattleUnitAnimationProfile.AnimationSequence();
+            hurtSequence.Configure(hurtFrames, 10f, false);
+
+            Sprite previewSprite = idleFrames != null && idleFrames.Length > 0
+                ? idleFrames[0]
+                : LoadSprite(CharacterSpritePath + spriteBaseName + ".png");
+
+            asset.Configure(previewSprite, idleSequence, attackSequence, hurtSequence);
+            EditorUtility.SetDirty(asset);
+            return asset;
+        }
+
         private static Sprite LoadSprite(string assetPath)
         {
             return AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+        }
+
+        private static BattleUnitAnimationProfile LoadAnimationProfile(string assetPath)
+        {
+            return AssetDatabase.LoadAssetAtPath<BattleUnitAnimationProfile>(assetPath);
+        }
+
+        private static Sprite[] LoadAnimationFrames(string assetSlug, string spriteBaseName, string animationName)
+        {
+            string prefix = CharacterAnimationPath + assetSlug + "/" + spriteBaseName + "_" + animationName + "_";
+            Sprite[] frames = new Sprite[4];
+
+            for (int i = 0; i < frames.Length; i++)
+            {
+                frames[i] = LoadSprite(prefix + (i + 1).ToString("00") + ".png");
+            }
+
+            return frames;
         }
 
         private static BattleContentDatabase CreateContentDatabase(
