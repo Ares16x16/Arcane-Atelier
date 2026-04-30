@@ -20,7 +20,15 @@ namespace ArcaneAtelier.Battle
             resolvedTarget.AddShield(shield);
 
             string desc = $"{resolvedTarget.DisplayName} gains {shield} shield. [{resolvedTarget.DisplayName} Shield: {resolvedTarget.Shield}]";
-            return new BattleActionResolution(0, 0, shield, desc);
+            return new BattleActionResolution(
+                0,
+                0,
+                shield,
+                desc,
+                BattleFeedbackTarget.Player,
+                resolvedTarget == caster ? BattleFeedbackTarget.Player : BattleFeedbackTarget.Boss,
+                BattleFeedbackKind.Shield,
+                "Shield Up");
         }
     }
 }

@@ -20,7 +20,15 @@ namespace ArcaneAtelier.Battle
             resolvedTarget.Heal(heal);
 
             string desc = $"Player restores {heal} HP to {resolvedTarget.DisplayName}. [{resolvedTarget.DisplayName} HP: {resolvedTarget.CurrentHealth}/{resolvedTarget.MaxHealth}]";
-            return new BattleActionResolution(0, heal, 0, desc);
+            return new BattleActionResolution(
+                0,
+                heal,
+                0,
+                desc,
+                BattleFeedbackTarget.Player,
+                resolvedTarget == caster ? BattleFeedbackTarget.Player : BattleFeedbackTarget.Boss,
+                BattleFeedbackKind.Heal,
+                "Restore");
         }
     }
 }

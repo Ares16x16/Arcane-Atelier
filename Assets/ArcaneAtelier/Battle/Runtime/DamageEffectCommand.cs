@@ -44,7 +44,15 @@ namespace ArcaneAtelier.Battle
             string desc = $"Player attacks {resolvedTarget.DisplayName} for {finalDamage} damage{relationText}. " +
                           $"[{resolvedTarget.DisplayName} HP: {resolvedTarget.CurrentHealth}/{resolvedTarget.MaxHealth}]";
 
-            return new BattleActionResolution(finalDamage, 0, 0, desc);
+            return new BattleActionResolution(
+                finalDamage,
+                0,
+                0,
+                desc,
+                BattleFeedbackTarget.Player,
+                resolvedTarget == caster ? BattleFeedbackTarget.Player : BattleFeedbackTarget.Boss,
+                BattleFeedbackKind.Damage,
+                "Spell Hit");
         }
     }
 }

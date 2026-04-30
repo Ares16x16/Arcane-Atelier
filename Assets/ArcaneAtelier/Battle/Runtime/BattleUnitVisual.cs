@@ -13,6 +13,7 @@ namespace ArcaneAtelier.Battle
         [SerializeField] private float attackDuration = 0.25f;
         [SerializeField] private float hurtDuration = 0.3f;
         [SerializeField] private float deathDuration = 0.8f;
+        [SerializeField] private float heavyHurtScalePulse = 0.08f;
 
         private Vector3 originalPosition;
         private Vector3 originalScale;
@@ -74,7 +75,7 @@ namespace ArcaneAtelier.Battle
             }
         }
 
-        public void PlayAttack(Vector3 direction)
+        public void PlayAttack(Vector3 direction, bool emphasize)
         {
             if (isAnimating)
             {
@@ -82,10 +83,10 @@ namespace ArcaneAtelier.Battle
             }
 
             StopIdle();
-            StartCoroutine(AttackRoutine(direction));
+            StartCoroutine(AttackRoutine(direction, emphasize));
         }
 
-        public void PlayHurt()
+        public void PlayHurt(bool heavy)
         {
             if (isAnimating)
             {
@@ -93,7 +94,18 @@ namespace ArcaneAtelier.Battle
             }
 
             StopIdle();
-            StartCoroutine(HurtRoutine());
+            StartCoroutine(HurtRoutine(heavy));
+        }
+
+        public void PlaySupportPulse(Color pulseColor)
+        {
+            if (isAnimating)
+            {
+                return;
+            }
+
+            StopIdle();
+            StartCoroutine(SupportPulseRoutine(pulseColor));
         }
 
         public void PlayDeath()
@@ -117,10 +129,11 @@ namespace ArcaneAtelier.Battle
             }
         }
 
-        private IEnumerator AttackRoutine(Vector3 direction)
+        private IEnumerator AttackRoutine(Vector3 direction, bool emphasize)
         {
             isAnimating = true;
-            Vector3 targetPos = originalPosition + direction.normalized * attackDistance;
+            float distance = emphasize ? attackDistance * 1.1f : attackDistance;
+            Vector3 targetPos = originalPosition + direction.normalized * distance;
             float halfDuration = attackDuration * 0.5f;
             float elapsed = 0f;
 
@@ -128,6 +141,7 @@ namespace ArcaneAtelier.Battle
             {
                 float t = elapsed / halfDuration;
                 transform.position = Vector3.Lerp(originalPosition, targetPos, t);
+                transform.localScale = Vector3.Lerp(originalScale, originalScale * (emphasize ? 1.04f : 1.02f), t);
                 elapsed += Time.deltaTime;
                 yield return null;
             }
@@ -139,29 +153,33 @@ namespace ArcaneAtelier.Battle
             {
                 float t = elapsed / halfDuration;
                 transform.position = Vector3.Lerp(targetPos, originalPosition, t);
+                transform.localScale = Vector3.Lerp(originalScale * (emphasize ? 1.04f : 1.02f), originalScale, t);
                 elapsed += Time.deltaTime;
                 yield return null;
             }
 
             transform.position = originalPosition;
+            transform.localScale = originalScale;
             isAnimating = false;
             StartIdle();
         }
 
-        private IEnumerator HurtRoutine()
+        private IEnumerator HurtRoutine(bool heavy)
         {
             isAnimating = true;
             float elapsed = 0f;
+            float scalePulse = heavy ? heavyHurtScalePulse : heavyHurtScalePulse * 0.5f;
 
             while (elapsed < hurtDuration)
             {
-                float x = Mathf.Sin(elapsed * 60f) * 0.08f;
+                float x = Mathf.Sin(elapsed * 60f) * (heavy ? 0.12f : 0.08f);
                 transform.position = originalPosition + new Vector3(x, 0f, 0f);
+                transform.localScale = originalScale * (1f + Mathf.Sin(elapsed * 24f) * scalePulse);
 
                 if (spriteRenderer != null)
                 {
-                    float flash = Mathf.PingPong(elapsed * 12f, 1f);
-                    spriteRenderer.color = Color.Lerp(originalColor, Color.white, flash);
+                    float flash = Mathf.PingPong(elapsed * (heavy ? 18f : 12f), 1f);
+                    spriteRenderer.color = Color.Lerp(originalColor, Color.white, heavy ? flash : flash * 0.8f);
                 }
 
                 elapsed += Time.deltaTime;
@@ -169,7 +187,38 @@ namespace ArcaneAtelier.Battle
             }
 
             transform.position = originalPosition;
+            transform.localScale = originalScale;
 
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.color = originalColor;
+            }
+
+            isAnimating = false;
+            StartIdle();
+        }
+
+        private IEnumerator SupportPulseRoutine(Color pulseColor)
+        {
+            isAnimating = true;
+            float duration = 0.28f;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                float progress = elapsed / duration;
+                float pulse = Mathf.Sin(progress * Mathf.PI);
+                transform.localScale = originalScale * (1f + pulse * 0.05f);
+                if (spriteRenderer != null)
+                {
+                    spriteRenderer.color = Color.Lerp(originalColor, pulseColor, pulse * 0.85f);
+                }
+
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            transform.localScale = originalScale;
             if (spriteRenderer != null)
             {
                 spriteRenderer.color = originalColor;

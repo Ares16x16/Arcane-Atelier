@@ -98,8 +98,17 @@ namespace ArcaneAtelier.Battle
                     {
                         int damage = Mathf.Max(0, value);
                         unit.TakeDamage(damage);
-                        results.Add(new BattleActionResolution(damage, 0, 0,
-                            $"[{instance.Definition.DisplayName}] deals {damage} damage to {unit.DisplayName}. [{unit.DisplayName} HP: {unit.CurrentHealth}/{unit.MaxHealth}]"));
+                        results.Add(new BattleActionResolution(
+                            damage,
+                            0,
+                            0,
+                            $"[{instance.Definition.DisplayName}] deals {damage} damage to {unit.DisplayName}. [{unit.DisplayName} HP: {unit.CurrentHealth}/{unit.MaxHealth}]",
+                            unit == instance.Caster ? BattleFeedbackTarget.Player : BattleFeedbackTarget.None,
+                            ResolveTarget(unit),
+                            BattleFeedbackKind.StatusTick,
+                            instance.Definition.DisplayName,
+                            instance.Definition.StatusId,
+                            instance.RemainingDuration));
                         break;
                     }
 
@@ -107,8 +116,17 @@ namespace ArcaneAtelier.Battle
                     {
                         int heal = Mathf.Max(0, value);
                         unit.Heal(heal);
-                        results.Add(new BattleActionResolution(0, heal, 0,
-                            $"[{instance.Definition.DisplayName}] restores {heal} HP to {unit.DisplayName}. [{unit.DisplayName} HP: {unit.CurrentHealth}/{unit.MaxHealth}]"));
+                        results.Add(new BattleActionResolution(
+                            0,
+                            heal,
+                            0,
+                            $"[{instance.Definition.DisplayName}] restores {heal} HP to {unit.DisplayName}. [{unit.DisplayName} HP: {unit.CurrentHealth}/{unit.MaxHealth}]",
+                            unit == instance.Caster ? BattleFeedbackTarget.Player : BattleFeedbackTarget.None,
+                            ResolveTarget(unit),
+                            BattleFeedbackKind.StatusTick,
+                            instance.Definition.DisplayName,
+                            instance.Definition.StatusId,
+                            instance.RemainingDuration));
                         break;
                     }
 
@@ -116,15 +134,33 @@ namespace ArcaneAtelier.Battle
                     {
                         int shield = Mathf.Max(0, value);
                         unit.AddShield(shield);
-                        results.Add(new BattleActionResolution(0, 0, shield,
-                            $"[{instance.Definition.DisplayName}] grants {shield} shield to {unit.DisplayName}. [{unit.DisplayName} Shield: {unit.Shield}]"));
+                        results.Add(new BattleActionResolution(
+                            0,
+                            0,
+                            shield,
+                            $"[{instance.Definition.DisplayName}] grants {shield} shield to {unit.DisplayName}. [{unit.DisplayName} Shield: {unit.Shield}]",
+                            unit == instance.Caster ? BattleFeedbackTarget.Player : BattleFeedbackTarget.None,
+                            ResolveTarget(unit),
+                            BattleFeedbackKind.StatusTick,
+                            instance.Definition.DisplayName,
+                            instance.Definition.StatusId,
+                            instance.RemainingDuration));
                         break;
                     }
 
                     default:
                     {
-                        results.Add(new BattleActionResolution(0, 0, 0,
-                            $"[{instance.Definition.DisplayName}] triggers on {unit.DisplayName}."));
+                        results.Add(new BattleActionResolution(
+                            0,
+                            0,
+                            0,
+                            $"[{instance.Definition.DisplayName}] triggers on {unit.DisplayName}.",
+                            BattleFeedbackTarget.None,
+                            ResolveTarget(unit),
+                            BattleFeedbackKind.StatusTick,
+                            instance.Definition.DisplayName,
+                            instance.Definition.StatusId,
+                            instance.RemainingDuration));
                         break;
                     }
                 }
@@ -147,6 +183,19 @@ namespace ArcaneAtelier.Battle
             }
 
             return effects.AsReadOnly();
+        }
+
+        public void ClearEffects(BattleUnit unit)
+        {
+            if (unit == null)
+            {
+                return;
+            }
+
+            if (unitEffects.ContainsKey(unit))
+            {
+                unitEffects.Remove(unit);
+            }
         }
 
         public bool HasStatus(BattleUnit unit, string statusId)
@@ -282,6 +331,13 @@ namespace ArcaneAtelier.Battle
                 default:
                     return false;
             }
+        }
+
+        private static BattleFeedbackTarget ResolveTarget(BattleUnit unit)
+        {
+            return unit != null && unit.DisplayName == "Player"
+                ? BattleFeedbackTarget.Player
+                : BattleFeedbackTarget.Boss;
         }
 
         private BattleStatusEffectDefinition FindDefinition(string statusId)

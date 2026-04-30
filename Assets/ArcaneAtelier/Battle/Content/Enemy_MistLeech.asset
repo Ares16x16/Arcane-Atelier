@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattleBossDefinition
   bossId: enemy.mist.leech
   displayName: Mist Leech
-  maxHealth: 50
+  maxHealth: 40
   element: 2
   encounterType: 0
   difficultyRank: 2
@@ -24,15 +24,15 @@ MonoBehaviour:
   preferredBurstTurnInterval: 3
   actionPattern:
   - ActionType: 1
-    Value: 7
+    Value: 6
     SecondaryValue: 0
     Description: Drains a thread of vitality
   - ActionType: 2
-    Value: 6
+    Value: 4
     SecondaryValue: 0
     Description: Condenses moisture to recover
   - ActionType: 1
-    Value: 9
+    Value: 7
     SecondaryValue: 0
     Description: Lashes with a liquid tendril
   phase2ActionPattern: []

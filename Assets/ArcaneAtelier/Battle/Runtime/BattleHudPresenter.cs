@@ -6,10 +6,10 @@ namespace ArcaneAtelier.Battle
     public sealed class BattleHudPresenter : MonoBehaviour
     {
         private const float Margin = 18f;
-        private const float TopBarHeight = 126f;
-        private const float BottomPanelHeight = 236f;
+        private const float TopBarHeight = 174f;
+        private const float BottomPanelHeight = 276f;
         private const float CardWidth = 196f;
-        private const float CardHeight = 160f;
+        private const float CardHeight = 176f;
         private const float CardSpacing = 14f;
         private const float DragThreshold = 10f;
 
@@ -151,8 +151,8 @@ namespace ArcaneAtelier.Battle
 
         private void DrawBackdrop()
         {
-            DrawRect(new Rect(0f, 0f, Screen.width, 168f), new Color(0.02f, 0.04f, 0.08f, 0.24f));
-            DrawRect(new Rect(0f, 0f, Screen.width, 84f), new Color(0.18f, 0.12f, 0.04f, 0.08f));
+            DrawRect(new Rect(0f, 0f, Screen.width, 220f), new Color(0.02f, 0.04f, 0.08f, 0.24f));
+            DrawRect(new Rect(0f, 0f, Screen.width, 104f), new Color(0.18f, 0.12f, 0.04f, 0.08f));
             DrawRect(new Rect(0f, Screen.height - BottomPanelHeight - Margin * 2f, Screen.width, BottomPanelHeight + Margin * 2f), new Color(0.02f, 0.03f, 0.06f, 0.44f));
             DrawRect(new Rect(0f, Screen.height - BottomPanelHeight - Margin * 1.5f, Screen.width, 48f), new Color(0.2f, 0.14f, 0.05f, 0.08f));
         }
@@ -162,15 +162,14 @@ namespace ArcaneAtelier.Battle
             DrawPanelFrame(rect, ApAccent, 0.94f);
             GUI.BeginGroup(rect);
 
-            float sideWidth = rect.width * 0.3f;
-            Rect playerRect = new Rect(16f, 16f, sideWidth, 78f);
-            Rect centerRect = new Rect(rect.width * 0.5f - 168f, 14f, 336f, 80f);
-            Rect bossRect = new Rect(rect.width - sideWidth - 16f, 16f, sideWidth, 78f);
+            float sideWidth = rect.width * 0.33f;
+            Rect playerRect = new Rect(16f, 16f, sideWidth, rect.height - 32f);
+            Rect centerRect = new Rect(rect.width * 0.5f - 180f, 16f, 360f, rect.height - 32f);
+            Rect bossRect = new Rect(rect.width - sideWidth - 16f, 16f, sideWidth, rect.height - 32f);
 
             DrawUnitStatusBlock(playerRect, controller.Player, "Player", false);
             DrawCenterBattleStrip(centerRect);
             DrawUnitStatusBlock(bossRect, controller.Boss, "Enemy", true);
-            DrawActionPoints(new Rect(rect.width * 0.5f - 132f, 100f, 264f, 18f));
 
             GUI.EndGroup();
         }
@@ -195,24 +194,33 @@ namespace ArcaneAtelier.Battle
                 alignment = alignRight ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft
             };
 
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 8f, rect.width - 24f, 18f), displayName, nameStyle);
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 27f, rect.width - 24f, 14f), element == WorkshopElementAttribute.None ? "Neutral" : element.ToString(), valueStyle);
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 46f, rect.width - 24f, 14f), $"HP {currentHealth}/{maxHealth}", valueStyle);
+            float contentX = rect.x + 14f;
+            float contentWidth = rect.width - 28f;
+            float labelWidth = Mathf.Max(64f, contentWidth * 0.26f);
+            string elementText = element == WorkshopElementAttribute.None ? "Neutral" : element.ToString();
 
-            Rect healthBarRect = new Rect(rect.x + 12f, rect.y + 60f, rect.width - 24f, 8f);
-            Rect shieldBarRect = new Rect(rect.x + 12f, rect.y + 71f, rect.width - 24f, 4f);
+            GUI.Label(new Rect(contentX, rect.y + 10f, contentWidth, 18f), displayName, nameStyle);
+            GUI.Label(new Rect(contentX, rect.y + 30f, contentWidth, 14f), elementText, valueStyle);
+            GUI.Label(new Rect(contentX, rect.y + 52f, labelWidth, 14f), $"HP {currentHealth}/{maxHealth}", valueStyle);
+
+            Rect healthBarRect = new Rect(contentX + labelWidth + 8f, rect.y + 54f, contentWidth - labelWidth - 8f, 10f);
+            Rect shieldBarRect = new Rect(contentX + labelWidth + 8f, rect.y + 78f, contentWidth - labelWidth - 8f, 8f);
             float healthRatio = maxHealth > 0 ? Mathf.Clamp01(currentHealth / (float)maxHealth) : 0f;
             float shieldRatio = maxHealth > 0 ? Mathf.Clamp01(shield / (float)maxHealth) : 0f;
 
             DrawProgressBar(healthBarRect, healthRatio, accent, new Color(0.12f, 0.16f, 0.22f, 1f));
             DrawProgressBar(shieldBarRect, shieldRatio, ShieldAccent, new Color(0.09f, 0.12f, 0.18f, 1f));
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 74f, rect.width - 24f, 12f), shield > 0 ? $"Shield {shield}" : "No Shield", valueStyle);
+            GUI.Label(new Rect(contentX, rect.y + 74f, labelWidth, 14f), shield > 0 ? $"Shield {shield}" : "Shield 0", valueStyle);
+
+            DrawRect(new Rect(contentX, rect.y + 98f, contentWidth, 1f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.6f));
 
             string statusText = BuildStatusList(unit);
-            if (!string.IsNullOrEmpty(statusText))
+            if (string.IsNullOrEmpty(statusText))
             {
-                GUI.Label(new Rect(rect.x + 12f, rect.y + 88f, rect.width - 24f, 28f), statusText, mutedStyle);
+                statusText = "Status: None";
             }
+
+            GUI.Label(new Rect(contentX, rect.y + 106f, contentWidth, 36f), statusText, mutedStyle);
         }
 
         private void DrawActionPoints(Rect rect)
@@ -253,19 +261,40 @@ namespace ArcaneAtelier.Battle
             Color intentAccent = GetIntentColor(nextAction.ActionType);
             string intentBadge = GetIntentBadge(nextAction.ActionType);
             string intent = TruncateText(controller.BossIntentDescription, 44);
+            bool bossTurnPending = controller.IsBossTurnPending;
+            float windupProgress = controller.BossTurnWindupProgress;
 
-            GUI.Label(new Rect(rect.x, rect.y + 6f, rect.width, 14f), $"Turn {controller.Simulation.TurnsElapsed + 1}", centeredMutedStyle);
-            DrawTag(new Rect(rect.x + rect.width * 0.5f - 48f, rect.y + 26f, 96f, 18f), intentBadge, new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.88f));
-            GUI.Label(new Rect(rect.x + 14f, rect.y + 46f, rect.width - 28f, 16f), intent, centeredBodyStyle);
+            if (bossTurnPending)
+            {
+                DrawRect(
+                    new Rect(rect.x + 8f, rect.y + 8f, rect.width - 16f, rect.height - 16f),
+                    new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.08f + windupProgress * 0.08f));
+                DrawRect(
+                    new Rect(rect.x + 18f, rect.y + rect.height - 10f, (rect.width - 36f) * windupProgress, 4f),
+                    new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.88f));
+            }
+
+            GUI.Label(new Rect(rect.x, rect.y + 8f, rect.width, 14f), $"Encounter {controller.CurrentEncounterNumber}/{controller.TotalEncounterCount}", centeredMutedStyle);
+            GUI.Label(
+                new Rect(rect.x, rect.y + 24f, rect.width, 14f),
+                bossTurnPending ? "Enemy action incoming" : $"Turn {controller.Simulation.TurnsElapsed + 1}",
+                centeredMutedStyle);
+            DrawTag(new Rect(rect.x + rect.width * 0.5f - 56f, rect.y + 48f, 112f, 20f), intentBadge, new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.88f));
+            GUI.Label(
+                new Rect(rect.x + 18f, rect.y + 74f, rect.width - 36f, 30f),
+                bossTurnPending ? $"Preparing: {intent}" : intent,
+                centeredBodyStyle);
 
             bool canEnd = controller.CanEndTurn;
             bool previousEnabled = GUI.enabled;
             GUI.enabled = canEnd;
-            if (GUI.Button(new Rect(rect.x + rect.width * 0.5f - 64f, rect.y + 60f, 128f, 18f), "End Turn", GUI.skin.button))
+            if (GUI.Button(new Rect(rect.x + rect.width * 0.5f - 76f, rect.y + 118f, 152f, 22f), "End Turn", GUI.skin.button))
             {
                 controller.EndTurnFromHud();
             }
             GUI.enabled = previousEnabled;
+
+            DrawActionPoints(new Rect(rect.x + 40f, rect.y + 146f, rect.width - 80f, 18f));
         }
 
         private void DrawHandPanel(Rect rect)
@@ -274,7 +303,17 @@ namespace ArcaneAtelier.Battle
             GUI.BeginGroup(rect);
 
             int handCount = controller.Simulation.Deck.HandCount;
-            Rect contentRect = new Rect(14f, 14f, rect.width - 28f, rect.height - 28f);
+            Rect headerRect = new Rect(14f, 12f, rect.width - 28f, 30f);
+            Rect contentRect = new Rect(14f, 48f, rect.width - 28f, rect.height - 62f);
+
+            DrawRect(headerRect, new Color(0.06f, 0.08f, 0.12f, 0.66f));
+            DrawOutline(headerRect, new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.42f));
+            GUI.Label(new Rect(headerRect.x + 12f, headerRect.y + 6f, 180f, 18f), "Prepared Cards", sectionStyle);
+            GUI.Label(
+                new Rect(headerRect.x + headerRect.width - 320f, headerRect.y + 7f, 308f, 16f),
+                $"Hand {controller.Simulation.Deck.HandCount}  •  Draw {controller.Simulation.Deck.DrawPileCount}  •  Discard {controller.Simulation.Deck.DiscardPileCount}",
+                new GUIStyle(mutedStyle) { alignment = TextAnchor.MiddleRight });
+
             DrawRect(contentRect, new Color(0.05f, 0.07f, 0.11f, 0.54f));
             DrawOutline(contentRect, new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.32f));
             DrawRect(new Rect(contentRect.x + 10f, contentRect.y + 8f, contentRect.width - 20f, 1f), new Color(1f, 1f, 1f, 0.03f));
@@ -377,12 +416,12 @@ namespace ArcaneAtelier.Battle
             GUI.Label(new Rect(rect.x + 12f, rect.y + 14f, 30f, 18f), index < 9 ? (index + 1).ToString() : "-", pillStyle);
 
             DrawTag(new Rect(rect.x + rect.width - 58f, rect.y + 12f, 46f, 20f), $"{apCost} AP", new Color(ApAccent.r, ApAccent.g, ApAccent.b, 0.96f), darkChipStyle);
-            GUI.Label(new Rect(rect.x + 50f, rect.y + 12f, rect.width - 114f, 20f), TruncateText(card.DisplayName, 24), cardTitleStyle);
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 42f, rect.width - 24f, 14f), BuildCardMeta(card), cardMetaStyle);
-            DrawRect(new Rect(rect.x + 12f, rect.y + 62f, rect.width - 24f, 1f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.8f));
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 74f, rect.width - 24f, 32f), BuildCardSummary(card), cardSummaryStyle);
-            DrawTag(new Rect(rect.x + 12f, rect.y + 118f, 100f, 18f), BuildTargetLabel(card), new Color(accent.r, accent.g, accent.b, 0.26f));
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 140f, rect.width - 24f, 14f), canAfford ? BuildDragHint(card) : "Insufficient AP", centeredMutedStyle);
+            GUI.Label(new Rect(rect.x + 50f, rect.y + 10f, rect.width - 114f, 34f), card.DisplayName, cardTitleStyle);
+            DrawRect(new Rect(rect.x + 12f, rect.y + 48f, rect.width - 24f, 1f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.8f));
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 56f, rect.width - 24f, 40f), BuildCardSummary(card), cardSummaryStyle);
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 100f, rect.width - 24f, 14f), BuildCardMeta(card), cardMetaStyle);
+            DrawTag(new Rect(rect.x + 12f, rect.y + 122f, 100f, 18f), BuildTargetLabel(card), new Color(accent.r, accent.g, accent.b, 0.26f));
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 146f, rect.width - 24f, 18f), canAfford ? BuildDragHint(card) : "Insufficient AP", centeredMutedStyle);
 
             if (!canAfford)
             {
@@ -449,7 +488,7 @@ namespace ArcaneAtelier.Battle
             GUI.BeginGroup(animatedRect);
             GUI.Label(new Rect(28f, 14f, animatedRect.width - 56f, 30f), outcome, resultStyle);
             GUI.Label(new Rect(28f, 44f, animatedRect.width - 56f, 18f), result.BossDisplayName, sectionStyle);
-            GUI.Label(new Rect(28f, 68f, animatedRect.width - 56f, 16f), result.ResultType == BattleResultType.Victory ? "Encounter cleared. Rewards routed to bridge." : "Encounter failed. Review the combat breakdown below.", mutedStyle);
+            GUI.Label(new Rect(28f, 68f, animatedRect.width - 56f, 16f), result.ResultType == BattleResultType.Victory ? $"Run cleared. {result.EncountersCleared} encounters completed." : $"Run failed after clearing {result.EncountersCleared} encounter(s).", mutedStyle);
 
             DrawMiniStat(new Rect(28f, 98f, 104f, 52f), $"{result.TotalDamageDealt}", "Damage");
             DrawMiniStat(new Rect(144f, 98f, 104f, 52f), $"{result.TotalHealingDone}", "Healing");
@@ -457,8 +496,9 @@ namespace ArcaneAtelier.Battle
             DrawMiniStat(new Rect(376f, 98f, 104f, 52f), $"{result.CardsPlayed}", "Cards");
 
             DrawRect(new Rect(28f, 168f, animatedRect.width - 56f, 1f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.72f));
-            GUI.Label(new Rect(28f, 182f, animatedRect.width - 56f, 18f), $"Turns elapsed: {result.TurnsElapsed}", bodyStyle);
-            GUI.Label(new Rect(28f, 204f, animatedRect.width - 56f, 18f), "Battle result has been committed. Scene handoff is still pending.", mutedStyle);
+            GUI.Label(new Rect(28f, 182f, animatedRect.width - 56f, 18f), $"Final encounter: {result.FinalEncounterId}", bodyStyle);
+            GUI.Label(new Rect(28f, 204f, animatedRect.width - 56f, 18f), $"Turns elapsed: {result.TurnsElapsed}", bodyStyle);
+            GUI.Label(new Rect(28f, 226f, animatedRect.width - 56f, 18f), "Battle result has been committed. Scene handoff is still pending.", mutedStyle);
             GUI.EndGroup();
         }
 
@@ -583,7 +623,7 @@ namespace ArcaneAtelier.Battle
                 return card.Role.ToString();
             }
 
-            return $"{card.Role}  •  {card.Element}";
+            return $"{card.Element}  •  {card.Role}";
         }
 
         private string BuildDragHint(WorkshopBattleCardEntry card)
@@ -604,11 +644,11 @@ namespace ArcaneAtelier.Battle
             switch (GetExpectedTarget(card))
             {
                 case DragTarget.Boss:
-                    return "Target  Enemy";
+                    return "Enemy";
                 case DragTarget.Player:
-                    return "Target  Self";
+                    return "Self";
                 default:
-                    return "Target  None";
+                    return "None";
             }
         }
 
@@ -675,7 +715,7 @@ namespace ArcaneAtelier.Battle
             {
                 if (i > 0)
                 {
-                    builder.Append(" | ");
+                    builder.Append("  |  ");
                 }
 
                 BattleStatusEffectInstance effect = effects[i];
@@ -712,7 +752,7 @@ namespace ArcaneAtelier.Battle
                 return text;
             }
 
-            return text.Substring(0, maxLength - 1) + "\u2026";
+            return text.Substring(0, maxLength - 3) + "...";
         }
 
         private Color GetElementColor(WorkshopElementAttribute element)
@@ -904,7 +944,9 @@ namespace ArcaneAtelier.Battle
             {
                 fontSize = 13,
                 fontStyle = FontStyle.Bold,
-                wordWrap = false,
+                alignment = TextAnchor.UpperLeft,
+                wordWrap = true,
+                clipping = TextClipping.Clip,
                 normal = { textColor = HudText }
             };
 

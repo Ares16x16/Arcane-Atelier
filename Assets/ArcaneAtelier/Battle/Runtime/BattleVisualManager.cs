@@ -16,6 +16,8 @@ namespace ArcaneAtelier.Battle
         [SerializeField] private BattleUnitVisual playerVisual;
         [SerializeField] private BattleUnitVisual bossVisual;
         [SerializeField] private SpriteRenderer backgroundRenderer;
+        [SerializeField] private BattleEffectAnchor playerAnchor;
+        [SerializeField] private BattleEffectAnchor bossAnchor;
 
         [Header("Fallback Sprites")]
         [SerializeField] private Sprite playerSprite;
@@ -40,6 +42,8 @@ namespace ArcaneAtelier.Battle
         public Camera BattleCamera => battleCamera;
         public BattleUnitVisual PlayerVisual => playerVisual;
         public BattleUnitVisual BossVisual => bossVisual;
+        public BattleEffectAnchor PlayerAnchor => playerAnchor;
+        public BattleEffectAnchor BossAnchor => bossAnchor;
 
         public void Initialize(
             BattleSimulation simulation,
@@ -48,6 +52,7 @@ namespace ArcaneAtelier.Battle
             BattleContentDatabase contentDatabase,
             string bossId)
         {
+            UnsubscribeFromSimulation();
             activePresentationProfile = contentDatabase != null
                 ? contentDatabase.FindPresentationProfile(bossId)
                 : null;
@@ -55,6 +60,7 @@ namespace ArcaneAtelier.Battle
             EnsureBackground();
             EnsurePlayerVisual();
             EnsureBossVisual();
+            EnsureAnchors();
 
             subscribedSimulation = simulation;
             simulation.PlayerActionResolved += OnPlayerActionResolved;
@@ -64,12 +70,7 @@ namespace ArcaneAtelier.Battle
 
         private void OnDestroy()
         {
-            if (subscribedSimulation != null)
-            {
-                subscribedSimulation.PlayerActionResolved -= OnPlayerActionResolved;
-                subscribedSimulation.BossActionResolved -= OnBossActionResolved;
-                subscribedSimulation.BattleEnded -= OnBattleEnded;
-            }
+            UnsubscribeFromSimulation();
         }
 
         private void EnsureCamera()
@@ -173,6 +174,35 @@ namespace ArcaneAtelier.Battle
             bossVisual.Setup(sprite, bossColor, bossScale);
         }
 
+        private void EnsureAnchors()
+        {
+            if (playerVisual != null)
+            {
+                playerAnchor = EnsureAnchor(playerVisual.gameObject, playerAnchor);
+            }
+
+            if (bossVisual != null)
+            {
+                bossAnchor = EnsureAnchor(bossVisual.gameObject, bossAnchor);
+            }
+        }
+
+        private static BattleEffectAnchor EnsureAnchor(GameObject owner, BattleEffectAnchor existingAnchor)
+        {
+            if (existingAnchor != null)
+            {
+                return existingAnchor;
+            }
+
+            BattleEffectAnchor anchor = owner.GetComponent<BattleEffectAnchor>();
+            if (anchor == null)
+            {
+                anchor = owner.AddComponent<BattleEffectAnchor>();
+            }
+
+            return anchor;
+        }
+
         private Sprite ResolveBossSprite()
         {
             if (activePresentationProfile != null && activePresentationProfile.BossSprite != null)
@@ -243,9 +273,17 @@ namespace ArcaneAtelier.Battle
         {
             if (resolution.DamageDealt > 0)
             {
-                playerVisual.PlayAttack(Vector3.right);
-                bossVisual.PlayHurt();
+                playerVisual.PlayAttack(Vector3.right, true);
+                bossVisual.PlayHurt(resolution.DamageDealt >= 12);
                 StartCoroutine(ScreenShake());
+            }
+            else if (resolution.HealingDone > 0)
+            {
+                playerVisual.PlaySupportPulse(new Color(0.45f, 0.9f, 0.58f));
+            }
+            else if (resolution.ShieldGained > 0)
+            {
+                playerVisual.PlaySupportPulse(new Color(0.5f, 0.76f, 0.98f));
             }
         }
 
@@ -253,13 +291,15 @@ namespace ArcaneAtelier.Battle
         {
             if (resolution.DamageDealt > 0)
             {
-                bossVisual.PlayAttack(Vector3.left);
-                playerVisual.PlayHurt();
+                bossVisual.PlayAttack(Vector3.left, true);
+                playerVisual.PlayHurt(resolution.DamageDealt >= 12);
                 StartCoroutine(ScreenShake());
             }
             else if (resolution.ShieldGained > 0 || resolution.HealingDone > 0)
             {
-                bossVisual.PlayHurt();
+                bossVisual.PlaySupportPulse(resolution.HealingDone > 0
+                    ? new Color(0.45f, 0.9f, 0.58f)
+                    : new Color(0.5f, 0.76f, 0.98f));
             }
         }
 
@@ -296,6 +336,19 @@ namespace ArcaneAtelier.Battle
 
             battleCamera.transform.position = cameraOriginalPosition;
             isShaking = false;
+        }
+
+        private void UnsubscribeFromSimulation()
+        {
+            if (subscribedSimulation == null)
+            {
+                return;
+            }
+
+            subscribedSimulation.PlayerActionResolved -= OnPlayerActionResolved;
+            subscribedSimulation.BossActionResolved -= OnBossActionResolved;
+            subscribedSimulation.BattleEnded -= OnBattleEnded;
+            subscribedSimulation = null;
         }
     }
 }

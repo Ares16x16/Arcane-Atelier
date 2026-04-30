@@ -14,7 +14,17 @@ namespace ArcaneAtelier.Battle
             resolvedTarget.StatusEffectController?.Apply(resolvedTarget, instruction.StatusId, instruction.Duration, caster, instruction.Value);
 
             string desc = $"Applies [{instruction.StatusId}] for {instruction.Duration} turn(s) to {resolvedTarget.DisplayName}.";
-            return new BattleActionResolution(0, 0, 0, desc);
+            return new BattleActionResolution(
+                0,
+                0,
+                0,
+                desc,
+                BattleFeedbackTarget.Player,
+                resolvedTarget == caster ? BattleFeedbackTarget.Player : BattleFeedbackTarget.Boss,
+                BattleFeedbackKind.StatusApplied,
+                instruction.StatusId,
+                instruction.StatusId,
+                instruction.Duration);
         }
     }
 }

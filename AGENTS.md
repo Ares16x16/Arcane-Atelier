@@ -43,6 +43,8 @@ Battle ─────→ Workshop
 - Runtime type names still use `Boss` terminology, but the same content path is now used for both true bosses and normal enemies.
 - Battle now supports **per-card effect instructions** via `BattleCardDefinition` (22 definitions mapping to Workshop cards).
 - A **status effect framework** is in place (`BattleStatusEffectController` + `BattleStatusEffectDefinition`), with 16 status definitions generated. Complex keyword behaviors (Freeze, Stun, Expose, etc.) are currently stubbed and require further iteration.
+- Battle now includes a lightweight feedback layer (`BattleFeedbackPresenter`) for turn banners, action callouts, floating numbers, and status toasts.
+- Enemy turn flow is no longer purely synchronous: runtime now uses a short `BossTurnPending` windup before enemy action resolution so the UI can present clearer turn-change feedback.
 
 ## Assembly Definitions
 
@@ -52,6 +54,7 @@ Battle ─────→ Workshop
 | `ArcaneAtelier.Workshop.Editor` | `Workshop.Runtime` | Editor only | Workshop bootstrapping |
 | `ArcaneAtelier.Battle.Runtime` | `Workshop.Runtime`, `UnityEngine.IMGUIModule` | All | Combat systems |
 | `ArcaneAtelier.Battle.Editor` | `Battle.Runtime`, `Workshop.Runtime` | Editor only | Battle content generation |
+| `ArcaneAtelier.Battle.Editor.Tests` | `Battle.Runtime`, `Workshop.Runtime` | Editor only | Minimal Battle EditMode tests |
 
 - Unity asmdef references are non-transitive; editor assemblies must explicitly reference required runtime assemblies.
 
@@ -69,7 +72,7 @@ Battle ─────→ Workshop
 2. No complete Workshop → Battle → Workshop scene flow has been finalized.
 3. No save/load persistence.
 4. Enemy attacks do not currently apply elemental advantage/disadvantage.
-5. Automated tests are still absent.
+5. Automated coverage is still minimal; Battle currently has only a small EditMode test baseline for turn-flow timing.
 6. Documentation may lag behind rapid codebase iteration. Prefer runtime code and current assets as source of truth.
 
 ## Important Paths

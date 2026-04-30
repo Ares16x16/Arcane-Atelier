@@ -7,6 +7,7 @@ namespace ArcaneAtelier.Battle
     public enum BattleState
     {
         WaitingForPlayer,
+        BossTurnPending,
         ResolvingBoss,
         BattleEnded
     }
@@ -100,7 +101,7 @@ namespace ArcaneAtelier.Battle
 
             if (ActionPoints <= 0)
             {
-                ResolveBossTurn();
+                QueueBossTurn();
             }
 
             return true;
@@ -123,7 +124,22 @@ namespace ArcaneAtelier.Battle
                 return;
             }
 
+            QueueBossTurn();
+        }
+
+        public void AdvancePendingTurn()
+        {
+            if (State != BattleState.BossTurnPending)
+            {
+                return;
+            }
+
             ResolveBossTurn();
+        }
+
+        private void QueueBossTurn()
+        {
+            State = BattleState.BossTurnPending;
         }
 
         private void ResolveBossTurn()
