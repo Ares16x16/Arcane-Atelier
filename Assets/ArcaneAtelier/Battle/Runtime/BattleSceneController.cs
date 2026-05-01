@@ -7,14 +7,14 @@ namespace ArcaneAtelier.Battle
     public sealed class BattleSceneController : MonoBehaviour
     {
         private const int MaxRecentEvents = 8;
-        private const float BossTurnTransitionDelay = 3.0f;
+        private const float BossTurnTransitionDelay = 1.1f;
 
         [SerializeField] private BattleContentDatabase contentDatabase;
         [SerializeField] private BattleVisualManager visualManager;
         [SerializeField] private BattleHudPresenter hudPresenter;
         [SerializeField] private BattleFeedbackPresenter feedbackPresenter;
         [SerializeField] private string startingBossId = "enemy.ash.imp";
-        [SerializeField] private int playerMaxHealth = 100;
+        [SerializeField] private int playerMaxHealth = 80;
         [SerializeField] private string[] encounterSequence = new[]
         {
             "enemy.ash.imp",
@@ -397,8 +397,11 @@ namespace ArcaneAtelier.Battle
             {
                 string clearedName = result.BossDisplayName;
                 currentEncounterIndex++;
-                AddRecentEvent($"{clearedName} defeated. Advancing to next encounter.");
-                Debug.Log($"=== ENCOUNTER CLEARED: {clearedName} ===");
+
+                int healAmount = 15;
+                Player.Heal(healAmount);
+                AddRecentEvent($"{clearedName} defeated. Recovered {healAmount} HP. Advancing to next encounter.");
+                Debug.Log($"=== ENCOUNTER CLEARED: {clearedName} === Recovered {healAmount} HP ===");
                 StartEncounter(currentEncounterIndex, resetDeck: false);
                 return;
             }
