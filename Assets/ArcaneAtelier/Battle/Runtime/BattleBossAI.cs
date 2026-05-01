@@ -19,6 +19,8 @@ namespace ArcaneAtelier.Battle
         private bool isPhase2 = false;
         private float damageMultiplier = 1.0f;
         private readonly System.Random rng = new System.Random();
+        private BattleBossAction plannedEnemyAction;
+        private bool hasPlannedEnemyAction;
 
         public BattleBossAI(BattleBossDefinition bossDefinition)
         {
@@ -44,7 +46,7 @@ namespace ArcaneAtelier.Battle
         {
             if (definition != null && definition.IsEnemy)
             {
-                return SelectEnemyAction(previewOnly: true);
+                return EnsurePlannedEnemyAction();
             }
 
             IReadOnlyList<BattleBossAction> pattern = GetCurrentPhasePattern();
@@ -63,13 +65,14 @@ namespace ArcaneAtelier.Battle
                 if (selfUnit.StatusEffectController.ConsumeStatus(selfUnit, "Freeze") ||
                     selfUnit.StatusEffectController.ConsumeStatus(selfUnit, "Stun"))
                 {
+                    ClearPlannedEnemyAction();
                     return CreateNoAction();
                 }
             }
 
             if (definition != null && definition.IsEnemy)
             {
-                return SelectEnemyAction(previewOnly: false);
+                return ConsumePlannedEnemyAction();
             }
 
             CheckPhaseTransition();
@@ -92,6 +95,7 @@ namespace ArcaneAtelier.Battle
             sustainAttackCounter = 0;
             isPhase2 = false;
             damageMultiplier = 1.0f;
+            ClearPlannedEnemyAction();
         }
 
         private void CategorizeActions()
@@ -131,7 +135,41 @@ namespace ArcaneAtelier.Battle
             }
         }
 
-        private BattleBossAction SelectEnemyAction(bool previewOnly)
+        private BattleBossAction EnsurePlannedEnemyAction()
+        {
+            if (!hasPlannedEnemyAction)
+            {
+                plannedEnemyAction = SelectEnemyAction();
+                hasPlannedEnemyAction = true;
+            }
+
+            return plannedEnemyAction ?? CreateNoAction();
+        }
+
+        private BattleBossAction ConsumePlannedEnemyAction()
+        {
+            BattleBossAction action = EnsurePlannedEnemyAction();
+            ClearPlannedEnemyAction();
+
+            if (action != null && definition.ActionPattern != null && definition.ActionPattern.Count > 0)
+            {
+                currentActionIndex = (currentActionIndex + 1) % definition.ActionPattern.Count;
+                if (definition.EnemyArchetype == BattleEnemyArchetype.Sustain)
+                {
+                    sustainTurnCounter++;
+                }
+            }
+
+            return action ?? CreateNoAction();
+        }
+
+        private void ClearPlannedEnemyAction()
+        {
+            plannedEnemyAction = null;
+            hasPlannedEnemyAction = false;
+        }
+
+        private BattleBossAction SelectEnemyAction()
         {
             BattleBossAction action = definition.EnemyArchetype switch
             {
@@ -140,15 +178,6 @@ namespace ArcaneAtelier.Battle
                 BattleEnemyArchetype.Defensive => SelectDefensiveEnemyAction(),
                 _ => PeekFallbackAction()
             };
-
-            if (!previewOnly && action != null && definition.ActionPattern != null && definition.ActionPattern.Count > 0)
-            {
-                currentActionIndex = (currentActionIndex + 1) % definition.ActionPattern.Count;
-                if (definition.EnemyArchetype == BattleEnemyArchetype.Sustain)
-                {
-                    sustainTurnCounter++;
-                }
-            }
 
             return action ?? CreateNoAction();
         }
