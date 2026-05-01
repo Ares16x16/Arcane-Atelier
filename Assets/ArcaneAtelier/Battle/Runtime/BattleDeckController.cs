@@ -53,10 +53,10 @@ namespace ArcaneAtelier.Battle
             AddFallbackCard("combat.spell.basic.wind", "Zephyr Cut", WorkshopElementAttribute.Wind, WorkshopSpellRole.Attack, 5, 2, 10f, "Expose", 2);
             AddFallbackCard("combat.spell.basic.ice", "Frost Pin", WorkshopElementAttribute.Ice, WorkshopSpellRole.Attack, 4, 2, 20f, "Slow", 2);
             AddFallbackCard("combat.spell.basic.thunder", "Volt Javelin", WorkshopElementAttribute.Thunder, WorkshopSpellRole.Attack, 7, 1, 15f, "Shock", 2);
-            AddFallbackCard("combat.spell.basic.water", "Tidal Mend", WorkshopElementAttribute.Water, WorkshopSpellRole.Healing, 6, 1, 8f, "Regen", 2);
-            AddFallbackCard("combat.spell.basic.light", "Lumen Prayer", WorkshopElementAttribute.Light, WorkshopSpellRole.Healing, 5, 2, 12f, "Bless", 2);
-            AddFallbackCard("combat.spell.basic.earth", "Stoneguard Sigil", WorkshopElementAttribute.Earth, WorkshopSpellRole.Defense, 7, 1, 18f, "Bulwark", 2);
-            AddFallbackCard("combat.spell.basic.dark", "Gloam Ward", WorkshopElementAttribute.Dark, WorkshopSpellRole.Defense, 6, 1, 20f, "Veil", 1);
+            AddFallbackCard("combat.spell.basic.water", "Tidal Mend", WorkshopElementAttribute.Water, WorkshopSpellRole.Healing, 5, 1, 8f, "Regen", 2);
+            AddFallbackCard("combat.spell.basic.light", "Lumen Prayer", WorkshopElementAttribute.Light, WorkshopSpellRole.Healing, 4, 2, 12f, "Bless", 2);
+            AddFallbackCard("combat.spell.basic.earth", "Stoneguard Sigil", WorkshopElementAttribute.Earth, WorkshopSpellRole.Defense, 6, 1, 18f, "Bulwark", 2);
+            AddFallbackCard("combat.spell.basic.dark", "Gloam Ward", WorkshopElementAttribute.Dark, WorkshopSpellRole.Defense, 5, 1, 20f, "Veil", 1);
         }
 
         private void AddFallbackCard(
