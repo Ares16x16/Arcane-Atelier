@@ -23,7 +23,7 @@ namespace ArcaneAtelier.Battle
         {
             contentDatabase = database;
             InitializeDeck(payload);
-            DrawCards(5);
+            DrawCards(4);
         }
 
         private void InitializeDeck(WorkshopBattlePayload payload)
@@ -177,7 +177,7 @@ namespace ArcaneAtelier.Battle
             // Move entire hand to discard and draw fresh hand
             discardPile.AddRange(hand);
             hand.Clear();
-            DrawCards(5);
+            DrawCards(4);
         }
 
         public static int GetActionPointCost(WorkshopSpellRole role)
