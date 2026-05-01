@@ -14,27 +14,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattleBossDefinition
   bossId: enemy.moss.shell
   displayName: Moss Shell
-  maxHealth: 50
+  maxHealth: 64
   element: 4
   encounterType: 0
   difficultyRank: 3
   enemyArchetype: 3
   lowHealthThresholdNormalized: 0.45
-  defensiveShieldThreshold: 12
-  preferredBurstTurnInterval: 4
+  defensiveShieldThreshold: 6
+  preferredBurstTurnInterval: 3
   actionPattern:
-  - ActionType: 3
-    Value: 6
-    SecondaryValue: 0
-    Description: Raises a bark shield
-  - ActionType: 1
-    Value: 9
-    SecondaryValue: 0
-    Description: Body slams forward
   - ActionType: 3
     Value: 8
     SecondaryValue: 0
-    Description: Roots tighten into armor
+    Description: Raises a bark shield
+  - ActionType: 1
+    Value: 12
+    SecondaryValue: 0
+    Description: Body slams forward
+  - ActionType: 1
+    Value: 14
+    SecondaryValue: 0
+    Description: Roots crash down in a heavy sweep
   phase2ActionPattern: []
   phaseTransitionHealthPercent: 0.5
   defeatRewardId: reward.enemy.earth.minor

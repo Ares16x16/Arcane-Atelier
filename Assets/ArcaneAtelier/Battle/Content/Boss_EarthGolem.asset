@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattleBossDefinition
   bossId: boss.earth.golem
   displayName: Corrupted Earth Golem
-  maxHealth: 90
+  maxHealth: 130
   element: 4
   encounterType: 1
   difficultyRank: 100
@@ -24,28 +24,28 @@ MonoBehaviour:
   preferredBurstTurnInterval: 3
   actionPattern:
   - ActionType: 1
-    Value: 10
+    Value: 16
     SecondaryValue: 0
     Description: Slams the ground
   - ActionType: 3
-    Value: 8
+    Value: 10
     SecondaryValue: 0
     Description: Hardens its shell
   - ActionType: 1
-    Value: 14
+    Value: 20
     SecondaryValue: 0
     Description: Heavy strike
   - ActionType: 2
-    Value: 7
+    Value: 8
     SecondaryValue: 0
     Description: Absorbs earth energy
   phase2ActionPattern:
   - ActionType: 1
-    Value: 16
+    Value: 15
     SecondaryValue: 0
     Description: Raging slam
   - ActionType: 1
-    Value: 20
+    Value: 19
     SecondaryValue: 0
     Description: Crushing blow
   - ActionType: 2

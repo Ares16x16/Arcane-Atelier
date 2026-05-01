@@ -21,10 +21,27 @@ namespace ArcaneAtelier.Battle.Tests
         }
 
         [Test]
-        public void BattleDeckController_InitialHandSize_IsFour()
+        public void BattleDeckController_InitialHandSize_IsFive()
         {
             BattleSimulation simulation = CreateSimulation();
-            Assert.That(simulation.Deck.HandCount, Is.EqualTo(1));
+            Assert.That(simulation.Deck.HandCount, Is.EqualTo(5));
+        }
+
+        [Test]
+        public void BattleSimulation_UsesThreeActionPointsPerTurn()
+        {
+            BattleSimulation simulation = CreateSimulation();
+
+            Assert.That(simulation.MaxActionPoints, Is.EqualTo(3));
+            Assert.That(simulation.ActionPoints, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void BattleDeckController_ActionPointCosts_MatchDifficultyV2()
+        {
+            Assert.That(BattleDeckController.GetActionPointCost(WorkshopSpellRole.Attack), Is.EqualTo(1));
+            Assert.That(BattleDeckController.GetActionPointCost(WorkshopSpellRole.Defense), Is.EqualTo(2));
+            Assert.That(BattleDeckController.GetActionPointCost(WorkshopSpellRole.Healing), Is.EqualTo(2));
         }
 
         [Test]
@@ -161,6 +178,46 @@ namespace ArcaneAtelier.Battle.Tests
                         Element = WorkshopElementAttribute.Fire,
                         Role = WorkshopSpellRole.Attack,
                         PrimaryValue = 8,
+                        HitCount = 1
+                    },
+                    new WorkshopBattleCardEntry
+                    {
+                        CardId = "combat.spell.basic.wind",
+                        DisplayName = "Zephyr Cut",
+                        Amount = 1,
+                        Element = WorkshopElementAttribute.Wind,
+                        Role = WorkshopSpellRole.Attack,
+                        PrimaryValue = 5,
+                        HitCount = 2
+                    },
+                    new WorkshopBattleCardEntry
+                    {
+                        CardId = "combat.spell.basic.ice",
+                        DisplayName = "Frost Pin",
+                        Amount = 1,
+                        Element = WorkshopElementAttribute.Ice,
+                        Role = WorkshopSpellRole.Attack,
+                        PrimaryValue = 4,
+                        HitCount = 2
+                    },
+                    new WorkshopBattleCardEntry
+                    {
+                        CardId = "combat.spell.basic.earth",
+                        DisplayName = "Stoneguard Sigil",
+                        Amount = 1,
+                        Element = WorkshopElementAttribute.Earth,
+                        Role = WorkshopSpellRole.Defense,
+                        PrimaryValue = 6,
+                        HitCount = 1
+                    },
+                    new WorkshopBattleCardEntry
+                    {
+                        CardId = "combat.spell.basic.water",
+                        DisplayName = "Tidal Mend",
+                        Amount = 1,
+                        Element = WorkshopElementAttribute.Water,
+                        Role = WorkshopSpellRole.Healing,
+                        PrimaryValue = 5,
                         HitCount = 1
                     }
                 }

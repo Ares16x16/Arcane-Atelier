@@ -19,13 +19,13 @@ MonoBehaviour:
   instructions:
   - Type: 1
     Target: 1
-    Value: 14
+    Value: 11
     HitCount: 3
     StatusId: 
     Duration: 0
   - Type: 3
     Target: 1
-    Value: 24
+    Value: 16
     HitCount: 1
     StatusId: Radiance
     Duration: 3

@@ -19,13 +19,13 @@ MonoBehaviour:
   instructions:
   - Type: 2
     Target: 1
-    Value: 10
+    Value: 8
     HitCount: 2
     StatusId: 
     Duration: 0
   - Type: 3
     Target: 1
-    Value: 24
+    Value: 16
     HitCount: 1
     StatusId: Shade
     Duration: 3

@@ -116,28 +116,28 @@ namespace ArcaneAtelier.Battle.Editor
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Attack,
-                    Value = 10,
+                    Value = 16,
                     SecondaryValue = 0f,
                     Description = "Slams the ground"
                 },
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Defend,
-                    Value = 8,
+                    Value = 10,
                     SecondaryValue = 0f,
                     Description = "Hardens its shell"
                 },
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Attack,
-                    Value = 14,
+                    Value = 20,
                     SecondaryValue = 0f,
                     Description = "Heavy strike"
                 },
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Heal,
-                    Value = 7,
+                    Value = 8,
                     SecondaryValue = 0f,
                     Description = "Absorbs earth energy"
                 }
@@ -148,14 +148,14 @@ namespace ArcaneAtelier.Battle.Editor
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Attack,
-                    Value = 16,
+                    Value = 15,
                     SecondaryValue = 0f,
                     Description = "Raging slam"
                 },
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Attack,
-                    Value = 20,
+                    Value = 19,
                     SecondaryValue = 0f,
                     Description = "Crushing blow"
                 },
@@ -171,7 +171,7 @@ namespace ArcaneAtelier.Battle.Editor
             asset.Configure(
                 "boss.earth.golem",
                 "Corrupted Earth Golem",
-                90,
+                130,
                 WorkshopElementAttribute.Earth,
                 BattleEncounterType.Boss,
                 100,
@@ -198,21 +198,21 @@ namespace ArcaneAtelier.Battle.Editor
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Attack,
-                    Value = 8,
+                    Value = 12,
                     SecondaryValue = 0f,
                     Description = "Scorches with ember claws"
                 },
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Attack,
-                    Value = 11,
+                    Value = 15,
                     SecondaryValue = 0f,
                     Description = "Spits a burst of cinders"
                 },
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Special,
-                    Value = 10,
+                    Value = 12,
                     SecondaryValue = 0f,
                     Description = "Ignites the air"
                 }
@@ -221,7 +221,7 @@ namespace ArcaneAtelier.Battle.Editor
             asset.Configure(
                 "enemy.ash.imp",
                 "Ash Imp",
-                35,
+                42,
                 WorkshopElementAttribute.Fire,
                 BattleEncounterType.Enemy,
                 1,
@@ -246,37 +246,37 @@ namespace ArcaneAtelier.Battle.Editor
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Defend,
-                    Value = 6,
+                    Value = 8,
                     SecondaryValue = 0f,
                     Description = "Raises a bark shield"
                 },
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Attack,
-                    Value = 9,
+                    Value = 12,
                     SecondaryValue = 0f,
                     Description = "Body slams forward"
                 },
                 new BattleBossAction
                 {
-                    ActionType = BattleActionType.Defend,
-                    Value = 8,
+                    ActionType = BattleActionType.Attack,
+                    Value = 14,
                     SecondaryValue = 0f,
-                    Description = "Roots tighten into armor"
+                    Description = "Roots crash down in a heavy sweep"
                 }
             };
 
             asset.Configure(
                 "enemy.moss.shell",
                 "Moss Shell",
-                50,
+                64,
                 WorkshopElementAttribute.Earth,
                 BattleEncounterType.Enemy,
                 3,
                 BattleEnemyArchetype.Defensive,
                 0.45f,
-                12,
-                4,
+                6,
+                3,
                 pattern,
                 "reward.enemy.earth.minor");
 
@@ -294,21 +294,21 @@ namespace ArcaneAtelier.Battle.Editor
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Attack,
-                    Value = 8,
+                    Value = 10,
                     SecondaryValue = 0f,
                     Description = "Drains a thread of vitality"
                 },
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Heal,
-                    Value = 4,
+                    Value = 5,
                     SecondaryValue = 0f,
                     Description = "Condenses moisture to recover"
                 },
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Attack,
-                    Value = 10,
+                    Value = 12,
                     SecondaryValue = 0f,
                     Description = "Lashes with a liquid tendril"
                 }
@@ -317,12 +317,12 @@ namespace ArcaneAtelier.Battle.Editor
             asset.Configure(
                 "enemy.mist.leech",
                 "Mist Leech",
-                45,
+                52,
                 WorkshopElementAttribute.Water,
                 BattleEncounterType.Enemy,
                 2,
                 BattleEnemyArchetype.Sustain,
-                0.5f,
+                0.35f,
                 0,
                 3,
                 pattern,
@@ -482,8 +482,8 @@ namespace ArcaneAtelier.Battle.Editor
             definitions.Add(CreateCardDefinition(
                 "combat.spell.basic.water", "Tidal Mend",
                 WorkshopElementAttribute.Water, WorkshopSpellTier.Basic,
-                BattleEffectInstruction.Heal(5, 1),
-                BattleEffectInstruction.ApplyStatus("Regen", 2, 8, BattleEffectTarget.Self)));
+                BattleEffectInstruction.Heal(4, 1),
+                BattleEffectInstruction.ApplyStatus("Regen", 2, 5, BattleEffectTarget.Self)));
 
             definitions.Add(CreateCardDefinition(
                 "combat.spell.basic.wind", "Zephyr Cut",
@@ -494,8 +494,8 @@ namespace ArcaneAtelier.Battle.Editor
             definitions.Add(CreateCardDefinition(
                 "combat.spell.basic.earth", "Stoneguard Sigil",
                 WorkshopElementAttribute.Earth, WorkshopSpellTier.Basic,
-                BattleEffectInstruction.Shield(6, 1),
-                BattleEffectInstruction.ApplyStatus("Bulwark", 2, 18, BattleEffectTarget.Self)));
+                BattleEffectInstruction.Shield(4, 1),
+                BattleEffectInstruction.ApplyStatus("Bulwark", 2, 10, BattleEffectTarget.Self)));
 
             definitions.Add(CreateCardDefinition(
                 "combat.spell.basic.ice", "Frost Pin",
@@ -512,14 +512,14 @@ namespace ArcaneAtelier.Battle.Editor
             definitions.Add(CreateCardDefinition(
                 "combat.spell.basic.light", "Lumen Prayer",
                 WorkshopElementAttribute.Light, WorkshopSpellTier.Basic,
-                BattleEffectInstruction.Heal(4, 2),
-                BattleEffectInstruction.ApplyStatus("Bless", 2, 12, BattleEffectTarget.Self)));
+                BattleEffectInstruction.Heal(3, 2),
+                BattleEffectInstruction.ApplyStatus("Bless", 2, 8, BattleEffectTarget.Self)));
 
             definitions.Add(CreateCardDefinition(
                 "combat.spell.basic.dark", "Gloam Ward",
                 WorkshopElementAttribute.Dark, WorkshopSpellTier.Basic,
-                BattleEffectInstruction.Shield(5, 1),
-                BattleEffectInstruction.ApplyStatus("Veil", 2, 20, BattleEffectTarget.Self)));
+                BattleEffectInstruction.Shield(4, 1),
+                BattleEffectInstruction.ApplyStatus("Veil", 2, 10, BattleEffectTarget.Self)));
 
             // Intermediate spells (8)
             definitions.Add(CreateCardDefinition(
@@ -531,8 +531,8 @@ namespace ArcaneAtelier.Battle.Editor
             definitions.Add(CreateCardDefinition(
                 "combat.spell.intermediate.water", "Tide Chorus",
                 WorkshopElementAttribute.Water, WorkshopSpellTier.Intermediate,
-                BattleEffectInstruction.Heal(11, 2),
-                BattleEffectInstruction.ApplyStatus("Regen", 3, 14, BattleEffectTarget.Self)));
+                BattleEffectInstruction.Heal(8, 2),
+                BattleEffectInstruction.ApplyStatus("Regen", 3, 8, BattleEffectTarget.Self)));
 
             definitions.Add(CreateCardDefinition(
                 "combat.spell.intermediate.wind", "Razor Monsoon",
@@ -543,8 +543,8 @@ namespace ArcaneAtelier.Battle.Editor
             definitions.Add(CreateCardDefinition(
                 "combat.spell.intermediate.earth", "Bastion Pulse",
                 WorkshopElementAttribute.Earth, WorkshopSpellTier.Intermediate,
-                BattleEffectInstruction.Shield(12, 1),
-                BattleEffectInstruction.ApplyStatus("Ward", 3, 28, BattleEffectTarget.Self)));
+                BattleEffectInstruction.Shield(9, 1),
+                BattleEffectInstruction.ApplyStatus("Ward", 3, 16, BattleEffectTarget.Self)));
 
             definitions.Add(CreateCardDefinition(
                 "combat.spell.intermediate.ice", "Glacier Bind",
@@ -567,8 +567,8 @@ namespace ArcaneAtelier.Battle.Editor
             definitions.Add(CreateCardDefinition(
                 "combat.spell.intermediate.dark", "Umbral Bastion",
                 WorkshopElementAttribute.Dark, WorkshopSpellTier.Intermediate,
-                BattleEffectInstruction.Shield(10, 2),
-                BattleEffectInstruction.ApplyStatus("Shade", 3, 24, BattleEffectTarget.Self)));
+                BattleEffectInstruction.Shield(8, 2),
+                BattleEffectInstruction.ApplyStatus("Shade", 3, 16, BattleEffectTarget.Self)));
 
             // Advanced spells (4)
             definitions.Add(CreateCardDefinition(
@@ -651,7 +651,7 @@ namespace ArcaneAtelier.Battle.Editor
             statuses.Add(CreateStatusEffectDefinition(
                 "Bulwark", "Bulwark",
                 BattleStatusTrigger.OnHitTaken,
-                BattleEffectInstruction.Shield(0), true, 3));
+                BattleEffectInstruction.Shield(0), true, 2));
 
             statuses.Add(CreateStatusEffectDefinition(
                 "Slow", "Slow",
@@ -691,12 +691,12 @@ namespace ArcaneAtelier.Battle.Editor
             statuses.Add(CreateStatusEffectDefinition(
                 "Radiance", "Radiance",
                 BattleStatusTrigger.OnTurnStart,
-                BattleEffectInstruction.Heal(1), true, 3));
+                BattleEffectInstruction.Heal(1), true, 2));
 
             statuses.Add(CreateStatusEffectDefinition(
                 "Shade", "Shade",
                 BattleStatusTrigger.OnHitTaken,
-                BattleEffectInstruction.Shield(0), true, 3));
+                BattleEffectInstruction.Shield(0), true, 2));
 
             statuses.Add(CreateStatusEffectDefinition(
                 "Scald", "Scald",

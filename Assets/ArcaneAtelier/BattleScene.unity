@@ -267,7 +267,7 @@ MonoBehaviour:
   hudPresenter: {fileID: 860823088}
   feedbackPresenter: {fileID: 0}
   startingBossId: enemy.ash.imp
-  playerMaxHealth: 100
+  playerMaxHealth: 60
   encounterSequence:
   - enemy.ash.imp
   - enemy.mist.leech

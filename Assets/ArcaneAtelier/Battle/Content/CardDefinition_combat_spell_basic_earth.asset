@@ -19,13 +19,13 @@ MonoBehaviour:
   instructions:
   - Type: 2
     Target: 1
-    Value: 6
+    Value: 4
     HitCount: 1
     StatusId: 
     Duration: 0
   - Type: 3
     Target: 1
-    Value: 18
+    Value: 10
     HitCount: 1
     StatusId: Bulwark
     Duration: 2

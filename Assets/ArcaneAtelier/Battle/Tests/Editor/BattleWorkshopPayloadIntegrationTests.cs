@@ -58,7 +58,7 @@ namespace ArcaneAtelier.Battle.Tests
 
             BattleDeckController deck = new BattleDeckController(battleDatabase, payload);
 
-            Assert.That(deck.HandCount, Is.EqualTo(1));
+            Assert.That(deck.HandCount, Is.EqualTo(1), "Single-card payload should only draw the available card, even with a 5-card hand target.");
             Assert.That(deck.TryPlayCard(0, out _), Is.True);
             Assert.That(deck.LastPlayedDefinition, Is.Not.Null);
             Assert.That(deck.LastPlayedDefinition.BattleCardId, Is.EqualTo("combat.spell.basic.wind"));

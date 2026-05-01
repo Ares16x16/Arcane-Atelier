@@ -14,7 +14,7 @@ namespace ArcaneAtelier.Battle
         [SerializeField] private BattleHudPresenter hudPresenter;
         [SerializeField] private BattleFeedbackPresenter feedbackPresenter;
         [SerializeField] private string startingBossId = "enemy.ash.imp";
-        [SerializeField] private int playerMaxHealth = 80;
+        [SerializeField] private int playerMaxHealth = 60;
         [SerializeField] private string[] encounterSequence = new[]
         {
             "enemy.ash.imp",
