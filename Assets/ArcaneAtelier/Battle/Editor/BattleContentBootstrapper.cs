@@ -116,7 +116,7 @@ namespace ArcaneAtelier.Battle.Editor
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Attack,
-                    Value = 11,
+                    Value = 10,
                     SecondaryValue = 0f,
                     Description = "Slams the ground"
                 },
@@ -130,7 +130,7 @@ namespace ArcaneAtelier.Battle.Editor
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Attack,
-                    Value = 15,
+                    Value = 14,
                     SecondaryValue = 0f,
                     Description = "Heavy strike"
                 },
@@ -155,7 +155,7 @@ namespace ArcaneAtelier.Battle.Editor
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Attack,
-                    Value = 22,
+                    Value = 20,
                     SecondaryValue = 0f,
                     Description = "Crushing blow"
                 },
@@ -171,7 +171,7 @@ namespace ArcaneAtelier.Battle.Editor
             asset.Configure(
                 "boss.earth.golem",
                 "Corrupted Earth Golem",
-                110,
+                90,
                 WorkshopElementAttribute.Earth,
                 BattleEncounterType.Boss,
                 100,
@@ -198,21 +198,21 @@ namespace ArcaneAtelier.Battle.Editor
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Attack,
-                    Value = 6,
+                    Value = 8,
                     SecondaryValue = 0f,
                     Description = "Scorches with ember claws"
                 },
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Attack,
-                    Value = 9,
+                    Value = 11,
                     SecondaryValue = 0f,
                     Description = "Spits a burst of cinders"
                 },
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Special,
-                    Value = 8,
+                    Value = 10,
                     SecondaryValue = 0f,
                     Description = "Ignites the air"
                 }
@@ -221,7 +221,7 @@ namespace ArcaneAtelier.Battle.Editor
             asset.Configure(
                 "enemy.ash.imp",
                 "Ash Imp",
-                30,
+                35,
                 WorkshopElementAttribute.Fire,
                 BattleEncounterType.Enemy,
                 1,
@@ -253,7 +253,7 @@ namespace ArcaneAtelier.Battle.Editor
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Attack,
-                    Value = 5,
+                    Value = 9,
                     SecondaryValue = 0f,
                     Description = "Body slams forward"
                 },
@@ -269,7 +269,7 @@ namespace ArcaneAtelier.Battle.Editor
             asset.Configure(
                 "enemy.moss.shell",
                 "Moss Shell",
-                48,
+                50,
                 WorkshopElementAttribute.Earth,
                 BattleEncounterType.Enemy,
                 3,
@@ -294,7 +294,7 @@ namespace ArcaneAtelier.Battle.Editor
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Attack,
-                    Value = 6,
+                    Value = 8,
                     SecondaryValue = 0f,
                     Description = "Drains a thread of vitality"
                 },
@@ -308,7 +308,7 @@ namespace ArcaneAtelier.Battle.Editor
                 new BattleBossAction
                 {
                     ActionType = BattleActionType.Attack,
-                    Value = 7,
+                    Value = 10,
                     SecondaryValue = 0f,
                     Description = "Lashes with a liquid tendril"
                 }
@@ -317,7 +317,7 @@ namespace ArcaneAtelier.Battle.Editor
             asset.Configure(
                 "enemy.mist.leech",
                 "Mist Leech",
-                40,
+                45,
                 WorkshopElementAttribute.Water,
                 BattleEncounterType.Enemy,
                 2,
