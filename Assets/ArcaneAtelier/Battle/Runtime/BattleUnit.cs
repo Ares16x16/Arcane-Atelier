@@ -11,6 +11,7 @@ namespace ArcaneAtelier.Battle
         public int Shield { get; set; } = 0;
         public WorkshopElementAttribute Element { get; set; } = WorkshopElementAttribute.None;
         public bool IsAlive => CurrentHealth > 0;
+        public BattleStatusEffectController StatusEffectController { get; set; }
 
         public void TakeDamage(int amount)
         {

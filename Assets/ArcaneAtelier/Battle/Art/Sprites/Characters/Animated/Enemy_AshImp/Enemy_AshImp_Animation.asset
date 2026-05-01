@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4ec0d4bfc40481bb6b4a71a47f5892d, type: 3}
+  m_Name: Enemy_AshImp_Animation
+  m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattleUnitAnimationProfile
+  previewSprite: {fileID: 21300000, guid: e69c5b7d615c64e55915282276356614, type: 3}
+  idleSequence:
+    frames:
+    - {fileID: 21300000, guid: 3768d59f66e3d4977acc0b6dfc30c728, type: 3}
+    - {fileID: 21300000, guid: d2fc728c80f7d412db1ceedda8a9ecda, type: 3}
+    - {fileID: 21300000, guid: 81fad3f2e0e4f4900b7088160d2ff9fb, type: 3}
+    - {fileID: 21300000, guid: 6a0ce8fad39974ad1bc89ca7f27a9ed7, type: 3}
+    framesPerSecond: 5
+    loop: 1
+  attackSequence:
+    frames:
+    - {fileID: 21300000, guid: 9638979e4610a4adc8cefaf69bea026a, type: 3}
+    - {fileID: 21300000, guid: cb729da5d76ca4a7ba1a34418777b9fb, type: 3}
+    - {fileID: 21300000, guid: ae564a459d016448a90e08fffcd61a31, type: 3}
+    - {fileID: 21300000, guid: d9c8b001e8eef488bac18eac9eff0447, type: 3}
+    framesPerSecond: 10
+    loop: 0
+  hurtSequence:
+    frames:
+    - {fileID: 21300000, guid: 3ee40f89a1f9e42028706b2521445fd6, type: 3}
+    - {fileID: 21300000, guid: 35b4b6550c9a24452888a9799c6809a6, type: 3}
+    - {fileID: 21300000, guid: a613401b0585642beacc923534729a5f, type: 3}
+    - {fileID: 21300000, guid: 21198b0cdf9714d8f9219a9923a5ba1a, type: 3}
+    framesPerSecond: 10
+    loop: 0

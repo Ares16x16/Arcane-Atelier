@@ -8,6 +8,8 @@ namespace ArcaneAtelier.Battle
         public BattleResultType ResultType;
         public string BossId;
         public string BossDisplayName;
+        public int EncountersCleared;
+        public string FinalEncounterId;
         public int TotalDamageDealt;
         public int TotalHealingDone;
         public int TotalShieldGained;

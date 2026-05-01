@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4ec0d4bfc40481bb6b4a71a47f5892d, type: 3}
+  m_Name: Player_Default_Animation
+  m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattleUnitAnimationProfile
+  previewSprite: {fileID: 21300000, guid: 79b9be081114e4159acf5867465f4072, type: 3}
+  idleSequence:
+    frames:
+    - {fileID: 21300000, guid: b2fca8f5421cd49e39f9e4cac6a1d656, type: 3}
+    - {fileID: 21300000, guid: 79487887ccb144935b4bb678c3714fce, type: 3}
+    - {fileID: 21300000, guid: 70fb7074b4aca4dfca14d2d324aaa720, type: 3}
+    - {fileID: 21300000, guid: ebcf67cbe8ccf416c8f1d72d8b85d34b, type: 3}
+    framesPerSecond: 5
+    loop: 1
+  attackSequence:
+    frames:
+    - {fileID: 21300000, guid: 3ffb650d592104a96859c6e1519c87e9, type: 3}
+    - {fileID: 21300000, guid: 48459c709c8b040768724f8acf50d530, type: 3}
+    - {fileID: 21300000, guid: e2525b84684a444f7906b893d1411427, type: 3}
+    - {fileID: 21300000, guid: aff39d4c430d1475d9b214b5b76482d0, type: 3}
+    framesPerSecond: 10
+    loop: 0
+  hurtSequence:
+    frames:
+    - {fileID: 21300000, guid: 719e2af0042d24625b844ed702a63f7d, type: 3}
+    - {fileID: 21300000, guid: 9e99082f67d26452a8d3cc633db6ff90, type: 3}
+    - {fileID: 21300000, guid: d270f9cfe7a584623b73b6dd987e76f0, type: 3}
+    - {fileID: 21300000, guid: 7c9fbf51bb4734cffb9939eea8762312, type: 3}
+    framesPerSecond: 10
+    loop: 0

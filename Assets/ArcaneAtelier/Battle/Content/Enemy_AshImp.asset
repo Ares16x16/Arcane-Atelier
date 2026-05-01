@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77bee526265284c00b0edc200472c624, type: 3}
+  m_Name: Enemy_AshImp
+  m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattleBossDefinition
+  bossId: enemy.ash.imp
+  displayName: Ash Imp
+  maxHealth: 30
+  element: 1
+  encounterType: 0
+  difficultyRank: 1
+  enemyArchetype: 1
+  lowHealthThresholdNormalized: 0.3
+  defensiveShieldThreshold: 0
+  preferredBurstTurnInterval: 3
+  actionPattern:
+  - ActionType: 1
+    Value: 6
+    SecondaryValue: 0
+    Description: Scorches with ember claws
+  - ActionType: 1
+    Value: 9
+    SecondaryValue: 0
+    Description: Spits a burst of cinders
+  - ActionType: 4
+    Value: 8
+    SecondaryValue: 0
+    Description: Ignites the air
+  phase2ActionPattern: []
+  phaseTransitionHealthPercent: 0.5
+  defeatRewardId: reward.enemy.fire.minor

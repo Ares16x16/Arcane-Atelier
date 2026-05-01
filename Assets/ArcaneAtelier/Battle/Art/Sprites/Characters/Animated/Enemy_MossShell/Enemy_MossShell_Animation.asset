@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4ec0d4bfc40481bb6b4a71a47f5892d, type: 3}
+  m_Name: Enemy_MossShell_Animation
+  m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattleUnitAnimationProfile
+  previewSprite: {fileID: 21300000, guid: 0270c186485394c00a3e9710edf71171, type: 3}
+  idleSequence:
+    frames:
+    - {fileID: 21300000, guid: 4caf83aa614454abdaf612c92c3f82d9, type: 3}
+    - {fileID: 21300000, guid: 508c9ce46e8714413b8fa79930a4e721, type: 3}
+    - {fileID: 21300000, guid: eb654c74b59734ccfacd64bb666c0081, type: 3}
+    - {fileID: 21300000, guid: cf505f49b49ce44d79dcb10bf4fdc8bc, type: 3}
+    framesPerSecond: 5
+    loop: 1
+  attackSequence:
+    frames:
+    - {fileID: 21300000, guid: e7c262a04f17645c7b50e7dd659e1386, type: 3}
+    - {fileID: 21300000, guid: a8713e21c2be44f259e59d83e1286225, type: 3}
+    - {fileID: 21300000, guid: 58735e055a12643a096e8c9de186da59, type: 3}
+    - {fileID: 21300000, guid: 67abab9e3a99046239436dbdcd036252, type: 3}
+    framesPerSecond: 10
+    loop: 0
+  hurtSequence:
+    frames:
+    - {fileID: 21300000, guid: e4550d2d2b58c4963948848719139167, type: 3}
+    - {fileID: 21300000, guid: a9a36c0b6ca2f4685a1b4f4d8fd81886, type: 3}
+    - {fileID: 21300000, guid: cbd01c5128dfb494f92c58dac5946bac, type: 3}
+    - {fileID: 21300000, guid: 03b3b4e16a2bd4cbebbb2efad516ccb6, type: 3}
+    framesPerSecond: 10
+    loop: 0

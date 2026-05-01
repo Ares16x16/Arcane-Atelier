@@ -1,0 +1,388 @@
+using System.Collections;
+using UnityEngine;
+
+namespace ArcaneAtelier.Battle
+{
+    public sealed class BattleUnitVisual : MonoBehaviour
+    {
+        private enum VisualAnimationState
+        {
+            Idle,
+            Attack,
+            Hurt
+        }
+
+        [SerializeField] private SpriteRenderer spriteRenderer;
+
+        [SerializeField] private float idleAmplitude = 0.08f;
+        [SerializeField] private float idleFrequency = 2.5f;
+        [SerializeField] private float attackDistance = 1.2f;
+        [SerializeField] private float attackDuration = 0.25f;
+        [SerializeField] private float hurtDuration = 0.3f;
+        [SerializeField] private float deathDuration = 0.8f;
+        [SerializeField] private float heavyHurtScalePulse = 0.08f;
+
+        private Vector3 originalPosition;
+        private Vector3 originalScale;
+        private Color originalColor;
+        private bool isAnimating;
+        private Coroutine idleCoroutine;
+        private Coroutine spriteAnimationCoroutine;
+        private BattleUnitAnimationProfile animationProfile;
+        private Sprite fallbackSprite;
+
+        public SpriteRenderer SpriteRenderer => spriteRenderer;
+
+        private void Awake()
+        {
+            if (spriteRenderer == null)
+            {
+                spriteRenderer = GetComponent<SpriteRenderer>();
+            }
+            originalPosition = transform.position;
+            originalScale = transform.localScale;
+        }
+
+        private void OnEnable()
+        {
+            StartIdle();
+        }
+
+        private void OnDisable()
+        {
+            StopIdle();
+        }
+
+        public void Setup(Sprite sprite, Color color, Vector3 scale)
+        {
+            Setup(sprite, null, color, scale);
+        }
+
+        public void Setup(Sprite sprite, BattleUnitAnimationProfile resolvedAnimationProfile, Color color, Vector3 scale)
+        {
+            if (spriteRenderer == null)
+            {
+                spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
+            }
+
+            animationProfile = resolvedAnimationProfile;
+            fallbackSprite = sprite;
+            spriteRenderer.sprite = ResolvePreviewSprite(sprite);
+            spriteRenderer.color = color;
+            transform.localScale = scale;
+
+            originalPosition = transform.position;
+            originalScale = scale;
+            originalColor = color;
+            StartIdle();
+        }
+
+        public void StartIdle()
+        {
+            StopIdle();
+            ApplySpriteState(VisualAnimationState.Idle);
+            idleCoroutine = StartCoroutine(IdleRoutine());
+        }
+
+        public void StopIdle()
+        {
+            if (idleCoroutine != null)
+            {
+                StopCoroutine(idleCoroutine);
+                idleCoroutine = null;
+            }
+
+            StopSpriteAnimation();
+        }
+
+        public void PlayAttack(Vector3 direction, bool emphasize)
+        {
+            if (isAnimating)
+            {
+                return;
+            }
+
+            StopIdle();
+            ApplySpriteState(VisualAnimationState.Attack);
+            StartCoroutine(AttackRoutine(direction, emphasize));
+        }
+
+        public void PlayHurt(bool heavy)
+        {
+            if (isAnimating)
+            {
+                return;
+            }
+
+            StopIdle();
+            ApplySpriteState(VisualAnimationState.Hurt);
+            StartCoroutine(HurtRoutine(heavy));
+        }
+
+        public void PlaySupportPulse(Color pulseColor)
+        {
+            if (isAnimating)
+            {
+                return;
+            }
+
+            StopIdle();
+            StartCoroutine(SupportPulseRoutine(pulseColor));
+        }
+
+        public void PlayDeath()
+        {
+            if (isAnimating)
+            {
+                return;
+            }
+
+            StopIdle();
+            StartCoroutine(DeathRoutine());
+        }
+
+        private IEnumerator IdleRoutine()
+        {
+            while (true)
+            {
+                float y = Mathf.Sin(Time.time * idleFrequency) * idleAmplitude;
+                transform.position = originalPosition + new Vector3(0f, y, 0f);
+                yield return null;
+            }
+        }
+
+        private IEnumerator AttackRoutine(Vector3 direction, bool emphasize)
+        {
+            isAnimating = true;
+            float distance = emphasize ? attackDistance * 1.1f : attackDistance;
+            Vector3 targetPos = originalPosition + direction.normalized * distance;
+            float halfDuration = attackDuration * 0.5f;
+            float elapsed = 0f;
+
+            while (elapsed < halfDuration)
+            {
+                float t = elapsed / halfDuration;
+                transform.position = Vector3.Lerp(originalPosition, targetPos, t);
+                transform.localScale = Vector3.Lerp(originalScale, originalScale * (emphasize ? 1.04f : 1.02f), t);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            transform.position = targetPos;
+            elapsed = 0f;
+
+            while (elapsed < halfDuration)
+            {
+                float t = elapsed / halfDuration;
+                transform.position = Vector3.Lerp(targetPos, originalPosition, t);
+                transform.localScale = Vector3.Lerp(originalScale * (emphasize ? 1.04f : 1.02f), originalScale, t);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            transform.position = originalPosition;
+            transform.localScale = originalScale;
+            isAnimating = false;
+            ApplySpriteState(VisualAnimationState.Idle);
+            StartIdle();
+        }
+
+        private IEnumerator HurtRoutine(bool heavy)
+        {
+            isAnimating = true;
+            float elapsed = 0f;
+            float scalePulse = heavy ? heavyHurtScalePulse : heavyHurtScalePulse * 0.5f;
+
+            while (elapsed < hurtDuration)
+            {
+                float x = Mathf.Sin(elapsed * 60f) * (heavy ? 0.12f : 0.08f);
+                transform.position = originalPosition + new Vector3(x, 0f, 0f);
+                transform.localScale = originalScale * (1f + Mathf.Sin(elapsed * 24f) * scalePulse);
+
+                if (spriteRenderer != null)
+                {
+                    float flash = Mathf.PingPong(elapsed * (heavy ? 18f : 12f), 1f);
+                    spriteRenderer.color = Color.Lerp(originalColor, Color.white, heavy ? flash : flash * 0.8f);
+                }
+
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            transform.position = originalPosition;
+            transform.localScale = originalScale;
+
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.color = originalColor;
+            }
+
+            isAnimating = false;
+            ApplySpriteState(VisualAnimationState.Idle);
+            StartIdle();
+        }
+
+        private IEnumerator SupportPulseRoutine(Color pulseColor)
+        {
+            isAnimating = true;
+            float duration = 0.28f;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                float progress = elapsed / duration;
+                float pulse = Mathf.Sin(progress * Mathf.PI);
+                transform.localScale = originalScale * (1f + pulse * 0.05f);
+                if (spriteRenderer != null)
+                {
+                    spriteRenderer.color = Color.Lerp(originalColor, pulseColor, pulse * 0.85f);
+                }
+
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            transform.localScale = originalScale;
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.color = originalColor;
+            }
+
+            isAnimating = false;
+            ApplySpriteState(VisualAnimationState.Idle);
+            StartIdle();
+        }
+
+        private IEnumerator DeathRoutine()
+        {
+            isAnimating = true;
+            float elapsed = 0f;
+
+            while (elapsed < deathDuration)
+            {
+                float t = elapsed / deathDuration;
+                transform.localScale = originalScale * Mathf.Max(0.1f, 1f - t);
+
+                if (spriteRenderer != null)
+                {
+                    Color c = originalColor;
+                    c.a = 1f - t;
+                    spriteRenderer.color = c;
+                }
+
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            transform.localScale = Vector3.zero;
+            gameObject.SetActive(false);
+            isAnimating = false;
+        }
+
+        private Sprite ResolvePreviewSprite(Sprite sprite)
+        {
+            if (animationProfile != null && animationProfile.PreviewSprite != null)
+            {
+                return animationProfile.PreviewSprite;
+            }
+
+            if (sprite != null)
+            {
+                return sprite;
+            }
+
+            if (animationProfile != null && animationProfile.IdleSequence.IsConfigured)
+            {
+                return animationProfile.IdleSequence.Frames[0];
+            }
+
+            return null;
+        }
+
+        private void ApplySpriteState(VisualAnimationState state)
+        {
+            StopSpriteAnimation();
+
+            BattleUnitAnimationProfile.AnimationSequence sequence = ResolveSequence(state);
+            if (sequence.IsConfigured)
+            {
+                spriteAnimationCoroutine = StartCoroutine(PlaySpriteSequence(sequence));
+                return;
+            }
+
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.sprite = ResolvePreviewSprite(fallbackSprite);
+            }
+        }
+
+        private BattleUnitAnimationProfile.AnimationSequence ResolveSequence(VisualAnimationState state)
+        {
+            if (animationProfile == null)
+            {
+                return default;
+            }
+
+            switch (state)
+            {
+                case VisualAnimationState.Attack:
+                    return animationProfile.AttackSequence;
+                case VisualAnimationState.Hurt:
+                    return animationProfile.HurtSequence;
+                default:
+                    return animationProfile.IdleSequence;
+            }
+        }
+
+        private IEnumerator PlaySpriteSequence(BattleUnitAnimationProfile.AnimationSequence sequence)
+        {
+            int frameIndex = 0;
+            float frameDuration = sequence.FrameDuration;
+
+            while (true)
+            {
+                if (spriteRenderer != null && sequence.Frames.Length > 0)
+                {
+                    spriteRenderer.sprite = sequence.Frames[frameIndex];
+                }
+
+                yield return new WaitForSeconds(frameDuration);
+
+                if (sequence.Frames.Length <= 1)
+                {
+                    if (!sequence.Loop)
+                    {
+                        yield break;
+                    }
+
+                    continue;
+                }
+
+                frameIndex++;
+                if (frameIndex >= sequence.Frames.Length)
+                {
+                    if (!sequence.Loop)
+                    {
+                        frameIndex = sequence.Frames.Length - 1;
+                        if (spriteRenderer != null)
+                        {
+                            spriteRenderer.sprite = sequence.Frames[frameIndex];
+                        }
+                        yield break;
+                    }
+
+                    frameIndex = 0;
+                }
+            }
+        }
+
+        private void StopSpriteAnimation()
+        {
+            if (spriteAnimationCoroutine != null)
+            {
+                StopCoroutine(spriteAnimationCoroutine);
+                spriteAnimationCoroutine = null;
+            }
+        }
+    }
+}
