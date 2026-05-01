@@ -20,6 +20,13 @@ namespace ArcaneAtelier.Battle.Tests
             Assert.That(bossResolutions, Is.EqualTo(0));
         }
 
+        [Test]
+        public void BattleDeckController_InitialHandSize_IsFour()
+        {
+            BattleSimulation simulation = CreateSimulation();
+            Assert.That(simulation.Deck.HandCount, Is.EqualTo(4));
+        }
+
         private static BattleSimulation CreateSimulation()
         {
             BattleUnit player = new BattleUnit
