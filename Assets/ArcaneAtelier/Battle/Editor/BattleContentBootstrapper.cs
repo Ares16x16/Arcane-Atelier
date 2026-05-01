@@ -482,7 +482,7 @@ namespace ArcaneAtelier.Battle.Editor
             definitions.Add(CreateCardDefinition(
                 "combat.spell.basic.water", "Tidal Mend",
                 WorkshopElementAttribute.Water, WorkshopSpellTier.Basic,
-                BattleEffectInstruction.Heal(6, 1),
+                BattleEffectInstruction.Heal(5, 1),
                 BattleEffectInstruction.ApplyStatus("Regen", 2, 8, BattleEffectTarget.Self)));
 
             definitions.Add(CreateCardDefinition(
@@ -494,7 +494,7 @@ namespace ArcaneAtelier.Battle.Editor
             definitions.Add(CreateCardDefinition(
                 "combat.spell.basic.earth", "Stoneguard Sigil",
                 WorkshopElementAttribute.Earth, WorkshopSpellTier.Basic,
-                BattleEffectInstruction.Shield(7, 1),
+                BattleEffectInstruction.Shield(6, 1),
                 BattleEffectInstruction.ApplyStatus("Bulwark", 2, 18, BattleEffectTarget.Self)));
 
             definitions.Add(CreateCardDefinition(
@@ -512,13 +512,13 @@ namespace ArcaneAtelier.Battle.Editor
             definitions.Add(CreateCardDefinition(
                 "combat.spell.basic.light", "Lumen Prayer",
                 WorkshopElementAttribute.Light, WorkshopSpellTier.Basic,
-                BattleEffectInstruction.Heal(5, 2),
+                BattleEffectInstruction.Heal(4, 2),
                 BattleEffectInstruction.ApplyStatus("Bless", 2, 12, BattleEffectTarget.Self)));
 
             definitions.Add(CreateCardDefinition(
                 "combat.spell.basic.dark", "Gloam Ward",
                 WorkshopElementAttribute.Dark, WorkshopSpellTier.Basic,
-                BattleEffectInstruction.Shield(6, 1),
+                BattleEffectInstruction.Shield(5, 1),
                 BattleEffectInstruction.ApplyStatus("Veil", 2, 20, BattleEffectTarget.Self)));
 
             // Intermediate spells (8)
