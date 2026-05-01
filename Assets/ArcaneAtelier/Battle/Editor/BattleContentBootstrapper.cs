@@ -609,7 +609,7 @@ namespace ArcaneAtelier.Battle.Editor
             definitions.Add(CreateCardDefinition(
                 "combat.arcane_ward", "Arcane Ward",
                 WorkshopElementAttribute.Earth, WorkshopSpellTier.Basic,
-                BattleEffectInstruction.Shield(10)));
+                BattleEffectInstruction.Shield(8)));
 
             return definitions.ToArray();
         }
