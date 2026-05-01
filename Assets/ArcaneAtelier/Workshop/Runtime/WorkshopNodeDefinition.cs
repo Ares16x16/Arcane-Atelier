@@ -61,7 +61,11 @@ namespace ArcaneAtelier.Workshop
         public WorkshopNodeCategory Category => category;
         public bool UnlockedByDefault => unlockedByDefault;
         public Color Tint => tint;
-        public Sprite NodeSprite => nodeSprite;
+        public Sprite NodeSprite
+        {
+            get => nodeSprite;
+            set => nodeSprite = value;
+        }
         public NodePortMask InputPorts => inputPorts;
         public NodePortMask OutputPorts => outputPorts;
         public int BufferCapacity => Mathf.Max(1, bufferCapacity);
