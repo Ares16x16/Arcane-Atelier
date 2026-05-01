@@ -3,8 +3,9 @@
     "ai-game-developer": {
       "url": "https://ai-game.dev/mcp",
       "headers": {
-        "Authorization": "Bearer 4BHqob4ZDISl3NDoAe7jDaEhGKs1eZrAdL8Gjg4tzPE"
-      }
+        "Authorization": "Bearer QRpKuBLDve7tTkNDC32tIfGEuTX7zuL8lkWktRItP5w"
+      },
+      "type": "http"
     }
   }
 }
