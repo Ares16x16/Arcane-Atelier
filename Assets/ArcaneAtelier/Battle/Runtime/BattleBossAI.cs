@@ -18,6 +18,7 @@ namespace ArcaneAtelier.Battle
         private int sustainAttackCounter = 0;
         private bool isPhase2 = false;
         private float damageMultiplier = 1.0f;
+        private readonly System.Random rng = new System.Random();
 
         public BattleBossAI(BattleBossDefinition bossDefinition)
         {
@@ -154,61 +155,62 @@ namespace ArcaneAtelier.Battle
 
         private BattleBossAction SelectAggressiveEnemyAction()
         {
-            if (specialActions.Count > 0 && ShouldUseBurstTurn())
+            if (specialActions.Count > 0 && rng.Next(100) < 20)
             {
-                return specialActions[0];
-            }
-
-            return GetScaledAction(attackActions, currentActionIndex, 0.85f);
-        }
-
-        private BattleBossAction SelectSustainEnemyAction()
-        {
-            if (IsLowHealth() && healActions.Count > 0)
-            {
-                return healActions[0];
-            }
-
-            if (specialActions.Count > 0 && ShouldUseBurstTurn())
-            {
-                return specialActions[0];
-            }
-
-            if (sustainTurnCounter % 2 == 0)
-            {
-                BattleBossAction attack = GetScaledAction(attackActions, sustainAttackCounter, 1f);
-                if (attack != null)
-                {
-                    sustainAttackCounter++;
-                    return attack;
-                }
-            }
-
-            return GetScaledAction(healActions, sustainTurnCounter, 1f) ?? GetScaledAction(attackActions, sustainAttackCounter, 1f);
-        }
-
-        private BattleBossAction SelectDefensiveEnemyAction()
-        {
-            if (ShouldAddShield())
-            {
-                BattleBossAction defend = GetScaledAction(defendActions, currentActionIndex, 1f);
-                if (defend != null)
-                {
-                    return defend;
-                }
-            }
-
-            if (specialActions.Count > 0 && ShouldUseBurstTurn())
-            {
-                return specialActions[0];
+                return CloneAction(specialActions[rng.Next(specialActions.Count)], 1f);
             }
 
             if (attackActions.Count > 0)
             {
-                return GetScaledAction(attackActions, currentActionIndex, 0.95f);
+                return GetScaledAction(attackActions, rng.Next(attackActions.Count), 0.85f);
             }
 
-            return GetScaledAction(defendActions, currentActionIndex, 1f);
+            return PeekFallbackAction();
+        }
+
+        private BattleBossAction SelectSustainEnemyAction()
+        {
+            if (IsLowHealth() && healActions.Count > 0 && rng.Next(100) < 80)
+            {
+                return CloneAction(healActions[rng.Next(healActions.Count)], 1f);
+            }
+
+            if (specialActions.Count > 0 && rng.Next(100) < 20)
+            {
+                return CloneAction(specialActions[rng.Next(specialActions.Count)], 1f);
+            }
+
+            if (attackActions.Count > 0)
+            {
+                return GetScaledAction(attackActions, rng.Next(attackActions.Count), 1f);
+            }
+
+            return PeekFallbackAction();
+        }
+
+        private BattleBossAction SelectDefensiveEnemyAction()
+        {
+            if (ShouldAddShield() && defendActions.Count > 0)
+            {
+                return CloneAction(defendActions[rng.Next(defendActions.Count)], 1f);
+            }
+
+            if (specialActions.Count > 0 && rng.Next(100) < 20)
+            {
+                return CloneAction(specialActions[rng.Next(specialActions.Count)], 1f);
+            }
+
+            if (attackActions.Count > 0)
+            {
+                return GetScaledAction(attackActions, rng.Next(attackActions.Count), 0.95f);
+            }
+
+            if (defendActions.Count > 0)
+            {
+                return CloneAction(defendActions[rng.Next(defendActions.Count)], 1f);
+            }
+
+            return PeekFallbackAction();
         }
 
         private BattleBossAction GetScaledAction(IReadOnlyList<BattleBossAction> actions, int indexSeed, float multiplier)
