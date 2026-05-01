@@ -19,7 +19,7 @@ MonoBehaviour:
   instructions:
   - Type: 1
     Target: 1
-    Value: 5
+    Value: 4
     HitCount: 2
     StatusId: 
     Duration: 0

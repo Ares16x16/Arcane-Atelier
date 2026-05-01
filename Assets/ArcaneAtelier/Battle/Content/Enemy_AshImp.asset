@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattleBossDefinition
   bossId: enemy.ash.imp
   displayName: Ash Imp
-  maxHealth: 30
+  maxHealth: 35
   element: 1
   encounterType: 0
   difficultyRank: 1
@@ -24,15 +24,15 @@ MonoBehaviour:
   preferredBurstTurnInterval: 3
   actionPattern:
   - ActionType: 1
-    Value: 6
+    Value: 8
     SecondaryValue: 0
     Description: Scorches with ember claws
   - ActionType: 1
-    Value: 9
+    Value: 11
     SecondaryValue: 0
     Description: Spits a burst of cinders
   - ActionType: 4
-    Value: 8
+    Value: 10
     SecondaryValue: 0
     Description: Ignites the air
   phase2ActionPattern: []

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattleBossDefinition
   bossId: enemy.moss.shell
   displayName: Moss Shell
-  maxHealth: 48
+  maxHealth: 50
   element: 4
   encounterType: 0
   difficultyRank: 3
@@ -28,7 +28,7 @@ MonoBehaviour:
     SecondaryValue: 0
     Description: Raises a bark shield
   - ActionType: 1
-    Value: 5
+    Value: 9
     SecondaryValue: 0
     Description: Body slams forward
   - ActionType: 3
