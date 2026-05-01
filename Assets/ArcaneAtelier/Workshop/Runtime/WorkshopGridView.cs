@@ -26,6 +26,7 @@ namespace ArcaneAtelier.Workshop
         private sealed class NodeVisual
         {
             public GameObject Root;
+            public Transform VisualRoot;  // parent for Body/Frame/Shadow — gets rotation
             public SpriteRenderer Shadow;
             public SpriteRenderer Frame;
             public SpriteRenderer Body;
@@ -184,12 +185,17 @@ namespace ArcaneAtelier.Workshop
             root.transform.position = CellToWorld(cell);
             root.transform.localScale = Vector3.one * cellSize;
 
+            var visualGroup = new GameObject("VisualGroup");
+            visualGroup.transform.SetParent(root.transform, false);
+            visualGroup.transform.localPosition = Vector3.zero;
+
             var visual = new NodeVisual
             {
                 Root = root,
-                Shadow = CreateVisualLayer(root.transform, "Shadow", new Vector3(0.05f, -0.06f, 0f), Vector3.one * 0.92f, new Color(0f, 0f, 0f, 0.35f), 1),
-                Frame = CreateVisualLayer(root.transform, "Frame", Vector3.zero, Vector3.one * 0.88f, new Color(0.24f, 0.21f, 0.18f), 2),
-                Body = CreateVisualLayer(root.transform, "Body", Vector3.zero, Vector3.one * 0.76f, Color.white, 3)
+                VisualRoot = visualGroup.transform,
+                Shadow = CreateVisualLayer(visualGroup.transform, "Shadow", new Vector3(0.05f, -0.06f, 0f), Vector3.one * 0.92f, new Color(0f, 0f, 0f, 0.35f), 1),
+                Frame = CreateVisualLayer(visualGroup.transform, "Frame", Vector3.zero, Vector3.one * 0.88f, new Color(0.24f, 0.21f, 0.18f), 2),
+                Body = CreateVisualLayer(visualGroup.transform, "Body", Vector3.zero, Vector3.one * 0.76f, Color.white, 3)
             };
 
             foreach (var direction in WorkshopDirectionUtility.CardinalDirections)
@@ -212,7 +218,17 @@ namespace ArcaneAtelier.Workshop
         private void UpdateNodeVisual(Vector2Int cell, NodeVisual visual, WorkshopNodeState state)
         {
             visual.Root.transform.position = CellToWorld(state.Position);
-            visual.Body.color = state.Definition.Tint;
+            visual.VisualRoot.localRotation = Quaternion.Euler(0, 0, -90f * state.RotationQuarterTurns);
+            if (state.Definition.NodeSprite != null)
+            {
+                visual.Body.sprite = state.Definition.NodeSprite;
+                visual.Body.color = Color.white;
+            }
+            else
+            {
+                visual.Body.sprite = sharedSprite;
+                visual.Body.color = state.Definition.Tint;
+            }
             visual.Frame.color = controller.SelectedCell == cell
                 ? new Color(0.99f, 0.89f, 0.58f)
                 : new Color(0.24f, 0.21f, 0.18f);
