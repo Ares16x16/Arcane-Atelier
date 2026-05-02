@@ -75,6 +75,7 @@ namespace ArcaneAtelier.Workshop
             {
                 ownedRuntimeDatabase = WorkshopDefaultContentFactory.CreateRuntimeDatabase();
                 contentDatabase = ownedRuntimeDatabase;
+                Debug.LogWarning("WorkshopSceneController could not find a serialized WorkshopContentDatabase. Falling back to runtime-generated content.", this);
             }
 
             EnsureSceneIs2DPlayable();

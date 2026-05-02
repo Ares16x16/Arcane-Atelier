@@ -219,15 +219,18 @@ namespace ArcaneAtelier.Workshop
         {
             visual.Root.transform.position = CellToWorld(state.Position);
             visual.VisualRoot.localRotation = Quaternion.Euler(0, 0, -90f * state.RotationQuarterTurns);
+            var pulseScale = 0.94f + Mathf.PingPong(Time.time * 0.55f, 0.05f);
             if (state.Definition.NodeSprite != null)
             {
                 visual.Body.sprite = state.Definition.NodeSprite;
                 visual.Body.color = Color.white;
+                visual.Body.transform.localScale = Vector3.one * CalculateSpriteFitScale(state.Definition.NodeSprite, 0.76f * pulseScale);
             }
             else
             {
                 visual.Body.sprite = sharedSprite;
                 visual.Body.color = state.Definition.Tint;
+                visual.Body.transform.localScale = Vector3.one * (0.76f * pulseScale);
             }
             visual.Frame.color = controller.SelectedCell == cell
                 ? new Color(0.99f, 0.89f, 0.58f)
@@ -235,8 +238,6 @@ namespace ArcaneAtelier.Workshop
             visual.Shadow.color = controller.SelectedCell == cell
                 ? new Color(0.92f, 0.74f, 0.33f, 0.22f)
                 : new Color(0f, 0f, 0f, 0.35f);
-
-            visual.Body.transform.localScale = Vector3.one * 0.76f * (0.94f + Mathf.PingPong(Time.time * 0.55f, 0.05f));
 
             for (var index = 0; index < WorkshopDirectionUtility.CardinalDirections.Count; index++)
             {
@@ -248,6 +249,23 @@ namespace ArcaneAtelier.Workshop
                 renderer.enabled = isInput || isOutput;
                 renderer.color = isOutput ? new Color(0.91f, 0.62f, 0.24f) : new Color(0.36f, 0.78f, 0.95f);
             }
+        }
+
+        private static float CalculateSpriteFitScale(Sprite sprite, float targetSize)
+        {
+            if (sprite == null)
+            {
+                return targetSize;
+            }
+
+            var bounds = sprite.bounds.size;
+            var largestDimension = Mathf.Max(bounds.x, bounds.y);
+            if (largestDimension <= 0.0001f)
+            {
+                return targetSize;
+            }
+
+            return targetSize / largestDimension;
         }
 
         private SpriteRenderer CreateVisualLayer(Transform parent, string objectName, Vector3 localPosition, Vector3 localScale, Color tint, int sortingOrder)
