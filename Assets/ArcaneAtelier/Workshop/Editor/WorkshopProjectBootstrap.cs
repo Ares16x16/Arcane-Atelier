@@ -12,6 +12,7 @@ namespace ArcaneAtelier.Workshop.Editor
         private const string GeneratedRoot = "Assets/ArcaneAtelier/Workshop/Generated";
         private const string DataRoot = GeneratedRoot + "/Data";
         private const string ScenePath = "Assets/Scenes/WorkshopScene.unity";
+        private const string DatabaseAssetPath = DataRoot + "/WorkshopContentDatabase.asset";
 
         static WorkshopProjectBootstrap()
         {
@@ -37,10 +38,43 @@ namespace ArcaneAtelier.Workshop.Editor
             }
 
             var sceneExists = AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null;
-            if (!sceneExists)
+            var databaseExists = AssetDatabase.LoadAssetAtPath<WorkshopContentDatabase>(DatabaseAssetPath) != null;
+            if (!sceneExists || !databaseExists || GeneratedContentNeedsSpriteRefresh())
             {
                 Run();
             }
+        }
+
+        private static bool GeneratedContentNeedsSpriteRefresh()
+        {
+            var nodeGuids = AssetDatabase.FindAssets("t:WorkshopNodeDefinition", new[] { $"{DataRoot}/Nodes" });
+            if (nodeGuids == null || nodeGuids.Length == 0)
+            {
+                return true;
+            }
+
+            foreach (var guid in nodeGuids)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var node = AssetDatabase.LoadAssetAtPath<WorkshopNodeDefinition>(path);
+                if (node == null)
+                {
+                    continue;
+                }
+
+                var expectedSprite = FindNodeSprite(node.Id);
+                if (expectedSprite == null)
+                {
+                    continue;
+                }
+
+                if (node.NodeSprite != expectedSprite)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void Run()
@@ -403,11 +437,7 @@ namespace ArcaneAtelier.Workshop.Editor
             var asset = CreateOrLoadAsset<WorkshopNodeDefinition>($"{DataRoot}/Nodes/{SanitizeAssetName(id)}.asset");
             asset.Configure(id, displayName, description, category, unlockedByDefault, tint, inputPorts, outputPorts, bufferCapacity, maxTransferPerStep, acceptsAnyResource, recipes);
 
-            // Auto-load corresponding sprite from Assets/ArcaneAtelier/Art/Nodes/
-            var parts = id.Split('.');
-            var subdir = parts.Length >= 2 && parts[1] == "factory" ? "Factories" : "Spirits";
-            var spritePath = $"Assets/ArcaneAtelier/Art/Nodes/{subdir}/{SanitizeAssetName(id)}.png";
-            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+            var sprite = FindNodeSprite(id);
             if (sprite != null)
             {
                 asset.NodeSprite = sprite;
@@ -415,6 +445,19 @@ namespace ArcaneAtelier.Workshop.Editor
 
             EditorUtility.SetDirty(asset);
             return asset;
+        }
+
+        private static Sprite FindNodeSprite(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return null;
+            }
+
+            var parts = id.Split('.');
+            var subdir = parts.Length >= 2 && parts[1] == "factory" ? "Factories" : "Spirits";
+            var spritePath = $"Assets/ArcaneAtelier/Art/Nodes/{subdir}/{SanitizeAssetName(id)}.png";
+            return AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
         }
 
         private static WorkshopRewardDefinition UpsertReward(
