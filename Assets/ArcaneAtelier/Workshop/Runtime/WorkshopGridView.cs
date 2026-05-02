@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using ArcaneAtelier;
 using UnityEngine;
 
 namespace ArcaneAtelier.Workshop
@@ -19,6 +20,7 @@ namespace ArcaneAtelier.Workshop
         private Camera cachedCamera;
         private WorkshopSceneController controller;
         private Sprite sharedSprite;
+        private Sprite pipesOverlaySprite;
         private Transform gridRoot;
         private Transform nodeRoot;
         private Vector2Int hoveredCell = new Vector2Int(-1, -1);
@@ -30,6 +32,7 @@ namespace ArcaneAtelier.Workshop
             public SpriteRenderer Shadow;
             public SpriteRenderer Frame;
             public SpriteRenderer Body;
+            public SpriteRenderer Overlay;
             public List<SpriteRenderer> PortMarkers = new List<SpriteRenderer>();
         }
 
@@ -40,6 +43,7 @@ namespace ArcaneAtelier.Workshop
             controller = sceneController;
             cachedCamera = Camera.main;
             sharedSprite = CreateSquareSprite();
+            pipesOverlaySprite = ArcaneArtCatalog.GetPipesOverlay();
 
             BuildGrid();
             RefreshVisuals();
@@ -195,8 +199,11 @@ namespace ArcaneAtelier.Workshop
                 VisualRoot = visualGroup.transform,
                 Shadow = CreateVisualLayer(visualGroup.transform, "Shadow", new Vector3(0.05f, -0.06f, 0f), Vector3.one * 0.92f, new Color(0f, 0f, 0f, 0.35f), 1),
                 Frame = CreateVisualLayer(visualGroup.transform, "Frame", Vector3.zero, Vector3.one * 0.88f, new Color(0.24f, 0.21f, 0.18f), 2),
-                Body = CreateVisualLayer(visualGroup.transform, "Body", Vector3.zero, Vector3.one * 0.76f, Color.white, 3)
+                Body = CreateVisualLayer(visualGroup.transform, "Body", Vector3.zero, Vector3.one * 0.76f, Color.white, 3),
+                Overlay = CreateVisualLayer(visualGroup.transform, "Overlay", Vector3.zero, Vector3.one * 0.82f, new Color(1f, 1f, 1f, 0.82f), 4)
             };
+
+            visual.Overlay.enabled = false;
 
             foreach (var direction in WorkshopDirectionUtility.CardinalDirections)
             {
@@ -208,7 +215,7 @@ namespace ArcaneAtelier.Workshop
 
                 var portRenderer = portGo.AddComponent<SpriteRenderer>();
                 portRenderer.sprite = sharedSprite;
-                portRenderer.sortingOrder = 4;
+                portRenderer.sortingOrder = 5;
                 visual.PortMarkers.Add(portRenderer);
             }
 
@@ -238,6 +245,15 @@ namespace ArcaneAtelier.Workshop
             visual.Shadow.color = controller.SelectedCell == cell
                 ? new Color(0.92f, 0.74f, 0.33f, 0.22f)
                 : new Color(0f, 0f, 0f, 0.35f);
+
+            bool showPipeOverlay = pipesOverlaySprite != null && state.Definition != null && state.Definition.Id == "node.factory.conduit";
+            visual.Overlay.enabled = showPipeOverlay;
+            if (showPipeOverlay)
+            {
+                visual.Overlay.sprite = pipesOverlaySprite;
+                visual.Overlay.color = new Color(1f, 1f, 1f, 0.9f);
+                visual.Overlay.transform.localScale = Vector3.one * CalculateSpriteFitScale(pipesOverlaySprite, 0.84f * pulseScale);
+            }
 
             for (var index = 0; index < WorkshopDirectionUtility.CardinalDirections.Count; index++)
             {

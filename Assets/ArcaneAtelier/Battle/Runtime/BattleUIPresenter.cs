@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using ArcaneAtelier;
 using ArcaneAtelier.Battle;
 using ArcaneAtelier.Workshop;
 
@@ -54,6 +55,8 @@ public class BattleUIPresenter : MonoBehaviour
     private TextMeshProUGUI discardPileText;
     private TextMeshProUGUI playerShieldText;
     private TextMeshProUGUI bossShieldText;
+    private Image playerElementIcon;
+    private Image bossElementIcon;
     private TextMeshProUGUI handHeaderText;
     private Button endTurnButton;
     private Image endTurnButtonImage;
@@ -166,6 +169,11 @@ public class BattleUIPresenter : MonoBehaviour
         {
             bossShieldText.text = $"Shield {controller.Boss.Shield}";
         }
+        if (bossElementIcon != null)
+        {
+            bossElementIcon.sprite = ArcaneArtCatalog.GetElementIcon(controller.Boss.Element);
+            bossElementIcon.enabled = bossElementIcon.sprite != null;
+        }
 
         // Update Player
         if (playerNameText != null)
@@ -193,6 +201,11 @@ public class BattleUIPresenter : MonoBehaviour
         if (playerShieldText != null)
         {
             playerShieldText.text = $"Shield {controller.Player.Shield}";
+        }
+        if (playerElementIcon != null)
+        {
+            playerElementIcon.sprite = ArcaneArtCatalog.GetElementIcon(controller.Player.Element);
+            playerElementIcon.enabled = playerElementIcon.sprite != null;
         }
         if (intentText != null)
         {
@@ -386,9 +399,14 @@ public class BattleUIPresenter : MonoBehaviour
 
         if (playerNameText != null)
         {
-            Anchor(playerNameText.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(-28f, 24f), new Vector2(18f, -18f));
+            Anchor(playerNameText.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(-64f, 24f), new Vector2(36f, -18f));
             playerNameText.gameObject.SetActive(false);
         }
+
+        playerElementIcon = GetOrCreateImage(playerPanelRect, "PlayerElementIcon", Color.white);
+        Anchor(playerElementIcon.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(22f, 22f), new Vector2(18f, -18f));
+        playerElementIcon.preserveAspect = true;
+        playerElementIcon.enabled = false;
 
         if (playerHealthSlider != null)
         {
@@ -430,8 +448,13 @@ public class BattleUIPresenter : MonoBehaviour
 
         if (bossNameText != null)
         {
-            Anchor(bossNameText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(420f, 42f), new Vector2(0f, 20f));
+            Anchor(bossNameText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(390f, 42f), new Vector2(18f, 20f));
         }
+
+        bossElementIcon = GetOrCreateImage(bossPanelRect, "BossElementIcon", Color.white);
+        Anchor(bossElementIcon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(28f, 28f), new Vector2(-166f, 20f));
+        bossElementIcon.preserveAspect = true;
+        bossElementIcon.enabled = false;
 
         if (bossHealthSlider != null)
         {
@@ -640,8 +663,14 @@ public class BattleUIPresenter : MonoBehaviour
 
         TextMeshProUGUI nameText = GetOrCreateText(rect, "NameText", 19, TextAlignmentOptions.TopLeft);
         nameText.color = new Color(0.97f, 0.95f, 0.9f);
-        Anchor(nameText.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(-52f, 44f), new Vector2(44f, -10f));
+        Anchor(nameText.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(-88f, 44f), new Vector2(44f, -10f));
         nameText.text = cardEntry.DisplayName;
+
+        Image elementIcon = GetOrCreateImage(rect, "ElementIcon", Color.white);
+        Anchor(elementIcon.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(28f, 28f), new Vector2(-14f, -14f));
+        elementIcon.preserveAspect = true;
+        elementIcon.sprite = ArcaneArtCatalog.GetElementIcon(cardEntry.Element);
+        elementIcon.enabled = elementIcon.sprite != null;
 
         TextMeshProUGUI bodyText = GetOrCreateText(rect, "BodyText", 16, TextAlignmentOptions.TopLeft);
         bodyText.color = new Color(0.83f, 0.84f, 0.88f);
