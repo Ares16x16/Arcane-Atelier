@@ -402,6 +402,17 @@ namespace ArcaneAtelier.Workshop.Editor
         {
             var asset = CreateOrLoadAsset<WorkshopNodeDefinition>($"{DataRoot}/Nodes/{SanitizeAssetName(id)}.asset");
             asset.Configure(id, displayName, description, category, unlockedByDefault, tint, inputPorts, outputPorts, bufferCapacity, maxTransferPerStep, acceptsAnyResource, recipes);
+
+            // Auto-load corresponding sprite from Assets/ArcaneAtelier/Art/Nodes/
+            var parts = id.Split('.');
+            var subdir = parts.Length >= 2 && parts[1] == "factory" ? "Factories" : "Spirits";
+            var spritePath = $"Assets/ArcaneAtelier/Art/Nodes/{subdir}/{SanitizeAssetName(id)}.png";
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+            if (sprite != null)
+            {
+                asset.NodeSprite = sprite;
+            }
+
             EditorUtility.SetDirty(asset);
             return asset;
         }
