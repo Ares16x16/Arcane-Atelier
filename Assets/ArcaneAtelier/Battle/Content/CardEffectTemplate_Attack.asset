@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1561af436c4e64cebaeb4713b4e69f74, type: 3}
+  m_Name: CardEffectTemplate_Attack
+  m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattleCardEffectTemplate
+  cardId: template.attack
+  role: 1
+  primaryValueMultiplier: 1
+  secondaryValueMultiplier: 1
+  description: Standard attack effect.

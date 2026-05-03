@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ba63bb8c80a0423d98b8298c0180e17, type: 3}
+  m_Name: CardDefinition_combat_flame_bolt
+  m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattleCardDefinition
+  battleCardId: combat.flame_bolt
+  displayName: Flame Bolt
+  element: 1
+  tier: 1
+  instructions:
+  - Type: 0
+    Target: 2
+    Value: 15
+    HitCount: 1
+    StatusId: 
+    Duration: 0

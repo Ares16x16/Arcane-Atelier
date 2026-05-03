@@ -1,19 +1,19 @@
 {
-    "name": "ArcaneAtelier.Battle.Editor",
-    "rootNamespace": "ArcaneAtelier.Battle.Editor",
-    "references": [
-        "ArcaneAtelier.Battle.Runtime",
-        "ArcaneAtelier.Workshop.Runtime"
-    ],
-    "includePlatforms": [
-        "Editor"
-    ],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "ArcaneAtelier.Battle.Editor",
+  "rootNamespace": "ArcaneAtelier.Battle.Editor",
+  "references": [
+    "ArcaneAtelier.Battle.Runtime",
+    "ArcaneAtelier.Workshop.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

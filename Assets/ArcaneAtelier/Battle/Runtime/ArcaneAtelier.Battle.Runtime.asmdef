@@ -1,17 +1,17 @@
 {
-    "name": "ArcaneAtelier.Battle.Runtime",
-    "rootNamespace": "ArcaneAtelier.Battle",
-    "references": [
-        "ArcaneAtelier.Workshop.Runtime",
-        "Unity.TextMeshPro"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "ArcaneAtelier.Battle.Runtime",
+  "rootNamespace": "ArcaneAtelier.Battle",
+  "references": [
+    "ArcaneAtelier.Workshop.Runtime",
+    "UnityEngine.IMGUIModule"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

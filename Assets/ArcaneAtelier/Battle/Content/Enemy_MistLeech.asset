@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77bee526265284c00b0edc200472c624, type: 3}
+  m_Name: Enemy_MistLeech
+  m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattleBossDefinition
+  bossId: enemy.mist.leech
+  displayName: Mist Leech
+  maxHealth: 52
+  element: 2
+  encounterType: 0
+  difficultyRank: 2
+  enemyArchetype: 2
+  lowHealthThresholdNormalized: 0.35
+  defensiveShieldThreshold: 0
+  preferredBurstTurnInterval: 3
+  actionPattern:
+  - ActionType: 1
+    Value: 10
+    SecondaryValue: 0
+    Description: Drains a thread of vitality
+  - ActionType: 2
+    Value: 5
+    SecondaryValue: 0
+    Description: Condenses moisture to recover
+  - ActionType: 1
+    Value: 12
+    SecondaryValue: 0
+    Description: Lashes with a liquid tendril
+  phase2ActionPattern: []
+  phaseTransitionHealthPercent: 0.5
+  defeatRewardId: reward.enemy.water.minor

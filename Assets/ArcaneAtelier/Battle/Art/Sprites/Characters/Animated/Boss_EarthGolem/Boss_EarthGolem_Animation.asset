@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4ec0d4bfc40481bb6b4a71a47f5892d, type: 3}
+  m_Name: Boss_EarthGolem_Animation
+  m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattleUnitAnimationProfile
+  previewSprite: {fileID: 21300000, guid: b09d3975eb7d04b0493839313024a05b, type: 3}
+  idleSequence:
+    frames:
+    - {fileID: 21300000, guid: a3a3fec2d6c1e41cca28ae77cbcba1fc, type: 3}
+    - {fileID: 21300000, guid: 493b434f2a7904ce29898bdc589dbe11, type: 3}
+    - {fileID: 21300000, guid: 2bcd0e9bb07ce4829ad09afc2a77818f, type: 3}
+    - {fileID: 21300000, guid: 04c53380cbc7b4c2b8c4ba53e797a085, type: 3}
+    framesPerSecond: 5
+    loop: 1
+  attackSequence:
+    frames:
+    - {fileID: 21300000, guid: 0ae17159f297a4a80adc381ae5112352, type: 3}
+    - {fileID: 21300000, guid: a7a9e0fdf55664ab8835cf625f32c49a, type: 3}
+    - {fileID: 21300000, guid: 179bea625ba394d9ba26efd3ff6ffdfd, type: 3}
+    - {fileID: 21300000, guid: 65f8e27a1cb0c4a9e95e06be16ccbfd1, type: 3}
+    framesPerSecond: 10
+    loop: 0
+  hurtSequence:
+    frames:
+    - {fileID: 21300000, guid: 95c03ccb06e864fba92053916b48e490, type: 3}
+    - {fileID: 21300000, guid: 696604979aa1f46868b8b20d38c8d06e, type: 3}
+    - {fileID: 21300000, guid: 1f16a8f214f854c3ba97ebe99e5f7a9a, type: 3}
+    - {fileID: 21300000, guid: fc835e442b51d4ab6a1ff1a8d91a847e, type: 3}
+    framesPerSecond: 10
+    loop: 0
