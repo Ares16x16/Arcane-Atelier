@@ -307,7 +307,8 @@ namespace ArcaneAtelier.Workshop
                 WorkshopProductionRecipe.Create("recipe.fusion.advanced.prism", "Forge Advanced Prism", 3f, new[] { WorkshopItemStack.Create(intermediateLightSpell, 1), WorkshopItemStack.Create(intermediateDarkSpell, 1) }, new[] { WorkshopItemStack.Create(advancedPrismSpell, 1) }),
                 WorkshopProductionRecipe.Create("recipe.fusion.advanced.polarity", "Forge Advanced Polarity", 3f, new[] { WorkshopItemStack.Create(intermediateIceSpell, 1), WorkshopItemStack.Create(intermediateThunderSpell, 1) }, new[] { WorkshopItemStack.Create(advancedPolaritySpell, 1) }));
 
-            var conduit = CreateNodeWithSprite("node.factory.conduit", "Arcane Conduit", "Relay node that forwards elements and spell cards through the line.", WorkshopNodeCategory.Storage, true, new Color(0.37f, 0.39f, 0.43f), NodePortMask.West, NodePortMask.East, 12, 2, true, Array.Empty<WorkshopProductionRecipe>());
+            var conduit = CreateNodeWithSprite("node.factory.conduit", "Arcane Conduit", "Relay node that forwards element resources through the line.", WorkshopNodeCategory.Storage, true, new Color(0.37f, 0.39f, 0.43f), NodePortMask.West, NodePortMask.East, 12, 2, true, Array.Empty<WorkshopProductionRecipe>());
+            var spellConduit = CreateNodeWithSprite("node.factory.spell_conduit", "Spell Conduit", "Relay node that forwards crafted spell cards into the battle deck.", WorkshopNodeCategory.Storage, true, new Color(0.58f, 0.42f, 0.78f), NodePortMask.West, NodePortMask.East, 12, 2, false, Array.Empty<WorkshopProductionRecipe>());
             var unlockSpellFusionBasic = CreateReward("reward.unlock.spell_fusion_basic", "Unlock Spell Fusion Basic", "Unlocks same-element spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionBasicFactory, 0f, Array.Empty<WorkshopItemStack>());
             var unlockSpellFusionIntermediate = CreateReward("reward.unlock.spell_fusion_intermediate", "Unlock Spell Fusion Intermediate", "Unlocks non-opposing mixed spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionIntermediateFactory, 0f, Array.Empty<WorkshopItemStack>());
             var unlockSpellFusionAdvanced = CreateReward("reward.unlock.spell_fusion_advanced", "Unlock Spell Fusion Advanced", "Unlocks opposing-element advanced fusion.", WorkshopRewardKind.UnlockNode, spellFusionAdvancedFactory, 0f, Array.Empty<WorkshopItemStack>());
@@ -323,7 +324,7 @@ namespace ArcaneAtelier.Workshop
             database.Configure(
                 new Vector2Int(9, 6),
                 0.25f,
-                new[] { fireSpirit, waterSpirit, windSpirit, earthSpirit, iceSpirit, thunderSpirit, lightSpirit, darkSpirit, elementFusionFactory, elementShapingFactory, spellFusionBasicFactory, spellFusionIntermediateFactory, spellFusionAdvancedFactory, conduit },
+                new[] { fireSpirit, waterSpirit, windSpirit, earthSpirit, iceSpirit, thunderSpirit, lightSpirit, darkSpirit, elementFusionFactory, elementShapingFactory, spellFusionBasicFactory, spellFusionIntermediateFactory, spellFusionAdvancedFactory, conduit, spellConduit },
                 new[] { unlockSpellFusionBasic, unlockSpellFusionIntermediate, unlockSpellFusionAdvanced, unlockIceSpirit, unlockThunderSpirit, unlockLightSpirit, unlockDarkSpirit, boostShaping, reserveReward },
                 new[]
                 {
@@ -331,6 +332,7 @@ namespace ArcaneAtelier.Workshop
                     WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(1, 5), 0),
                     WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(2, 5), 0),
                     WorkshopPlacedNodeSeed.Create(spellFusionBasicFactory, new Vector2Int(3, 5), 0),
+                    WorkshopPlacedNodeSeed.Create(spellConduit, new Vector2Int(4, 5), 0),
                     WorkshopPlacedNodeSeed.Create(fireSpirit, new Vector2Int(3, 2), 3),
                     WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(3, 3), 3),
                     WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(3, 4), 3),

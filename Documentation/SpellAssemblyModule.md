@@ -81,13 +81,15 @@ Each placed node owns one local buffer. The buffer stores resource tokens and sp
 Node input rules:
 
 - **Source** nodes do not need inputs. Their recipes generate elemental resources into their own buffer.
-- **Storage** nodes, including `Arcane Conduit`, accept and transfer any resource or card that physically reaches their input port.
+- **Arcane Conduit** accepts and transfers element resources only.
+- **Spell Conduit** accepts and transfers spell cards only.
+- Other future **Storage** nodes may define their own accepted item lanes.
 - **Processor** nodes, including `Element Fusion`, only accept items that appear in one of their recipe inputs.
 - **Crafter** nodes, including `Element Shaper` and `Spell Fusion`, only accept items that appear in one of their recipe inputs.
 
 Node output rules:
 
-- **Storage** nodes may output any buffered item. This is the only generic pass-through behavior.
+- **Storage** nodes may output any buffered item they were allowed to accept. This is the only pass-through behavior.
 - **Source**, **Processor**, and **Crafter** nodes may only output items that are declared as outputs of one of their own recipes.
 - A processor/crafter must not leak raw recipe inputs through its output port. Example: `Element Fusion` may hold `Wind` and `Earth`, but it must not forward either token unless a recipe turns them into a valid output.
 
@@ -97,8 +99,10 @@ Recipe execution rules:
 - A recipe consumes its complete input set from the node buffer.
 - If no recipe has all required inputs, the node keeps its buffer and waits.
 - If a recipe succeeds, its outputs are added to the node buffer.
+- If several recipes are possible in one buffer, the machine resolves the first matching recipe in recipe-list order, then scans from the top again on the next available cycle.
 - After recipes execute, transfer moves only legal output items to connected downstream nodes.
-- End-of-line spell cards auto-collect into `PreparedCards`, which becomes the battle deck payload.
+- End-of-line spell cards in crafters auto-collect into `PreparedCards`.
+- End-of-line spell cards in `Spell Conduit` stay visible in the conduit buffer and are also included in the battle deck snapshot.
 
 Important invalid-input example:
 
@@ -112,7 +116,7 @@ Important invalid-input example:
 - Per-node recipe execution consumes inputs from local buffer first, then reserve inventory.
 - Resource outputs enter node buffers.
 - Spell cards travel through the line while a valid downstream receiver exists.
-- End-of-line spell cards auto-collect into `PreparedCards` (battle-facing inventory).
+- End-of-line spell cards inside `Spell Conduit` remain visible as the card-lane buffer. The battle deck view and deploy payload include those terminal buffered cards.
 
 ---
 
@@ -136,7 +140,7 @@ Important invalid-input example:
 
 Starter scene note:
 
-- The generated opening layout already produces `Inferno Brand` through `Spell Fusion I` and `Frost Pin` through `Element Fusion`.
+- The generated opening layout already produces `Inferno Brand` through `Spell Fusion I -> Spell Conduit` and `Frost Pin` through `Element Fusion`.
 - `Element Fusion` is available from the start so players can immediately understand secondary-element crafting.
 - `Spell Fusion I` is available from the start for feature testing; `Spell Fusion II / III` remain reward-gated.
 

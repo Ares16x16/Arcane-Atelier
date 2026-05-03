@@ -8,6 +8,9 @@ namespace ArcaneAtelier.Workshop
 {
     public sealed class WorkshopNodeState
     {
+        private const string ElementConduitId = "node.factory.conduit";
+        private const string SpellConduitId = "node.factory.spell_conduit";
+
         private readonly Dictionary<WorkshopItemDefinition, int> buffer = new Dictionary<WorkshopItemDefinition, int>();
         private int bufferedItemCount;
 
@@ -47,15 +50,40 @@ namespace ArcaneAtelier.Workshop
                 return false;
             }
 
-            if (Definition.AcceptsAnyResource || Definition.Category == WorkshopNodeCategory.Storage)
+            if (Definition.Category == WorkshopNodeCategory.Storage)
             {
-                return true;
+                return StorageAcceptsItem(Definition, item);
+            }
+
+            if (Definition.AcceptsAnyResource)
+            {
+                return item.Kind == WorkshopItemKind.Resource;
             }
 
             return Definition.Recipes
                 .Where(recipe => recipe != null)
                 .SelectMany(recipe => recipe.Inputs ?? Array.Empty<WorkshopItemStack>())
                 .Any(stack => stack != null && stack.Item == item);
+        }
+
+        internal static bool StorageAcceptsItem(WorkshopNodeDefinition definition, WorkshopItemDefinition item)
+        {
+            if (definition == null || item == null)
+            {
+                return false;
+            }
+
+            if (definition.Id == ElementConduitId)
+            {
+                return item.Kind == WorkshopItemKind.Resource;
+            }
+
+            if (definition.Id == SpellConduitId)
+            {
+                return item.Kind == WorkshopItemKind.Card;
+            }
+
+            return true;
         }
 
         public bool TryAddToBuffer(WorkshopItemDefinition item, int amount)
@@ -375,30 +403,17 @@ namespace ArcaneAtelier.Workshop
                         nodeState.CycleProgress = Mathf.Min(nodeState.CycleProgress, maxCycleSeconds);
                     }
 
-                    var executedAny = false;
-                    foreach (var recipe in nodeState.Definition.Recipes)
+                    while (TryFindExecutableRecipe(nodeState, out var recipe) &&
+                           recipe != null &&
+                           nodeState.CycleProgress >= recipe.CycleSeconds)
                     {
-                        if (recipe == null)
-                        {
-                            continue;
-                        }
-
-                        while (nodeState.CycleProgress >= recipe.CycleSeconds)
-                        {
-                            if (!TryExecuteRecipe(nodeState, recipe))
-                            {
-                                break;
-                            }
-
-                            nodeState.CycleProgress -= recipe.CycleSeconds;
-                            dirty = true;
-                            executedAny = true;
-                        }
-
-                        if (executedAny)
+                        if (!TryExecuteRecipe(nodeState, recipe))
                         {
                             break;
                         }
+
+                        nodeState.CycleProgress -= recipe.CycleSeconds;
+                        dirty = true;
                     }
                 }
 
@@ -420,6 +435,11 @@ namespace ArcaneAtelier.Workshop
             {
                 foreach (var pair in nodeState.EnumerateBufferUnsorted())
                 {
+                    if (pair.Key == null || pair.Key.Kind != WorkshopItemKind.Resource)
+                    {
+                        continue;
+                    }
+
                     if (!network.TryAdd(pair.Key, pair.Value))
                     {
                         network[pair.Key] += pair.Value;
@@ -427,12 +447,12 @@ namespace ArcaneAtelier.Workshop
                 }
             }
 
-            return new WorkshopInventoryView(network, new Dictionary<WorkshopItemDefinition, int>(preparedCards));
+            return new WorkshopInventoryView(network, BuildPreparedCardSnapshot());
         }
 
         public void CommitBattlePayload()
         {
-            WorkshopBattlePayloadBridge.Commit(preparedCards);
+            WorkshopBattlePayloadBridge.Commit(BuildPreparedCardSnapshot());
         }
 
         public WorkshopFlowStatsView BuildFlowStatsView()
@@ -445,40 +465,105 @@ namespace ArcaneAtelier.Workshop
                 totalSpellsProduced / safeSeconds);
         }
 
-        private bool TryExecuteRecipe(WorkshopNodeState nodeState, WorkshopProductionRecipe recipe)
+        private Dictionary<WorkshopItemDefinition, int> BuildPreparedCardSnapshot()
         {
-            using (RecipeMarker.Auto())
+            var snapshot = new Dictionary<WorkshopItemDefinition, int>(preparedCards);
+
+            foreach (var nodeState in nodes.Values)
             {
-                if (recipe == null)
+                foreach (var pair in nodeState.EnumerateBufferUnsorted())
+                {
+                    if (pair.Key == null || pair.Key.Kind != WorkshopItemKind.Card || pair.Value <= 0)
+                    {
+                        continue;
+                    }
+
+                    if (HasConnectedTransferTarget(nodeState, pair.Key))
+                    {
+                        continue;
+                    }
+
+                    if (!snapshot.TryAdd(pair.Key, pair.Value))
+                    {
+                        snapshot[pair.Key] += pair.Value;
+                    }
+                }
+            }
+
+            return snapshot;
+        }
+
+        private bool TryFindExecutableRecipe(WorkshopNodeState nodeState, out WorkshopProductionRecipe executableRecipe)
+        {
+            foreach (var recipe in nodeState.Definition.Recipes)
+            {
+                if (CanExecuteRecipe(nodeState, recipe))
+                {
+                    executableRecipe = recipe;
+                    return true;
+                }
+            }
+
+            executableRecipe = null;
+            return false;
+        }
+
+        private bool CanExecuteRecipe(WorkshopNodeState nodeState, WorkshopProductionRecipe recipe)
+        {
+            if (nodeState == null || recipe == null || recipe.CycleSeconds <= 0f)
+            {
+                return false;
+            }
+
+            var bufferedInputAmount = 0;
+            foreach (var input in recipe.Inputs ?? Array.Empty<WorkshopItemStack>())
+            {
+                if (input?.Item == null || input.Amount <= 0)
                 {
                     return false;
                 }
 
-                foreach (var input in recipe.Inputs ?? Array.Empty<WorkshopItemStack>())
+                var bufferedAmount = nodeState.CountItem(input.Item);
+                var available = bufferedAmount;
+                if (input.Item.Kind == WorkshopItemKind.Resource)
                 {
-                    if (input?.Item == null || input.Amount <= 0)
-                    {
-                        return false;
-                    }
-
-                    var available = nodeState.CountItem(input.Item);
-                    if (input.Item != null && input.Item.Kind == WorkshopItemKind.Resource)
-                    {
-                        available += GetReserveCount(input.Item);
-                    }
-
-                    if (available < input.Amount)
-                    {
-                        return false;
-                    }
+                    available += GetReserveCount(input.Item);
                 }
 
-                foreach (var output in recipe.Outputs.Where(output => ShouldBufferOutput(nodeState, output)))
+                if (available < input.Amount)
                 {
-                    if (nodeState.BufferedItemCount + output.Amount > nodeState.Definition.BufferCapacity)
-                    {
-                        return false;
-                    }
+                    return false;
+                }
+
+                bufferedInputAmount += Math.Min(input.Amount, bufferedAmount);
+            }
+
+            var bufferedOutputAmount = 0;
+            foreach (var output in (recipe.Outputs ?? Array.Empty<WorkshopItemStack>()).Where(output => ShouldBufferOutput(nodeState, output)))
+            {
+                if (output?.Item == null || output.Amount <= 0)
+                {
+                    return false;
+                }
+
+                bufferedOutputAmount += output.Amount;
+            }
+
+            if (nodeState.BufferedItemCount - bufferedInputAmount + bufferedOutputAmount > nodeState.Definition.BufferCapacity)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool TryExecuteRecipe(WorkshopNodeState nodeState, WorkshopProductionRecipe recipe)
+        {
+            using (RecipeMarker.Auto())
+            {
+                if (!CanExecuteRecipe(nodeState, recipe))
+                {
+                    return false;
                 }
 
                 foreach (var input in recipe.Inputs ?? Array.Empty<WorkshopItemStack>())
@@ -501,7 +586,7 @@ namespace ArcaneAtelier.Workshop
                     }
                 }
 
-                foreach (var output in recipe.Outputs)
+                foreach (var output in recipe.Outputs ?? Array.Empty<WorkshopItemStack>())
                 {
                     if (output.Item == null || output.Amount <= 0)
                     {
@@ -626,6 +711,11 @@ namespace ArcaneAtelier.Workshop
 
             foreach (var nodeState in nodes.Values)
             {
+                if (nodeState.Definition.Category == WorkshopNodeCategory.Storage)
+                {
+                    continue;
+                }
+
                 transferBufferCache.Clear();
                 transferBufferCache.AddRange(nodeState.EnumerateBufferUnsorted().Where(pair => pair.Key != null && pair.Key.Kind == WorkshopItemKind.Card));
                 foreach (var pair in transferBufferCache)
@@ -710,7 +800,7 @@ namespace ArcaneAtelier.Workshop
 
             if (nodeState.Definition.Category == WorkshopNodeCategory.Storage)
             {
-                return true;
+                return WorkshopNodeState.StorageAcceptsItem(nodeState.Definition, item);
             }
 
             return nodeState.Definition.Recipes
@@ -766,9 +856,14 @@ namespace ArcaneAtelier.Workshop
                 return false;
             }
 
-            if (definition.AcceptsAnyResource || definition.Category == WorkshopNodeCategory.Storage)
+            if (definition.Category == WorkshopNodeCategory.Storage)
             {
-                return true;
+                return WorkshopNodeState.StorageAcceptsItem(definition, item);
+            }
+
+            if (definition.AcceptsAnyResource)
+            {
+                return item.Kind == WorkshopItemKind.Resource;
             }
 
             return definition.Recipes

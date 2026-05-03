@@ -112,7 +112,7 @@ When the generated scene first opens, the starter layout is already producing sp
 The opening layout demonstrates two working lines:
 
 - **Top lane**
-  - `Fire Spirit -> Arcane Conduit -> Element Shaper -> Spell Fusion I`
+  - `Fire Spirit -> Arcane Conduit -> Element Shaper -> Spell Fusion I -> Spell Conduit`
   - `Fire Spirit -> vertical Arcane Conduit -> rotated Element Shaper -> Spell Fusion I`
   - result: `Inferno Brand`
 
@@ -129,6 +129,7 @@ You also begin with these nodes unlocked in the palette:
 - Wind Spirit
 - Earth Spirit
 - Arcane Conduit
+- Spell Conduit
 - Element Shaper
 - Element Fusion
 - Spell Fusion I
@@ -144,9 +145,10 @@ To try the default fusion features:
 
 1. open `WorkshopScene`
 2. press `Advance 1 Prep Tick` several times, or let time run
-3. watch the right-side `Battle Deck`
+3. select `Spell Conduit` to see fused spell cards waiting in its buffer
 4. `Inferno Brand` proves Spell Fusion I is working
 5. `Frost Pin` proves Element Fusion plus Element Shaper is working
+6. watch the right-side `Battle Deck`; it includes terminal `Spell Conduit` cards
 
 To see the higher fusion tiers:
 
@@ -159,9 +161,15 @@ To see the higher fusion tiers:
 
 ### 2. Arcane Conduit
 
-This is the relay node.
+This is the element relay node.
 
-Use it to carry resources or spell cards forward through the line.
+Use it to carry element resources forward through the line. It does not accept spell cards.
+
+### 2b. Spell Conduit
+
+This is the spell-card relay node.
+
+Use it after `Element Shaper` or `Spell Fusion` when you want cards to visibly travel through a card lane before becoming part of the battle deck. It does not accept element resources.
 
 ### 3. Element Fusion
 
@@ -501,6 +509,8 @@ If the game only produces `Cinder Dart` and `Tidal Mend`, the workshop content d
 
 Invalid pairs stay in the `Element Fusion` buffer and do not output anything.
 For example, `Wind + Earth` is not a current Element Fusion recipe, so it should not produce a secondary element and it should not leak `Wind` or `Earth` into a downstream conduit.
+
+If more than two valid elements are buffered, `Element Fusion` resolves every possible recipe in recipe-list order as cycle time becomes available. For example, a buffer with `Wind x2`, `Water x1`, and `Fire x1` produces `Ice` first, then `Thunder`.
 
 ### Element Shaper
 

@@ -335,7 +335,7 @@ namespace ArcaneAtelier.Workshop.Editor
             var conduit = UpsertNode(
                 "node.factory.conduit",
                 "Arcane Conduit",
-                "Relay node that forwards elements and spell cards through the line.",
+                "Relay node that forwards element resources through the line.",
                 WorkshopNodeCategory.Storage,
                 true,
                 new Color(0.37f, 0.39f, 0.43f),
@@ -344,6 +344,20 @@ namespace ArcaneAtelier.Workshop.Editor
                 12,
                 2,
                 true,
+                Array.Empty<WorkshopProductionRecipe>());
+
+            var spellConduit = UpsertNode(
+                "node.factory.spell_conduit",
+                "Spell Conduit",
+                "Relay node that forwards crafted spell cards into the battle deck.",
+                WorkshopNodeCategory.Storage,
+                true,
+                new Color(0.58f, 0.42f, 0.78f),
+                NodePortMask.West,
+                NodePortMask.East,
+                12,
+                2,
+                false,
                 Array.Empty<WorkshopProductionRecipe>());
 
             var unlockSpellFusionBasic = UpsertReward("reward.unlock.spell_fusion_basic", "Unlock Spell Fusion Basic", "Unlocks same-element spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionBasicFactory, 0f, Array.Empty<WorkshopItemStack>());
@@ -366,7 +380,7 @@ namespace ArcaneAtelier.Workshop.Editor
             database.Configure(
                 new Vector2Int(9, 6),
                 0.25f,
-                new[] { fireSpirit, waterSpirit, windSpirit, earthSpirit, iceSpirit, thunderSpirit, lightSpirit, darkSpirit, elementFusionFactory, elementShapingFactory, spellFusionBasicFactory, spellFusionIntermediateFactory, spellFusionAdvancedFactory, conduit },
+                new[] { fireSpirit, waterSpirit, windSpirit, earthSpirit, iceSpirit, thunderSpirit, lightSpirit, darkSpirit, elementFusionFactory, elementShapingFactory, spellFusionBasicFactory, spellFusionIntermediateFactory, spellFusionAdvancedFactory, conduit, spellConduit },
                 new[] { unlockSpellFusionBasic, unlockSpellFusionIntermediate, unlockSpellFusionAdvanced, unlockIceSpirit, unlockThunderSpirit, unlockLightSpirit, unlockDarkSpirit, boostShaping, reserveReward },
                 new[]
                 {
@@ -374,6 +388,7 @@ namespace ArcaneAtelier.Workshop.Editor
                     WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(1, 5), 0),
                     WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(2, 5), 0),
                     WorkshopPlacedNodeSeed.Create(spellFusionBasicFactory, new Vector2Int(3, 5), 0),
+                    WorkshopPlacedNodeSeed.Create(spellConduit, new Vector2Int(4, 5), 0),
                     WorkshopPlacedNodeSeed.Create(fireSpirit, new Vector2Int(3, 2), 3),
                     WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(3, 3), 3),
                     WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(3, 4), 3),

@@ -442,6 +442,8 @@ namespace ArcaneAtelier.Workshop
             {
                 "node.factory.element_fusion",
                 "node.factory.element_shaping",
+                "node.factory.conduit",
+                "node.factory.spell_conduit",
                 "node.factory.spell_fusion.basic",
                 "node.factory.spell_fusion.intermediate",
                 "node.factory.spell_fusion.advanced"
@@ -536,6 +538,7 @@ namespace ArcaneAtelier.Workshop
             return ContainsSeed(layout, "node.spirit.fire", new Vector2Int(0, 5), 0) &&
                    ContainsSeed(layout, "node.factory.element_shaping", new Vector2Int(2, 5), 0) &&
                    ContainsSeed(layout, "node.factory.spell_fusion.basic", new Vector2Int(3, 5), 0) &&
+                   ContainsSeed(layout, "node.factory.spell_conduit", new Vector2Int(4, 5), 0) &&
                    ContainsSeed(layout, "node.spirit.fire", new Vector2Int(3, 2), 3) &&
                    ContainsSeed(layout, "node.factory.element_shaping", new Vector2Int(3, 4), 3) &&
                    ContainsSeed(layout, "node.spirit.water", new Vector2Int(0, 1), 0) &&
