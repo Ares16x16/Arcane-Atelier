@@ -6,9 +6,11 @@ This branch still contains the workshop-heavy implementation baseline, while the
 
 ## Engine compatibility
 
+## Engine compatibility
+
 - **Original target editor**: Unity `6000.4.0f1` (Unity 6 LTS).
 - Runtime/editor C# source has been written with older C# compiler compatibility in mind (no target-typed `new` expressions), which improves portability to Unity forks based on older compiler stacks (including Tuanjie-derived workflows).
-- Runtime/editor modules are currently organized under `Assets/ArcaneAtelier/Workshop`.
+- The project is assembly-definition based and organized into runtime/editor modules under `Assets/ArcaneAtelier/Workshop`.
 
 ## Quick start
 

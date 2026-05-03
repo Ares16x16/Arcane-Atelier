@@ -442,22 +442,37 @@ The cards use placeholder colors and metadata only.
 
 ---
 
-## Current example cards
+## Current Card List
 
-The workshop currently generates named cards instead of generic placeholders.
+The battle side consumes the spell metadata exported from the workshop payload.
+The table below reflects the current generated content in `WorkshopProjectBootstrap.cs`, so names and numbers may still change during balance passes.
 
-Examples:
+`Produced From` lists the main production path for each card, not every alternate recipe branch.
+Battle now consumes `PrimaryValue`、`HitCount`、`SecondaryValue` and `EffectKeyword` through generated per-card definitions and runtime status handling.
+The exact keyword semantics are still current-implementation rules rather than final long-term balance design, so timing, scaling, and wording may continue to evolve.
 
-- `Cinder Dart`
-- `Tidal Mend`
-- `Zephyr Cut`
-- `Stoneguard Sigil`
-- `Inferno Brand`
-- `Stormbreaker`
-- `Dawn Benediction`
-- `Steam Requiem`
-
-These names and numbers are still tuning values and may change later.
+| Card | Tier | Element | Role | Effect | Keyword | Produced From |
+| --- | --- | --- | --- | --- | --- | --- |
+| `Cinder Dart` | Basic | Fire | Attack | Deal 8 damage. SecondaryValue: 1. | `Burn` | `Element Shaper` from `Fire` |
+| `Tidal Mend` | Basic | Water | Healing | Restore 6 HP. SecondaryValue: 8. | `Regen` | `Element Shaper` from `Water` |
+| `Zephyr Cut` | Basic | Wind | Attack | Deal 5 damage x2. SecondaryValue: 10. | `Expose` | `Element Shaper` from `Wind` |
+| `Stoneguard Sigil` | Basic | Earth | Defense | Gain 7 shield. SecondaryValue: 18. | `Bulwark` | `Element Shaper` from `Earth` |
+| `Frost Pin` | Basic | Ice | Attack | Deal 4 damage x2. SecondaryValue: 20. | `Slow` | `Element Shaper` from `Ice` |
+| `Volt Javelin` | Basic | Thunder | Attack | Deal 7 damage. SecondaryValue: 15. | `Shock` | `Element Shaper` from `Thunder` |
+| `Lumen Prayer` | Basic | Light | Healing | Restore 5 HP x2. SecondaryValue: 12. | `Bless` | `Element Shaper` from `Light` |
+| `Gloam Ward` | Basic | Dark | Defense | Gain 6 shield. SecondaryValue: 20. | `Veil` | `Element Shaper` from `Dark` |
+| `Inferno Brand` | Intermediate | Fire | Attack | Deal 14 damage x2. SecondaryValue: 2. | `Burn` | `Spell Fusion I` from `Cinder Dart + Cinder Dart` |
+| `Tide Chorus` | Intermediate | Water | Healing | Restore 11 HP x2. SecondaryValue: 14. | `Regen` | `Spell Fusion I` from `Tidal Mend + Tidal Mend` |
+| `Razor Monsoon` | Intermediate | Wind | Attack | Deal 8 damage x3. SecondaryValue: 12. | `Expose` | `Spell Fusion I` from `Zephyr Cut + Zephyr Cut` |
+| `Bastion Pulse` | Intermediate | Earth | Defense | Gain 12 shield. SecondaryValue: 28. | `Ward` | `Spell Fusion I` from `Stoneguard Sigil + Stoneguard Sigil` |
+| `Glacier Bind` | Intermediate | Ice | Attack | Deal 9 damage x2. SecondaryValue: 24. | `Freeze` | `Spell Fusion II` from `Zephyr Cut + Tidal Mend` |
+| `Stormbreaker` | Intermediate | Thunder | Attack | Deal 16 damage. SecondaryValue: 18. | `Stun` | `Spell Fusion II` from `Zephyr Cut + Cinder Dart` |
+| `Dawn Benediction` | Intermediate | Light | Healing | Restore 9 HP x3. SecondaryValue: 18. | `Radiance` | `Spell Fusion II` from `Stoneguard Sigil + Cinder Dart` |
+| `Umbral Bastion` | Intermediate | Dark | Defense | Gain 10 shield x2. SecondaryValue: 24. | `Shade` | `Spell Fusion II` from `Stoneguard Sigil + Tidal Mend` |
+| `Steam Requiem` | Advanced | Fire | Attack | Deal 20 damage x2. SecondaryValue: 28. | `Scald` | `Spell Fusion III` from `Inferno Brand + Tide Chorus` |
+| `Worldsplit Tempest` | Advanced | Wind | Attack | Deal 12 damage x3. SecondaryValue: 20. | `Rend` | `Spell Fusion III` from `Razor Monsoon + Bastion Pulse` |
+| `Eclipse Covenant` | Advanced | Light | Healing | Restore 14 HP x3. SecondaryValue: 24. | `Radiance` | `Spell Fusion III` from `Dawn Benediction + Umbral Bastion` |
+| `Absolute Zero Surge` | Advanced | Ice | Defense | Gain 16 shield x2. SecondaryValue: 35. | `Static Shell` | `Spell Fusion III` from `Glacier Bind + Stormbreaker` |
 
 ---
 

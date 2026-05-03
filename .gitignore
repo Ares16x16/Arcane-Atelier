@@ -35,6 +35,12 @@ Assets/_Recovery.meta
 *.VC.db
 *.DotSettings.user
 
+# AI Agent tools
+.claude/
+.codex/
+.agents/
+.mcp.json
+
 # OS files
 .DS_Store
 Thumbs.db

@@ -16,138 +16,162 @@ namespace ArcaneAtelier.Workshop
             var spellInk = CreateItem("spell_ink", "Spell Ink", "A processed reagent that captures and binds elemental instructions.", WorkshopItemKind.Resource, new Color(0.72f, 0.42f, 0.95f));
             var crystal = CreateItem("crystal_shard", "Crystal Shard", "A rigid catalyst required for defensive card structures.", WorkshopItemKind.Resource, new Color(0.74f, 0.95f, 1f));
 
-            var flameBolt = CreateItem("card_flame_bolt", "Flame Bolt", "Offensive battle card produced directly from ember throughput.", WorkshopItemKind.Card, new Color(0.97f, 0.59f, 0.23f), "combat.flame_bolt");
-            var frostSigil = CreateItem("card_frost_sigil", "Frost Sigil", "Control-focused battle card shaped from raw mist flow.", WorkshopItemKind.Card, new Color(0.49f, 0.81f, 1f), "combat.frost_sigil");
-            var arcaneWard = CreateItem("card_arcane_ward", "Arcane Ward", "Defensive battle card pressed from spell ink and crystal.", WorkshopItemKind.Card, new Color(0.84f, 0.72f, 1f), "combat.arcane_ward");
-
-            var emberSpring = CreateNode(
-                "node_ember_spring",
-                "Ember Spring",
-                "Source node. Outputs Ember Essence into the connected network.",
-                WorkshopNodeCategory.Source,
-                true,
-                new Color(0.78f, 0.28f, 0.16f),
-                NodePortMask.None,
-                NodePortMask.East,
-                6,
-                1,
-                false,
-                WorkshopProductionRecipe.Create("recipe_ember", "Harvest Ember", 1.25f, Array.Empty<WorkshopItemStack>(), new[] { WorkshopItemStack.Create(ember, 1) }));
-
-            var mistWell = CreateNode(
-                "node_mist_well",
-                "Mist Well",
-                "Source node. Outputs Mist Essence into the connected network.",
-                WorkshopNodeCategory.Source,
-                true,
-                new Color(0.24f, 0.53f, 0.8f),
-                NodePortMask.None,
-                NodePortMask.East,
-                6,
-                1,
-                false,
-                WorkshopProductionRecipe.Create("recipe_mist", "Harvest Mist", 1.25f, Array.Empty<WorkshopItemStack>(), new[] { WorkshopItemStack.Create(mist, 1) }));
-
-            var infuser = CreateNode(
-                "node_infuser",
-                "Arcane Infuser",
-                "Processor node. Consumes Ember and Mist to create Spell Ink.",
-                WorkshopNodeCategory.Processor,
-                true,
-                new Color(0.5f, 0.32f, 0.72f),
-                NodePortMask.West | NodePortMask.South,
-                NodePortMask.East,
+            var cinderDart = CreateItem(
+                "spell.basic.fire",
+                "Cinder Dart",
+                "Basic fire attack spell shaped from raw Fire.",
+                WorkshopItemKind.Card,
+                new Color(0.95f, 0.43f, 0.2f),
+                "combat.spell.basic.fire",
+                WorkshopElementAttribute.Fire,
+                WorkshopSpellTier.Basic,
+                WorkshopSpellRole.Attack,
+                10f,
                 8,
                 1,
-                false,
-                WorkshopProductionRecipe.Create(
-                    "recipe_spell_ink",
-                    "Brew Spell Ink",
-                    2.25f,
-                    new[]
-                    {
-                        WorkshopItemStack.Create(ember, 1),
-                        WorkshopItemStack.Create(mist, 1)
-                    },
-                    new[] { WorkshopItemStack.Create(spellInk, 1) }));
-
-            var flamePress = CreateNode(
-                "node_flame_press",
-                "Flame Press",
-                "Crafter node. Converts Ember Essence directly into Flame Bolt cards.",
-                WorkshopNodeCategory.Crafter,
-                true,
-                new Color(0.9f, 0.45f, 0.14f),
-                NodePortMask.West,
-                NodePortMask.None,
-                6,
-                0,
-                false,
-                WorkshopProductionRecipe.Create(
-                    "recipe_flame_bolt",
-                    "Press Flame Bolt",
-                    2f,
-                    new[] { WorkshopItemStack.Create(ember, 2) },
-                    new[] { WorkshopItemStack.Create(flameBolt, 1) }));
-
-            var frostLoom = CreateNode(
-                "node_frost_loom",
-                "Frost Loom",
-                "Crafter node. Weaves Mist Essence into Frost Sigil cards.",
-                WorkshopNodeCategory.Crafter,
-                true,
-                new Color(0.37f, 0.72f, 0.96f),
-                NodePortMask.West,
-                NodePortMask.None,
-                6,
-                0,
-                false,
-                WorkshopProductionRecipe.Create(
-                    "recipe_frost_sigil",
-                    "Weave Frost Sigil",
-                    2f,
-                    new[] { WorkshopItemStack.Create(mist, 2) },
-                    new[] { WorkshopItemStack.Create(frostSigil, 1) }));
-
-            var crystalLattice = CreateNode(
-                "node_crystal_lattice",
-                "Crystal Lattice",
-                "Source node. Outputs Crystal Shards for defensive card crafting.",
-                WorkshopNodeCategory.Source,
-                false,
-                new Color(0.66f, 0.92f, 0.98f),
-                NodePortMask.None,
-                NodePortMask.North,
+                1f,
+                "Burn");
+            var tidalMend = CreateItem(
+                "spell.basic.water",
+                "Tidal Mend",
+                "Basic water healing spell shaped from raw Water.",
+                WorkshopItemKind.Card,
+                new Color(0.33f, 0.68f, 1f),
+                "combat.spell.basic.water",
+                WorkshopElementAttribute.Water,
+                WorkshopSpellTier.Basic,
+                WorkshopSpellRole.Healing,
+                12f,
                 6,
                 1,
-                false,
-                WorkshopProductionRecipe.Create("recipe_crystal", "Grow Crystal", 1.6f, Array.Empty<WorkshopItemStack>(), new[] { WorkshopItemStack.Create(crystal, 1) }));
+                8f,
+                "Regen");
+            var zephyrCut = CreateItem(
+                "spell.basic.wind",
+                "Zephyr Cut",
+                "Basic wind attack spell that strikes in quick succession.",
+                WorkshopItemKind.Card,
+                new Color(0.66f, 0.91f, 0.95f),
+                "combat.spell.basic.wind",
+                WorkshopElementAttribute.Wind,
+                WorkshopSpellTier.Basic,
+                WorkshopSpellRole.Attack,
+                11f,
+                5,
+                2,
+                10f,
+                "Expose");
+            var stoneguardSigil = CreateItem(
+                "spell.basic.earth",
+                "Stoneguard Sigil",
+                "Basic earth defense spell that anchors the caster.",
+                WorkshopItemKind.Card,
+                new Color(0.71f, 0.55f, 0.35f),
+                "combat.spell.basic.earth",
+                WorkshopElementAttribute.Earth,
+                WorkshopSpellTier.Basic,
+                WorkshopSpellRole.Defense,
+                11f,
+                7,
+                1,
+                18f,
+                "Bulwark");
 
-            var wardLoom = CreateNode(
-                "node_ward_loom",
-                "Ward Loom",
-                "Crafter node. Combines Spell Ink and Crystal Shards into Arcane Ward cards.",
-                WorkshopNodeCategory.Crafter,
-                false,
-                new Color(0.8f, 0.72f, 1f),
-                NodePortMask.West | NodePortMask.South,
+            var fireSpirit = CreateNode(
+                "node.spirit.fire",
+                "Fire Spirit",
+                "Source node. Outputs Fire into the connected network.",
+                WorkshopNodeCategory.Source,
+                true,
+                new Color(0.83f, 0.3f, 0.2f),
                 NodePortMask.None,
-                8,
-                0,
+                NodePortMask.East,
+                10,
+                2,
+                false,
+                WorkshopProductionRecipe.Create("recipe.spirit.fire", "Generate Fire", 1f, Array.Empty<WorkshopItemStack>(), new[] { WorkshopItemStack.Create(fire, 1) }));
+
+            var waterSpirit = CreateNode(
+                "node.spirit.water",
+                "Water Spirit",
+                "Source node. Outputs Water into the connected network.",
+                WorkshopNodeCategory.Source,
+                true,
+                new Color(0.27f, 0.54f, 0.84f),
+                NodePortMask.None,
+                NodePortMask.East,
+                10,
+                2,
+                false,
+                WorkshopProductionRecipe.Create("recipe.spirit.water", "Generate Water", 1f, Array.Empty<WorkshopItemStack>(), new[] { WorkshopItemStack.Create(water, 1) }));
+
+            var windSpirit = CreateNode(
+                "node.spirit.wind",
+                "Wind Spirit",
+                "Source node. Outputs Wind into the connected network.",
+                WorkshopNodeCategory.Source,
+                true,
+                new Color(0.5f, 0.76f, 0.83f),
+                NodePortMask.None,
+                NodePortMask.East,
+                10,
+                2,
+                false,
+                WorkshopProductionRecipe.Create("recipe.spirit.wind", "Generate Wind", 1f, Array.Empty<WorkshopItemStack>(), new[] { WorkshopItemStack.Create(wind, 1) }));
+
+            var earthSpirit = CreateNode(
+                "node.spirit.earth",
+                "Earth Spirit",
+                "Source node. Outputs Earth into the connected network.",
+                WorkshopNodeCategory.Source,
+                true,
+                new Color(0.53f, 0.41f, 0.27f),
+                NodePortMask.None,
+                NodePortMask.East,
+                10,
+                2,
+                false,
+                WorkshopProductionRecipe.Create("recipe.spirit.earth", "Generate Earth", 1f, Array.Empty<WorkshopItemStack>(), new[] { WorkshopItemStack.Create(earth, 1) }));
+
+            var elementShaper = CreateNode(
+                "node.factory.element_shaping",
+                "Element Shaper",
+                "Crafter node. Shapes one element into one basic spell card.",
+                WorkshopNodeCategory.Crafter,
+                true,
+                new Color(0.95f, 0.62f, 0.25f),
+                NodePortMask.West,
+                NodePortMask.East,
+                12,
+                2,
                 false,
                 WorkshopProductionRecipe.Create(
-                    "recipe_arcane_ward",
-                    "Weave Arcane Ward",
-                    2.5f,
-                    new[]
-                    {
-                        WorkshopItemStack.Create(spellInk, 1),
-                        WorkshopItemStack.Create(crystal, 1)
-                    },
-                    new[] { WorkshopItemStack.Create(arcaneWard, 1) }));
+                    "recipe.shape.fire",
+                    "Shape Cinder Dart",
+                    1.2f,
+                    new[] { WorkshopItemStack.Create(fire, 1) },
+                    new[] { WorkshopItemStack.Create(cinderDart, 1) }),
+                WorkshopProductionRecipe.Create(
+                    "recipe.shape.water",
+                    "Shape Tidal Mend",
+                    1.2f,
+                    new[] { WorkshopItemStack.Create(water, 1) },
+                    new[] { WorkshopItemStack.Create(tidalMend, 1) }),
+                WorkshopProductionRecipe.Create(
+                    "recipe.shape.wind",
+                    "Shape Zephyr Cut",
+                    1.2f,
+                    new[] { WorkshopItemStack.Create(wind, 1) },
+                    new[] { WorkshopItemStack.Create(zephyrCut, 1) }),
+                WorkshopProductionRecipe.Create(
+                    "recipe.shape.earth",
+                    "Shape Stoneguard Sigil",
+                    1.2f,
+                    new[] { WorkshopItemStack.Create(earth, 1) },
+                    new[] { WorkshopItemStack.Create(stoneguardSigil, 1) }));
 
             var conduit = CreateNode(
-                "node_conduit",
+                "node.factory.conduit",
                 "Arcane Conduit",
                 "Storage / relay node. Forwards any resource along its rotated output lane.",
                 WorkshopNodeCategory.Storage,
@@ -160,13 +184,11 @@ namespace ArcaneAtelier.Workshop
                 true,
                 Array.Empty<WorkshopProductionRecipe>());
 
-            var unlockCrystalReward = CreateReward("reward_unlock_crystal", "Unlock Crystal Lattice", "Adds a new crystal source node to the workshop palette.", WorkshopRewardKind.UnlockNode, crystalLattice, 0f, Array.Empty<WorkshopItemStack>());
-            var unlockWardReward = CreateReward("reward_unlock_ward", "Unlock Ward Loom", "Adds the Arcane Ward card production endpoint to the workshop palette.", WorkshopRewardKind.UnlockNode, wardLoom, 0f, Array.Empty<WorkshopItemStack>());
-            var infuserBoostReward = CreateReward("reward_infuser_boost", "Infuser Calibration", "Applies a permanent +25% cycle speed bonus to placed Arcane Infusers.", WorkshopRewardKind.EfficiencyBoost, infuser, 0.25f, Array.Empty<WorkshopItemStack>());
-            var reserveReward = CreateReward("reward_emergency_supplies", "Emergency Supplies", "Injects extra Ember and Mist into reserve inventory for chain recovery.", WorkshopRewardKind.GrantItems, null, 0f, new[]
+            var shaperBoostReward = CreateReward("reward.boost.shaping", "Shaper Calibration", "Applies a permanent +25% cycle speed bonus to placed Element Shapers.", WorkshopRewardKind.EfficiencyBoost, elementShaper, 0.25f, Array.Empty<WorkshopItemStack>());
+            var reserveReward = CreateReward("reward.resources.recovery", "Emergency Element Cache", "Injects extra Fire and Water into reserve inventory for chain recovery.", WorkshopRewardKind.GrantItems, null, 0f, new[]
             {
-                WorkshopItemStack.Create(ember, 3),
-                WorkshopItemStack.Create(mist, 3)
+                WorkshopItemStack.Create(fire, 3),
+                WorkshopItemStack.Create(water, 3)
             });
 
             var database = ScriptableObject.CreateInstance<WorkshopContentDatabase>();
@@ -174,18 +196,18 @@ namespace ArcaneAtelier.Workshop
             database.Configure(
                 new Vector2Int(9, 6),
                 0.25f,
-                new[] { emberSpring, mistWell, infuser, flamePress, frostLoom, crystalLattice, wardLoom, conduit },
-                new[] { unlockCrystalReward, unlockWardReward, infuserBoostReward, reserveReward },
+                new[] { fireSpirit, waterSpirit, windSpirit, earthSpirit, elementShaper, conduit },
+                new[] { shaperBoostReward, reserveReward },
                 new[]
                 {
-                    WorkshopPlacedNodeSeed.Create(emberSpring, new Vector2Int(1, 4), 0),
-                    WorkshopPlacedNodeSeed.Create(flamePress, new Vector2Int(2, 4), 0),
-                    WorkshopPlacedNodeSeed.Create(mistWell, new Vector2Int(1, 2), 0),
-                    WorkshopPlacedNodeSeed.Create(frostLoom, new Vector2Int(2, 2), 0),
-                    WorkshopPlacedNodeSeed.Create(emberSpring, new Vector2Int(4, 3), 0),
-                    WorkshopPlacedNodeSeed.Create(infuser, new Vector2Int(5, 3), 0),
-                    WorkshopPlacedNodeSeed.Create(mistWell, new Vector2Int(5, 2), 1),
-                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(6, 3), 0)
+                    WorkshopPlacedNodeSeed.Create(fireSpirit, new Vector2Int(1, 4), 0),
+                    WorkshopPlacedNodeSeed.Create(elementShaper, new Vector2Int(2, 4), 0),
+                    WorkshopPlacedNodeSeed.Create(waterSpirit, new Vector2Int(1, 2), 0),
+                    WorkshopPlacedNodeSeed.Create(elementShaper, new Vector2Int(2, 2), 0),
+                    WorkshopPlacedNodeSeed.Create(windSpirit, new Vector2Int(5, 4), 0),
+                    WorkshopPlacedNodeSeed.Create(elementShaper, new Vector2Int(6, 4), 0),
+                    WorkshopPlacedNodeSeed.Create(earthSpirit, new Vector2Int(5, 2), 0),
+                    WorkshopPlacedNodeSeed.Create(elementShaper, new Vector2Int(6, 2), 0)
                 });
             return database;
 #endif
@@ -388,11 +410,25 @@ namespace ArcaneAtelier.Workshop
             return sanitized.Trim('_');
         }
 
-        private static WorkshopItemDefinition CreateItem(string id, string displayName, string description, WorkshopItemKind kind, Color tint, string battleCardId = "")
+        private static WorkshopItemDefinition CreateItem(
+            string id,
+            string displayName,
+            string description,
+            WorkshopItemKind kind,
+            Color tint,
+            string battleCardId = "",
+            WorkshopElementAttribute element = WorkshopElementAttribute.None,
+            WorkshopSpellTier tier = WorkshopSpellTier.None,
+            WorkshopSpellRole role = WorkshopSpellRole.None,
+            float rarityWeight = 1f,
+            int primaryValue = 0,
+            int hitCount = 1,
+            float secondaryValue = 0f,
+            string effectKeyword = "")
         {
             var item = ScriptableObject.CreateInstance<WorkshopItemDefinition>();
             item.hideFlags = HideFlags.HideAndDontSave;
-            item.Configure(id, displayName, description, kind, tint, battleCardId);
+            item.Configure(id, displayName, description, kind, tint, battleCardId, element, tier, role, rarityWeight, primaryValue, hitCount, secondaryValue, effectKeyword);
             return item;
         }
 
