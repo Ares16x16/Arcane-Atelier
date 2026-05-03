@@ -51,10 +51,11 @@ Runtime code lives in `Assets/ArcaneAtelier/Workshop/Runtime`.
 
 - Grid bounds: **9 x 6** cells (configurable in content DB).
 - Input mapping (current debug UX):
-  - **LMB**: place/replace using armed palette node.
+  - **LMB empty cell**: place the armed palette node.
+  - **LMB occupied cell**: select the placed node without replacing it.
   - **RMB**: remove node.
   - **R**: rotate selected placed node clockwise.
-  - **Rotate Ghost**: rotate armed placement orientation.
+  - **Rotate Placement**: rotate armed placement orientation.
 
 ### Node behavior model
 
@@ -72,6 +73,38 @@ Transfer across an edge succeeds only when **all** checks pass:
 2. Target exposes input on opposite edge.
 3. Target accepts the item type.
 4. Target has remaining buffer capacity.
+
+### Buffer input/output contract
+
+Each placed node owns one local buffer. The buffer stores resource tokens and spell-card tokens waiting for either recipe execution or transfer.
+
+Node input rules:
+
+- **Source** nodes do not need inputs. Their recipes generate elemental resources into their own buffer.
+- **Storage** nodes, including `Arcane Conduit`, accept and transfer any resource or card that physically reaches their input port.
+- **Processor** nodes, including `Element Fusion`, only accept items that appear in one of their recipe inputs.
+- **Crafter** nodes, including `Element Shaper` and `Spell Fusion`, only accept items that appear in one of their recipe inputs.
+
+Node output rules:
+
+- **Storage** nodes may output any buffered item. This is the only generic pass-through behavior.
+- **Source**, **Processor**, and **Crafter** nodes may only output items that are declared as outputs of one of their own recipes.
+- A processor/crafter must not leak raw recipe inputs through its output port. Example: `Element Fusion` may hold `Wind` and `Earth`, but it must not forward either token unless a recipe turns them into a valid output.
+
+Recipe execution rules:
+
+- Recipes execute before transfer on each simulation step.
+- A recipe consumes its complete input set from the node buffer.
+- If no recipe has all required inputs, the node keeps its buffer and waits.
+- If a recipe succeeds, its outputs are added to the node buffer.
+- After recipes execute, transfer moves only legal output items to connected downstream nodes.
+- End-of-line spell cards auto-collect into `PreparedCards`, which becomes the battle deck payload.
+
+Important invalid-input example:
+
+- `Wind + Earth` is not an `Element Fusion` recipe in the current design.
+- If both are inserted into `Element Fusion`, the machine should hold them but produce nothing.
+- It should not forward `Wind` or `Earth` into a conduit, because those are recipe inputs, not legal outputs.
 
 ### Production execution
 
@@ -103,9 +136,9 @@ Transfer across an edge succeeds only when **all** checks pass:
 
 Starter scene note:
 
-- The generated opening layout already produces `Cinder Dart` and `Frost Pin`.
+- The generated opening layout already produces `Inferno Brand` through `Spell Fusion I` and `Frost Pin` through `Element Fusion`.
 - `Element Fusion` is available from the start so players can immediately understand secondary-element crafting.
-- `Spell Fusion I / II / III` remain reward-gated.
+- `Spell Fusion I` is available from the start for feature testing; `Spell Fusion II / III` remain reward-gated.
 
 ---
 

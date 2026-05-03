@@ -6,7 +6,7 @@ namespace ArcaneAtelier.Battle
     public sealed class BattleHudPresenter : MonoBehaviour
     {
         private const float Margin = 18f;
-        private const float TopBarHeight = 174f;
+        private const float TopBarHeight = 192f;
         private const float BottomPanelHeight = 276f;
         private const float CardWidth = 196f;
         private const float CardHeight = 176f;
@@ -91,7 +91,7 @@ namespace ArcaneAtelier.Battle
 
             if (controller.CurrentResult != null)
             {
-                DrawResultOverlay(new Rect(Screen.width * 0.5f - 250f, Screen.height * 0.5f - 142f, 500f, 284f));
+                DrawResultOverlay(new Rect(Screen.width * 0.5f - 270f, Screen.height * 0.5f - 168f, 540f, 336f));
             }
         }
 
@@ -162,9 +162,9 @@ namespace ArcaneAtelier.Battle
             DrawPanelFrame(rect, ApAccent, 0.94f);
             GUI.BeginGroup(rect);
 
-            float sideWidth = rect.width * 0.33f;
+            float sideWidth = Mathf.Clamp((rect.width - 440f) * 0.5f, 260f, 360f);
             Rect playerRect = new Rect(16f, 16f, sideWidth, rect.height - 32f);
-            Rect centerRect = new Rect(rect.width * 0.5f - 180f, 16f, 360f, rect.height - 32f);
+            Rect centerRect = new Rect(rect.width * 0.5f - 190f, 16f, 380f, rect.height - 32f);
             Rect bossRect = new Rect(rect.width - sideWidth - 16f, 16f, sideWidth, rect.height - 32f);
 
             DrawUnitStatusBlock(playerRect, controller.Player, "Player", false);
@@ -269,9 +269,6 @@ namespace ArcaneAtelier.Battle
                 DrawRect(
                     new Rect(rect.x + 8f, rect.y + 8f, rect.width - 16f, rect.height - 16f),
                     new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.08f + windupProgress * 0.08f));
-                DrawRect(
-                    new Rect(rect.x + 18f, rect.y + rect.height - 10f, (rect.width - 36f) * windupProgress, 4f),
-                    new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.88f));
             }
 
             GUI.Label(new Rect(rect.x, rect.y + 8f, rect.width, 14f), $"Encounter {controller.CurrentEncounterNumber}/{controller.TotalEncounterCount}", centeredMutedStyle);
@@ -279,22 +276,29 @@ namespace ArcaneAtelier.Battle
                 new Rect(rect.x, rect.y + 24f, rect.width, 14f),
                 bossTurnPending ? "Enemy action incoming" : $"Turn {controller.Simulation.TurnsElapsed + 1}",
                 centeredMutedStyle);
-            DrawTag(new Rect(rect.x + rect.width * 0.5f - 56f, rect.y + 48f, 112f, 20f), intentBadge, new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.88f));
+            DrawTag(new Rect(rect.x + rect.width * 0.5f - 56f, rect.y + 46f, 112f, 20f), intentBadge, new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.88f));
             GUI.Label(
-                new Rect(rect.x + 18f, rect.y + 74f, rect.width - 36f, 30f),
+                new Rect(rect.x + 18f, rect.y + 72f, rect.width - 36f, 30f),
                 bossTurnPending ? $"Preparing: {intent}" : intent,
                 centeredBodyStyle);
+
+            DrawActionPoints(new Rect(rect.x + 28f, rect.y + 108f, rect.width - 56f, 20f));
 
             bool canEnd = controller.CanEndTurn;
             bool previousEnabled = GUI.enabled;
             GUI.enabled = canEnd;
-            if (GUI.Button(new Rect(rect.x + rect.width * 0.5f - 76f, rect.y + 118f, 152f, 22f), "End Turn", GUI.skin.button))
+            if (GUI.Button(new Rect(rect.x + rect.width * 0.5f - 82f, rect.y + 136f, 164f, 24f), "End Turn", GUI.skin.button))
             {
                 controller.EndTurnFromHud();
             }
             GUI.enabled = previousEnabled;
 
-            DrawActionPoints(new Rect(rect.x + 40f, rect.y + 146f, rect.width - 80f, 18f));
+            if (bossTurnPending)
+            {
+                DrawRect(
+                    new Rect(rect.x + 18f, rect.y + rect.height - 7f, (rect.width - 36f) * windupProgress, 3f),
+                    new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.88f));
+            }
         }
 
         private void DrawHandPanel(Rect rect)
@@ -477,8 +481,8 @@ namespace ArcaneAtelier.Battle
             Color accent = result.ResultType == BattleResultType.Victory ? VictoryAccent : DefeatAccent;
             float intro = resultOverlayShownAt >= 0f ? Mathf.Clamp01((Time.unscaledTime - resultOverlayShownAt) * 4f) : 1f;
             float easedIntro = intro * intro * (3f - 2f * intro);
-            float width = Mathf.Lerp(456f, rect.width, easedIntro);
-            float height = Mathf.Lerp(250f, rect.height, easedIntro);
+            float width = Mathf.Lerp(520f, rect.width, easedIntro);
+            float height = Mathf.Lerp(286f, rect.height, easedIntro);
             Rect animatedRect = new Rect(Screen.width * 0.5f - width * 0.5f, Screen.height * 0.5f - height * 0.5f, width, height);
 
             DrawRect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0f, 0f, 0f, 0.54f + 0.14f * easedIntro));
@@ -498,7 +502,11 @@ namespace ArcaneAtelier.Battle
             DrawRect(new Rect(28f, 168f, animatedRect.width - 56f, 1f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.72f));
             GUI.Label(new Rect(28f, 182f, animatedRect.width - 56f, 18f), $"Final encounter: {result.FinalEncounterId}", bodyStyle);
             GUI.Label(new Rect(28f, 204f, animatedRect.width - 56f, 18f), $"Turns elapsed: {result.TurnsElapsed}", bodyStyle);
-            GUI.Label(new Rect(28f, 226f, animatedRect.width - 56f, 18f), "Battle result has been committed. Scene handoff is still pending.", mutedStyle);
+            GUI.Label(new Rect(28f, 226f, animatedRect.width - 56f, 18f), "Run summary recorded.", mutedStyle);
+            if (GUI.Button(new Rect(animatedRect.width - 176f, animatedRect.height - 54f, 148f, 30f), "Return To Menu", GUI.skin.button))
+            {
+                controller.ReturnToMainMenu();
+            }
             GUI.EndGroup();
         }
 
@@ -583,14 +591,7 @@ namespace ArcaneAtelier.Battle
 
         private string BuildCardSummary(WorkshopBattleCardEntry card)
         {
-            BattleCardDefinition definition = controller != null && controller.Simulation != null
-                ? controller.Simulation.Deck.LastPlayedDefinition
-                : null;
-
-            if (definition == null && controller != null)
-            {
-                definition = controller.GetCardDefinition(card.CardId);
-            }
+            BattleCardDefinition definition = controller != null ? controller.GetCardDefinition(card.CardId) : null;
 
             if (definition != null)
             {

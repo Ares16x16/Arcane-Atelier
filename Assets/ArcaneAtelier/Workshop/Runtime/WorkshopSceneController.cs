@@ -77,6 +77,12 @@ namespace ArcaneAtelier.Workshop
                 contentDatabase = ownedRuntimeDatabase;
                 Debug.LogWarning("WorkshopSceneController could not find a serialized WorkshopContentDatabase. Falling back to runtime-generated content.", this);
             }
+            else if (!HasCompleteWorkshopContent(contentDatabase))
+            {
+                ownedRuntimeDatabase = WorkshopDefaultContentFactory.CreateRuntimeDatabase();
+                contentDatabase = ownedRuntimeDatabase;
+                Debug.LogWarning("WorkshopSceneController found stale workshop content. Falling back to the complete runtime content set.", this);
+            }
 
             EnsureSceneIs2DPlayable();
 
@@ -192,6 +198,12 @@ namespace ArcaneAtelier.Workshop
         public void TryPlaceSelectedNode(Vector2Int cell)
         {
             SetSelectedCell(cell);
+            if (Simulation.TryGetNode(cell, out var existingNode))
+            {
+                statusMessage = $"Selected {existingNode.Definition.DisplayName}. Press R to rotate or RMB to remove.";
+                return;
+            }
+
             var result = Simulation.PlaceNode(cell, SelectedPaletteNode, PlacementRotationQuarterTurns);
             statusMessage = result.Message;
         }
@@ -417,6 +429,129 @@ namespace ArcaneAtelier.Workshop
         {
             var activeScene = SceneManager.GetActiveScene();
             return string.IsNullOrEmpty(activeScene.path) || activeScene.path == GeneratedWorkshopScenePath;
+        }
+
+        private static bool HasCompleteWorkshopContent(WorkshopContentDatabase database)
+        {
+            if (database == null)
+            {
+                return false;
+            }
+
+            string[] requiredNodeIds =
+            {
+                "node.factory.element_fusion",
+                "node.factory.element_shaping",
+                "node.factory.spell_fusion.basic",
+                "node.factory.spell_fusion.intermediate",
+                "node.factory.spell_fusion.advanced"
+            };
+
+            var nodes = database.PlaceableNodes;
+            foreach (string nodeId in requiredNodeIds)
+            {
+                if (!nodes.Any(node => node != null && node.Id == nodeId))
+                {
+                    return false;
+                }
+            }
+
+            var shaper = nodes.FirstOrDefault(node => node != null && node.Id == "node.factory.element_shaping");
+            if (shaper == null || shaper.Recipes.Count < 8)
+            {
+                return false;
+            }
+
+            var fusionOne = nodes.FirstOrDefault(node => node != null && node.Id == "node.factory.spell_fusion.basic");
+            if (fusionOne == null || fusionOne.Recipes.Count < 8)
+            {
+                return false;
+            }
+
+            var fusionTwo = nodes.FirstOrDefault(node => node != null && node.Id == "node.factory.spell_fusion.intermediate");
+            if (fusionTwo == null || fusionTwo.Recipes.Count < 12)
+            {
+                return false;
+            }
+
+            var fusionThree = nodes.FirstOrDefault(node => node != null && node.Id == "node.factory.spell_fusion.advanced");
+            if (fusionThree == null || fusionThree.Recipes.Count < 4)
+            {
+                return false;
+            }
+
+            if (!HasCurrentDefaultDemoLayout(database))
+            {
+                return false;
+            }
+
+            string[] requiredRecipeIds =
+            {
+                "recipe.shape.fire",
+                "recipe.shape.water",
+                "recipe.shape.wind",
+                "recipe.shape.earth",
+                "recipe.shape.ice",
+                "recipe.shape.thunder",
+                "recipe.shape.light",
+                "recipe.shape.dark",
+                "recipe.fusion.basic.fire",
+                "recipe.fusion.basic.water",
+                "recipe.fusion.basic.wind",
+                "recipe.fusion.basic.earth",
+                "recipe.fusion.basic.ice",
+                "recipe.fusion.basic.thunder",
+                "recipe.fusion.basic.light",
+                "recipe.fusion.basic.dark",
+                "recipe.fusion.intermediate.ice",
+                "recipe.fusion.intermediate.ice_alt_a",
+                "recipe.fusion.intermediate.ice_alt_b",
+                "recipe.fusion.intermediate.thunder",
+                "recipe.fusion.intermediate.thunder_alt_a",
+                "recipe.fusion.intermediate.thunder_alt_b",
+                "recipe.fusion.intermediate.light",
+                "recipe.fusion.intermediate.light_alt_a",
+                "recipe.fusion.intermediate.light_alt_b",
+                "recipe.fusion.intermediate.dark",
+                "recipe.fusion.intermediate.dark_alt_a",
+                "recipe.fusion.intermediate.dark_alt_b",
+                "recipe.fusion.advanced.steam",
+                "recipe.fusion.advanced.tempest",
+                "recipe.fusion.advanced.prism",
+                "recipe.fusion.advanced.polarity"
+            };
+
+            var recipeIds = new HashSet<string>(
+                nodes.Where(node => node != null)
+                    .SelectMany(node => node.Recipes)
+                    .Where(recipe => recipe != null)
+                    .Select(recipe => recipe.Id));
+
+            return requiredRecipeIds.All(recipeIds.Contains);
+        }
+
+        private static bool HasCurrentDefaultDemoLayout(WorkshopContentDatabase database)
+        {
+            var layout = database.DefaultLayout;
+            return ContainsSeed(layout, "node.spirit.fire", new Vector2Int(0, 5), 0) &&
+                   ContainsSeed(layout, "node.factory.element_shaping", new Vector2Int(2, 5), 0) &&
+                   ContainsSeed(layout, "node.factory.spell_fusion.basic", new Vector2Int(3, 5), 0) &&
+                   ContainsSeed(layout, "node.spirit.fire", new Vector2Int(3, 2), 3) &&
+                   ContainsSeed(layout, "node.factory.element_shaping", new Vector2Int(3, 4), 3) &&
+                   ContainsSeed(layout, "node.spirit.water", new Vector2Int(0, 1), 0) &&
+                   ContainsSeed(layout, "node.factory.element_fusion", new Vector2Int(4, 1), 0) &&
+                   ContainsSeed(layout, "node.factory.element_shaping", new Vector2Int(5, 1), 0) &&
+                   ContainsSeed(layout, "node.spirit.wind", new Vector2Int(4, 0), 3);
+        }
+
+        private static bool ContainsSeed(WorkshopPlacedNodeSeed[] layout, string nodeId, Vector2Int position, int rotation)
+        {
+            return layout.Any(seed =>
+                seed != null &&
+                seed.NodeDefinition != null &&
+                seed.NodeDefinition.Id == nodeId &&
+                seed.Position == position &&
+                seed.RotationQuarterTurns == rotation);
         }
     }
 }

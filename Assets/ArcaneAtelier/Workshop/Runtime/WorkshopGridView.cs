@@ -56,9 +56,16 @@ namespace ArcaneAtelier.Workshop
                 return;
             }
 
+            var simulation = controller.Simulation;
+            if (simulation == null)
+            {
+                return;
+            }
+
             var worldPosition = cachedCamera.ScreenToWorldPoint(Input.mousePosition);
             var cell = WorldToCell(worldPosition);
-            var nextHoveredCell = controller.Simulation.IsInsideGrid(cell) ? cell : new Vector2Int(-1, -1);
+            var isInsideGrid = simulation.IsInsideGrid(cell);
+            var nextHoveredCell = isInsideGrid ? cell : new Vector2Int(-1, -1);
             if (nextHoveredCell != hoveredCell)
             {
                 hoveredCell = nextHoveredCell;
@@ -66,12 +73,12 @@ namespace ArcaneAtelier.Workshop
                 RefreshVisuals();
             }
 
-            if (Input.GetMouseButtonDown(0) && controller.Simulation.IsInsideGrid(cell))
+            if (Input.GetMouseButtonDown(0) && isInsideGrid)
             {
                 controller.TryPlaceSelectedNode(cell);
             }
 
-            if (Input.GetMouseButtonDown(1) && controller.Simulation.IsInsideGrid(cell))
+            if (Input.GetMouseButtonDown(1) && isInsideGrid)
             {
                 controller.TryRemoveNode(cell);
             }

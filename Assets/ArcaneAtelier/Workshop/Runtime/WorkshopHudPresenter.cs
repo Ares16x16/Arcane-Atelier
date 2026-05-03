@@ -7,8 +7,8 @@ namespace ArcaneAtelier.Workshop
     public sealed class WorkshopHudPresenter : MonoBehaviour
     {
         private const float Margin = 20f;
-        private const float RightRailWidth = 256f;
-        private const float BottomDockHeight = 156f;
+        private const float RightRailWidth = 380f;
+        private const float BottomDockHeight = 292f;
         private const float TopHudHeight = 94f;
 
         private Vector2 paletteScroll;
@@ -107,7 +107,7 @@ namespace ArcaneAtelier.Workshop
 
             if (showGuide)
             {
-                DrawGuideOverlay(new Rect(Screen.width * 0.5f - 310f, Screen.height * 0.5f - 178f, 620f, 356f));
+                DrawGuideOverlay(new Rect(Screen.width * 0.5f - 410f, Screen.height * 0.5f - 250f, 820f, 500f));
             }
         }
 
@@ -190,10 +190,12 @@ namespace ArcaneAtelier.Workshop
             GUI.Label(new Rect(18f, 50f, rect.width - 36f, 18f), $"Cell {controller.SelectedCell.x}, {controller.SelectedCell.y}", tinyLabelStyle);
 
             var node = controller.SelectedNode;
-            var detailBottom = 126f;
+            const float detailBottom = 166f;
             if (node == null)
             {
-                GUI.Label(new Rect(18f, 74f, contentWidth, 34f), "Choose a tile to inspect a machine.", bodyStyle);
+                DrawRect(new Rect(18f, 76f, contentWidth, 70f), new Color(0.08f, 0.1f, 0.14f, 0.78f));
+                DrawOutline(new Rect(18f, 76f, contentWidth, 70f), new Color(0.18f, 0.25f, 0.32f));
+                GUI.Label(new Rect(32f, 92f, contentWidth - 28f, 34f), "Choose a tile to inspect a machine. Place with LMB on empty cells.", bodyStyle);
             }
             else
             {
@@ -219,41 +221,39 @@ namespace ArcaneAtelier.Workshop
                 }
 
                 GUI.Label(new Rect(18f, y + 2f, contentWidth, 18f), "R rotate   RMB remove", tinyLabelStyle);
-                detailBottom = y + 24f;
             }
 
             var inventory = controller.BuildInventoryView();
             var deployButtonY = rect.height - 42f;
             var stepButtonY = deployButtonY - 34f;
-            var deckListY = stepButtonY - 58f;
-            var deckTitleY = deckListY - 22f;
+            var payloadBottom = stepButtonY - 14f;
+            var payloadTop = detailBottom + 18f;
+            var payloadHeight = Mathf.Max(150f, payloadBottom - payloadTop);
+            var columnGap = 12f;
+            var columnWidth = (contentWidth - columnGap) * 0.5f;
             var inventoryItems = inventory.NetworkItems
                 .OrderBy(pair => pair.Key.DisplayName)
                 .Select(pair => (ShortItemName(pair.Key.DisplayName), pair.Value, pair.Key.Tint, GetItemIcon(pair.Key)))
                 .ToArray();
-            var inventoryTitleY = detailBottom + 12f;
-            var inventoryListY = inventoryTitleY + 26f;
-            var inventorySpace = deckTitleY - inventoryTitleY - 10f;
-            var inventoryListHeight = Mathf.Clamp(deckTitleY - inventoryListY - 14f, 18f, 54f);
+            var deckItems = inventory.PreparedCards
+                .OrderBy(pair => pair.Key.DisplayName)
+                .Select(pair => (ShortItemName(pair.Key.DisplayName), pair.Value, pair.Key.Tint, GetItemIcon(pair.Key)))
+                .ToArray();
 
             DrawRect(new Rect(18f, detailBottom, contentWidth, 1f), new Color(0.22f, 0.24f, 0.28f));
 
-            if (inventorySpace >= 40f)
-            {
-                GUI.Label(new Rect(18f, inventoryTitleY, contentWidth, 20f), "Inventory", sectionStyle);
-                DrawCompactList(
-                    new Rect(18f, inventoryListY, contentWidth, inventoryListHeight),
-                    inventoryItems);
-            }
-            else if (inventorySpace >= 18f)
-            {
-                GUI.Label(new Rect(18f, inventoryTitleY, contentWidth, 18f), $"Inventory  x{inventoryItems.Length}", tinyLabelStyle);
-            }
+            DrawRect(new Rect(18f, payloadTop, columnWidth, payloadHeight), new Color(0.07f, 0.09f, 0.13f, 0.92f));
+            DrawOutline(new Rect(18f, payloadTop, columnWidth, payloadHeight), new Color(0.18f, 0.24f, 0.3f));
+            GUI.Label(new Rect(30f, payloadTop + 12f, columnWidth - 24f, 20f), "Inventory", sectionStyle);
+            GUI.Label(new Rect(30f, payloadTop + 32f, columnWidth - 24f, 18f), "Network + reserve", tinyLabelStyle);
+            DrawCompactList(new Rect(30f, payloadTop + 58f, columnWidth - 24f, payloadHeight - 70f), inventoryItems);
 
-            GUI.Label(new Rect(18f, deckTitleY, contentWidth, 18f), "Battle Deck", sectionStyle);
-            DrawCompactList(
-                new Rect(18f, deckListY, contentWidth, 42f),
-                inventory.PreparedCards.OrderBy(pair => pair.Key.DisplayName).Select(pair => (ShortItemName(pair.Key.DisplayName), pair.Value, pair.Key.Tint, GetItemIcon(pair.Key))).ToArray());
+            var deckX = 18f + columnWidth + columnGap;
+            DrawRect(new Rect(deckX, payloadTop, columnWidth, payloadHeight), new Color(0.07f, 0.09f, 0.13f, 0.92f));
+            DrawOutline(new Rect(deckX, payloadTop, columnWidth, payloadHeight), new Color(0.27f, 0.33f, 0.42f));
+            GUI.Label(new Rect(deckX + 12f, payloadTop + 12f, columnWidth - 24f, 20f), "Battle Deck", sectionStyle);
+            GUI.Label(new Rect(deckX + 12f, payloadTop + 32f, columnWidth - 24f, 18f), "Cards sent to combat", tinyLabelStyle);
+            DrawCompactList(new Rect(deckX + 12f, payloadTop + 58f, columnWidth - 24f, payloadHeight - 70f), deckItems);
 
             if (GUI.Button(new Rect(18f, stepButtonY, contentWidth, 28f), "Advance 1 Prep Tick", buttonStyle))
             {
@@ -306,41 +306,48 @@ namespace ArcaneAtelier.Workshop
             DrawRect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0f, 0f, 0f, 0.5f));
             DrawPanelFrame(rect, new Color(0.88f, 0.74f, 0.33f));
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(20f, 16f, rect.width - 40f, 24f), "Workshop Guide", titleStyle);
-            GUI.Label(new Rect(20f, 46f, rect.width - 40f, 20f), "The starter scene already forges two spells. Follow these lines first.", mutedStyle);
-
-            const float leftX = 20f;
-            const float columnWidth = 270f;
-            const float rightX = 330f;
-
-            GUI.Label(new Rect(leftX, 82f, columnWidth, 20f), "Starter Layout", sectionStyle);
-            GUI.Label(new Rect(leftX, 106f, columnWidth, 40f), "Top lane: Fire Spirit -> Arcane Conduit -> Element Shaper -> Cinder Dart", bodyStyle);
-            GUI.Label(new Rect(leftX, 148f, columnWidth, 58f), "Middle lane: Water enters Element Fusion from the left, Wind enters from below, then the output goes into an Element Shaper -> Frost Pin", bodyStyle);
-            GUI.Label(new Rect(leftX, 210f, columnWidth, 34f), "If a lane stops, check the facing first. A broken port link stalls the whole recipe.", bodyStyle);
-
-            GUI.Label(new Rect(leftX, 256f, columnWidth, 20f), "Keys", sectionStyle);
-            DrawGuideRow(new Rect(leftX, 282f, columnWidth, 22f), "LMB", "Place / replace");
-            DrawGuideRow(new Rect(leftX, 308f, columnWidth, 22f), "RMB", "Remove");
-            DrawGuideRow(new Rect(leftX, 334f, columnWidth, 22f), "Q / E", "Rotate ghost");
-
-            GUI.Label(new Rect(rightX, 82f, columnWidth, 20f), "Ports Matter", sectionStyle);
-            GUI.Label(new Rect(rightX, 106f, columnWidth, 54f), "Yes. Direction has to match. A node only transfers when its output faces the next cell and that next node exposes the matching input side.", bodyStyle);
-            GUI.Label(new Rect(rightX, 164f, columnWidth, 20f), "Core Recipes", sectionStyle);
-            GUI.Label(new Rect(rightX, 188f, columnWidth, 112f),
-                "Wind + Water -> Ice\n" +
-                "Wind + Fire -> Thunder\n" +
-                "Earth + Fire -> Light\n" +
-                "Earth + Water -> Dark\n" +
-                "2x same basic spell -> Spell Fusion I\n" +
-                "2x compatible basic spells -> Spell Fusion II\n" +
-                "2x opposing intermediate spells -> Spell Fusion III",
-                bodyStyle);
-            GUI.Label(new Rect(rightX, 306f, columnWidth, 38f), "R rotates a placed machine. Space pauses time. Tab opens boons. F1 opens this guide again.", bodyStyle);
-
-            if (GUI.Button(new Rect(rect.width - 102f, rect.height - 42f, 82f, 26f), "Close", buttonStyle))
+            GUI.Label(new Rect(24f, 18f, rect.width - 132f, 24f), "Workshop Guide", titleStyle);
+            GUI.Label(new Rect(24f, 48f, rect.width - 132f, 20f), "Place machines, route outputs into matching inputs, then deploy the crafted deck.", mutedStyle);
+            if (GUI.Button(new Rect(rect.width - 64f, 18f, 38f, 28f), "X", buttonStyle))
             {
                 showGuide = false;
             }
+
+            const float leftX = 24f;
+            const float columnWidth = 354f;
+            const float rightX = 426f;
+
+            DrawRect(new Rect(leftX, 86f, columnWidth, 154f), new Color(0.07f, 0.09f, 0.13f, 0.9f));
+            DrawOutline(new Rect(leftX, 86f, columnWidth, 154f), new Color(0.28f, 0.24f, 0.18f));
+            GUI.Label(new Rect(leftX + 14f, 100f, columnWidth - 28f, 20f), "Starter Layout", sectionStyle);
+            GUI.Label(new Rect(leftX + 14f, 126f, columnWidth - 28f, 34f), "Spell line: two Fire Shapers feed Spell Fusion I -> Inferno Brand.", bodyStyle);
+            GUI.Label(new Rect(leftX + 14f, 164f, columnWidth - 28f, 48f), "Element line: Water enters Element Fusion from the left, Wind enters from below, then the shaped output becomes Frost Pin.", bodyStyle);
+            GUI.Label(new Rect(leftX + 14f, 214f, columnWidth - 28f, 18f), "Broken facing stalls the whole recipe.", tinyLabelStyle);
+
+            DrawRect(new Rect(leftX, 258f, columnWidth, 188f), new Color(0.07f, 0.09f, 0.13f, 0.9f));
+            DrawOutline(new Rect(leftX, 258f, columnWidth, 188f), new Color(0.18f, 0.25f, 0.32f));
+            GUI.Label(new Rect(leftX + 14f, 272f, columnWidth - 28f, 20f), "Controls", sectionStyle);
+            DrawGuideRow(new Rect(leftX + 14f, 304f, columnWidth - 28f, 22f), "LMB", "Place empty tile / select occupied tile");
+            DrawGuideRow(new Rect(leftX + 14f, 332f, columnWidth - 28f, 22f), "RMB", "Remove selected tile");
+            DrawGuideRow(new Rect(leftX + 14f, 360f, columnWidth - 28f, 22f), "R", "Rotate selected machine");
+            DrawGuideRow(new Rect(leftX + 14f, 388f, columnWidth - 28f, 22f), "Q / E", "Rotate next placement");
+            DrawGuideRow(new Rect(leftX + 14f, 416f, columnWidth - 28f, 22f), "TAB", "Open reward drawer");
+
+            DrawRect(new Rect(rightX, 86f, columnWidth, 178f), new Color(0.07f, 0.09f, 0.13f, 0.9f));
+            DrawOutline(new Rect(rightX, 86f, columnWidth, 178f), new Color(0.27f, 0.33f, 0.42f));
+            GUI.Label(new Rect(rightX + 14f, 100f, columnWidth - 28f, 20f), "Element Fusion", sectionStyle);
+            DrawElementRecipeRow(new Rect(rightX + 14f, 130f, columnWidth - 28f, 24f), WorkshopElementAttribute.Wind, WorkshopElementAttribute.Water, WorkshopElementAttribute.Ice);
+            DrawElementRecipeRow(new Rect(rightX + 14f, 160f, columnWidth - 28f, 24f), WorkshopElementAttribute.Wind, WorkshopElementAttribute.Fire, WorkshopElementAttribute.Thunder);
+            DrawElementRecipeRow(new Rect(rightX + 14f, 190f, columnWidth - 28f, 24f), WorkshopElementAttribute.Earth, WorkshopElementAttribute.Fire, WorkshopElementAttribute.Light);
+            DrawElementRecipeRow(new Rect(rightX + 14f, 220f, columnWidth - 28f, 24f), WorkshopElementAttribute.Earth, WorkshopElementAttribute.Water, WorkshopElementAttribute.Dark);
+
+            DrawRect(new Rect(rightX, 282f, columnWidth, 164f), new Color(0.07f, 0.09f, 0.13f, 0.9f));
+            DrawOutline(new Rect(rightX, 282f, columnWidth, 164f), new Color(0.26f, 0.2f, 0.34f));
+            GUI.Label(new Rect(rightX + 14f, 296f, columnWidth - 28f, 20f), "Spell Ladder", sectionStyle);
+            GUI.Label(new Rect(rightX + 14f, 324f, columnWidth - 28f, 28f), "Element Shaper: one element becomes one basic spell.", bodyStyle);
+            GUI.Label(new Rect(rightX + 14f, 356f, columnWidth - 28f, 28f), "Spell Fusion I: two same-element basic spells become an intermediate spell.", bodyStyle);
+            GUI.Label(new Rect(rightX + 14f, 388f, columnWidth - 28f, 28f), "Spell Fusion II: compatible basic spell pairs become Ice, Thunder, Light, or Dark intermediates.", bodyStyle);
+            GUI.Label(new Rect(rightX + 14f, 420f, columnWidth - 28f, 18f), "Spell Fusion III: opposing intermediates become advanced cards.", tinyLabelStyle);
             GUI.EndGroup();
         }
 
@@ -350,27 +357,37 @@ namespace ArcaneAtelier.Workshop
 
             GUI.BeginGroup(rect);
             GUI.Label(new Rect(18f, 14f, 220f, 24f), "Workshop Palette", titleStyle);
-            GUI.Label(new Rect(18f, 38f, 360f, 18f), "Choose a blueprint.", mutedStyle);
+            GUI.Label(new Rect(18f, 38f, 520f, 18f), "Choose a blueprint. LMB empty tile places; LMB occupied tile selects.", mutedStyle);
             DrawElementLegend(new Rect(18f, 58f, 272f, 18f));
 
-            var contentRect = new Rect(14f, 80f, rect.width - 28f, rect.height - 88f);
+            var contentRect = new Rect(14f, 82f, rect.width - 28f, rect.height - 92f);
             var nodes = controller.PlaceableNodes.Where(node => node != null).ToArray();
-            const float cardWidth = 156f;
-            const float cardHeight = 68f;
+            const float cardWidth = 220f;
+            const float cardHeight = 88f;
             const float spacing = 12f;
-            var viewWidth = nodes.Length * (cardWidth + spacing) + spacing;
+            var spiritNodes = nodes.Where(node => node.Category == WorkshopNodeCategory.Source).ToArray();
+            var machineNodes = nodes.Where(node => node.Category != WorkshopNodeCategory.Source).ToArray();
+            var spiritRowWidth = spiritNodes.Length * (cardWidth + spacing) + spacing;
+            var machineRowWidth = machineNodes.Length * (cardWidth + spacing) + spacing;
+            var viewWidth = Mathf.Max(contentRect.width - 18f, spiritRowWidth, machineRowWidth);
+            var viewHeight = spacing + cardHeight * 2f + spacing * 3f;
 
-            paletteScroll = GUI.BeginScrollView(contentRect, paletteScroll, new Rect(0f, 0f, viewWidth, contentRect.height - 18f), true, false);
-            var x = spacing;
-            foreach (var node in nodes)
-            {
-                var cardRect = new Rect(x, 0f, cardWidth, cardHeight);
-                DrawBlueprintCard(cardRect, node);
-                x += cardWidth + spacing;
-            }
+            paletteScroll = GUI.BeginScrollView(contentRect, paletteScroll, new Rect(0f, 0f, viewWidth, viewHeight), viewWidth > contentRect.width, false);
+            DrawBlueprintRow(spiritNodes, spacing, spacing, cardWidth, cardHeight, spacing);
+            DrawBlueprintRow(machineNodes, spacing, spacing * 2f + cardHeight, cardWidth, cardHeight, spacing);
 
             GUI.EndScrollView();
             GUI.EndGroup();
+        }
+
+        private void DrawBlueprintRow(WorkshopNodeDefinition[] nodes, float startX, float y, float cardWidth, float cardHeight, float spacing)
+        {
+            var x = startX;
+            foreach (var node in nodes)
+            {
+                DrawBlueprintCard(new Rect(x, y, cardWidth, cardHeight), node);
+                x += cardWidth + spacing;
+            }
         }
 
         private void DrawHoverTooltip()
@@ -409,8 +426,14 @@ namespace ArcaneAtelier.Workshop
 
         private void DrawBlueprintCard(Rect rect, WorkshopNodeDefinition node)
         {
-            var unlocked = controller.Simulation.IsUnlocked(node);
-            var selected = controller.SelectedPaletteNode == node;
+            if (node == null)
+            {
+                return;
+            }
+
+            var simulation = controller != null ? controller.Simulation : null;
+            var unlocked = simulation != null && simulation.IsUnlocked(node);
+            var selected = controller != null && controller.SelectedPaletteNode == node;
             var accent = GetCategoryColor(node.Category, node.Tint);
 
             DrawRect(rect, selected ? new Color(accent.r * 0.38f, accent.g * 0.38f, accent.b * 0.38f, 0.95f) : new Color(0.08f, 0.1f, 0.14f, 0.96f));
@@ -429,12 +452,15 @@ namespace ArcaneAtelier.Workshop
             {
                 GUI.Label(new Rect(rect.x + 12f, rect.y + 14f, 28f, 28f), GetCategorySymbol(node.Category), iconStyle);
             }
-            GUI.Label(new Rect(rect.x + 44f, rect.y + 14f, rect.width - 56f, 20f), node.DisplayName, cardTitleStyle);
-            GUI.Label(new Rect(rect.x + 44f, rect.y + 36f, rect.width - 56f, 16f), node.Category.ToString(), tinyLabelStyle);
+            DrawNodeElementBadge(new Rect(rect.x + rect.width - 34f, rect.y + 12f, 22f, 22f), node);
+            GUI.Label(new Rect(rect.x + 48f, rect.y + 14f, rect.width - 88f, 20f), node.DisplayName, cardTitleStyle);
+            GUI.Label(new Rect(rect.x + 48f, rect.y + 36f, rect.width - 58f, 16f), node.Category.ToString(), tinyLabelStyle);
+            GUI.Label(new Rect(rect.x + 48f, rect.y + 54f, rect.width - 58f, 16f), unlocked ? "Ready" : "Locked reward", tinyLabelStyle);
 
             if (!unlocked)
             {
-                DrawRect(rect, new Color(0f, 0f, 0f, 0.42f));
+                DrawRect(rect, new Color(0f, 0f, 0f, 0.46f));
+                GUI.Label(new Rect(rect.x, rect.y + rect.height * 0.5f - 10f, rect.width, 20f), "LOCKED", chipStyle);
             }
         }
 
@@ -504,6 +530,34 @@ namespace ArcaneAtelier.Workshop
             {
                 var overflowY = rect.y + (visibleCount - 1) * 18f;
                 GUI.Label(new Rect(rect.x, overflowY, rect.width, 18f), $"+{items.Length - itemCount} more", tinyLabelStyle);
+            }
+        }
+
+        private void DrawElementRecipeRow(Rect rect, WorkshopElementAttribute first, WorkshopElementAttribute second, WorkshopElementAttribute output)
+        {
+            DrawFormulaIcon(new Rect(rect.x, rect.y, 22f, 22f), first);
+            GUI.Label(new Rect(rect.x + 28f, rect.y + 2f, 16f, 18f), "+", chipStyle);
+            DrawFormulaIcon(new Rect(rect.x + 48f, rect.y, 22f, 22f), second);
+            GUI.Label(new Rect(rect.x + 76f, rect.y + 2f, 24f, 18f), "->", chipStyle);
+            DrawFormulaIcon(new Rect(rect.x + 104f, rect.y, 22f, 22f), output);
+            GUI.Label(new Rect(rect.x + 134f, rect.y + 2f, rect.width - 134f, 18f), GetElementDisplayName(output), bodyStyle);
+        }
+
+        private void DrawFormulaIcon(Rect rect, WorkshopElementAttribute element)
+        {
+            if (!DrawSprite(rect, ArcaneArtCatalog.GetElementIcon(element), Color.white))
+            {
+                DrawRect(rect, GetElementColor(element));
+                DrawOutline(rect, new Color(0.9f, 0.86f, 0.74f));
+                GUI.Label(rect, GetElementDisplayName(element).Substring(0, 1), chipStyle);
+            }
+        }
+
+        private void DrawNodeElementBadge(Rect rect, WorkshopNodeDefinition node)
+        {
+            if (TryGetNodeElement(node, out var element))
+            {
+                DrawFormulaIcon(rect, element);
             }
         }
 
@@ -746,6 +800,87 @@ namespace ArcaneAtelier.Workshop
                 WorkshopNodeCategory.Crafter => "✧",
                 WorkshopNodeCategory.Storage => "▣",
                 _ => "•"
+            };
+        }
+
+        private static bool TryGetNodeElement(WorkshopNodeDefinition node, out WorkshopElementAttribute element)
+        {
+            element = WorkshopElementAttribute.None;
+            if (node == null || string.IsNullOrWhiteSpace(node.Id))
+            {
+                return false;
+            }
+
+            string id = node.Id.ToLowerInvariant();
+            if (id.Contains(".fire"))
+            {
+                element = WorkshopElementAttribute.Fire;
+            }
+            else if (id.Contains(".water"))
+            {
+                element = WorkshopElementAttribute.Water;
+            }
+            else if (id.Contains(".wind"))
+            {
+                element = WorkshopElementAttribute.Wind;
+            }
+            else if (id.Contains(".earth"))
+            {
+                element = WorkshopElementAttribute.Earth;
+            }
+            else if (id.Contains(".ice"))
+            {
+                element = WorkshopElementAttribute.Ice;
+            }
+            else if (id.Contains(".thunder"))
+            {
+                element = WorkshopElementAttribute.Thunder;
+            }
+            else if (id.Contains(".light"))
+            {
+                element = WorkshopElementAttribute.Light;
+            }
+            else if (id.Contains(".dark"))
+            {
+                element = WorkshopElementAttribute.Dark;
+            }
+            else
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static string GetElementDisplayName(WorkshopElementAttribute element)
+        {
+            return element switch
+            {
+                WorkshopElementAttribute.Fire => "Fire",
+                WorkshopElementAttribute.Water => "Water",
+                WorkshopElementAttribute.Wind => "Wind",
+                WorkshopElementAttribute.Earth => "Earth",
+                WorkshopElementAttribute.Ice => "Ice",
+                WorkshopElementAttribute.Thunder => "Thunder",
+                WorkshopElementAttribute.Light => "Light",
+                WorkshopElementAttribute.Dark => "Dark",
+                _ => "Neutral"
+            };
+        }
+
+        private static Color GetElementColor(WorkshopElementAttribute element)
+        {
+            return element switch
+            {
+                WorkshopElementAttribute.Fire => new Color(0.95f, 0.36f, 0.2f),
+                WorkshopElementAttribute.Water => new Color(0.26f, 0.62f, 0.97f),
+                WorkshopElementAttribute.Wind => new Color(0.57f, 0.84f, 0.9f),
+                WorkshopElementAttribute.Earth => new Color(0.63f, 0.47f, 0.28f),
+                WorkshopElementAttribute.Ice => new Color(0.67f, 0.9f, 1f),
+                WorkshopElementAttribute.Thunder => new Color(0.95f, 0.88f, 0.3f),
+                WorkshopElementAttribute.Light => new Color(1f, 0.95f, 0.69f),
+                WorkshopElementAttribute.Dark => new Color(0.45f, 0.4f, 0.62f),
+                _ => new Color(0.65f, 0.73f, 0.8f)
             };
         }
 

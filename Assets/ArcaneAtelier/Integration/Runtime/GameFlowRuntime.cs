@@ -18,24 +18,24 @@ namespace ArcaneAtelier.Integration
             new EncounterPlan(
                 "encounter.ember.wisp",
                 "Breach 1: Ember Wisp",
-                "A fast outer-ward scout that pressures early attack production.",
+                "A fast outer-ward scout that opens mixed spell fusion after the starter workshop proves basic fusion.",
                 "enemy.ember.wisp",
                 120,
-                "reward.unlock.spell_fusion_basic"),
+                "reward.unlock.spell_fusion_intermediate"),
             new EncounterPlan(
                 "encounter.hollow.cleric",
                 "Breach 2: Hollow Cleric",
-                "A sustain-heavy foe that rewards cleaner shaping throughput and healing answers.",
+                "A sustain-heavy foe that opens advanced fusion for boss preparation.",
                 "enemy.hollow.cleric",
                 110,
-                "reward.boost.shaping"),
+                "reward.unlock.spell_fusion_advanced"),
             new EncounterPlan(
                 "encounter.glass.knight",
                 "Breach 3: Glass Knight",
-                "A shielded duelist that asks for stronger forged spells before the final siege.",
+                "A shielded duelist that rewards faster shaping before the final siege.",
                 "enemy.glass.knight",
                 100,
-                "reward.unlock.spell_fusion_intermediate")
+                "reward.boost.shaping")
         };
 
         private static readonly EncounterPlan FinalBossPlan = new EncounterPlan(

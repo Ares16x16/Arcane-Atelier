@@ -233,7 +233,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82f0c025dccc81eaa56f23fc91de9ee9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: ArcaneAtelier.Workshop.Runtime::ArcaneAtelier.Workshop.WorkshopSceneController
-  contentDatabase: {fileID: 11400000, guid: 50c6db1274467104789d8a228a2fcd78, type: 2}
+  contentDatabase: {fileID: 0}
   gridView: {fileID: 1112702908}
   hudPresenter: {fileID: 1112702907}
   autoConfigureSceneEnvironment: 1

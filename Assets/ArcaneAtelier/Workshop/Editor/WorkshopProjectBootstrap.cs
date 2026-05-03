@@ -274,7 +274,7 @@ namespace ArcaneAtelier.Workshop.Editor
                 "Spell Fusion I",
                 "Fuses two basic spells of the same element into intermediate spells.",
                 WorkshopNodeCategory.Crafter,
-                false,
+                true,
                 new Color(0.9f, 0.44f, 0.63f),
                 NodePortMask.West | NodePortMask.South,
                 NodePortMask.East,
@@ -370,17 +370,20 @@ namespace ArcaneAtelier.Workshop.Editor
                 new[] { unlockSpellFusionBasic, unlockSpellFusionIntermediate, unlockSpellFusionAdvanced, unlockIceSpirit, unlockThunderSpirit, unlockLightSpirit, unlockDarkSpirit, boostShaping, reserveReward },
                 new[]
                 {
-                    WorkshopPlacedNodeSeed.Create(fireSpirit, new Vector2Int(0, 4), 0),
-                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(1, 4), 0),
-                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(2, 4), 0),
-                    WorkshopPlacedNodeSeed.Create(waterSpirit, new Vector2Int(0, 2), 0),
-                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(1, 2), 0),
-                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(2, 2), 0),
-                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(3, 2), 0),
-                    WorkshopPlacedNodeSeed.Create(elementFusionFactory, new Vector2Int(4, 2), 0),
-                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(5, 2), 0),
+                    WorkshopPlacedNodeSeed.Create(fireSpirit, new Vector2Int(0, 5), 0),
+                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(1, 5), 0),
+                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(2, 5), 0),
+                    WorkshopPlacedNodeSeed.Create(spellFusionBasicFactory, new Vector2Int(3, 5), 0),
+                    WorkshopPlacedNodeSeed.Create(fireSpirit, new Vector2Int(3, 2), 3),
+                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(3, 3), 3),
+                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(3, 4), 3),
+                    WorkshopPlacedNodeSeed.Create(waterSpirit, new Vector2Int(0, 1), 0),
+                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(1, 1), 0),
+                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(2, 1), 0),
+                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(3, 1), 0),
+                    WorkshopPlacedNodeSeed.Create(elementFusionFactory, new Vector2Int(4, 1), 0),
+                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(5, 1), 0),
                     WorkshopPlacedNodeSeed.Create(windSpirit, new Vector2Int(4, 0), 3),
-                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(4, 1), 3)
                 });
 
             var validationErrors = database.ValidateContent();

@@ -584,6 +584,11 @@ namespace ArcaneAtelier.Workshop
                                 break;
                             }
 
+                            if (!CanTransferItemOut(nodeState, pair.Key))
+                            {
+                                continue;
+                            }
+
                             if (!targetNode.CanAccept(pair.Key))
                             {
                                 continue;
@@ -694,6 +699,24 @@ namespace ArcaneAtelier.Workshop
         private int GetReserveCount(WorkshopItemDefinition item)
         {
             return item != null && reserveItems.TryGetValue(item, out var amount) ? amount : 0;
+        }
+
+        private static bool CanTransferItemOut(WorkshopNodeState nodeState, WorkshopItemDefinition item)
+        {
+            if (nodeState == null || item == null)
+            {
+                return false;
+            }
+
+            if (nodeState.Definition.Category == WorkshopNodeCategory.Storage)
+            {
+                return true;
+            }
+
+            return nodeState.Definition.Recipes
+                .Where(recipe => recipe != null)
+                .SelectMany(recipe => recipe.Outputs ?? Array.Empty<WorkshopItemStack>())
+                .Any(output => output != null && output.Item == item);
         }
 
         private static bool ShouldBufferOutput(WorkshopNodeState nodeState, WorkshopItemStack output)

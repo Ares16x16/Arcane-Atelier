@@ -13,6 +13,7 @@
 .unityseed/
 UnitySeed/
 unity-batch.log
+casesensitivetest
 
 # IDE / editor
 .vs/

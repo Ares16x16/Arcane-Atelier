@@ -112,12 +112,13 @@ When the generated scene first opens, the starter layout is already producing sp
 The opening layout demonstrates two working lines:
 
 - **Top lane**
-  - `Fire Spirit -> Arcane Conduit -> Element Shaper`
-  - result: `Cinder Dart`
+  - `Fire Spirit -> Arcane Conduit -> Element Shaper -> Spell Fusion I`
+  - `Fire Spirit -> vertical Arcane Conduit -> rotated Element Shaper -> Spell Fusion I`
+  - result: `Inferno Brand`
 
-- **Middle lane**
+- **Lower lane**
   - `Water Spirit -> Arcane Conduits -> Element Fusion`
-  - `Wind Spirit -> vertical Arcane Conduit -> Element Fusion`
+  - `Wind Spirit -> Element Fusion`
   - `Element Fusion -> Element Shaper`
   - result: `Frost Pin`
 
@@ -130,16 +131,24 @@ You also begin with these nodes unlocked in the palette:
 - Arcane Conduit
 - Element Shaper
 - Element Fusion
+- Spell Fusion I
 
 You do **not** begin with every factory unlocked.
 
 These still start locked:
 
-- `Spell Fusion I`
 - `Spell Fusion II`
 - `Spell Fusion III`
 
-To see more of the system:
+To try the default fusion features:
+
+1. open `WorkshopScene`
+2. press `Advance 1 Prep Tick` several times, or let time run
+3. watch the right-side `Battle Deck`
+4. `Inferno Brand` proves Spell Fusion I is working
+5. `Frost Pin` proves Element Fusion plus Element Shaper is working
+
+To see the higher fusion tiers:
 
 1. open the boon drawer
 2. unlock the factory you want to test
@@ -476,13 +485,91 @@ The exact keyword semantics are still current-implementation rules rather than f
 
 ---
 
+## Workshop Recipe Outputs
+
+This table lists exactly what the workshop machines should make.
+If the game only produces `Cinder Dart` and `Tidal Mend`, the workshop content database is stale or the machine inputs are not routed into the correct ports.
+
+### Element Fusion
+
+| Machine | Inputs | Output |
+| --- | --- | --- |
+| `Element Fusion` | `Wind + Water` | `Ice` |
+| `Element Fusion` | `Wind + Fire` | `Thunder` |
+| `Element Fusion` | `Earth + Fire` | `Light` |
+| `Element Fusion` | `Earth + Water` | `Dark` |
+
+Invalid pairs stay in the `Element Fusion` buffer and do not output anything.
+For example, `Wind + Earth` is not a current Element Fusion recipe, so it should not produce a secondary element and it should not leak `Wind` or `Earth` into a downstream conduit.
+
+### Element Shaper
+
+| Machine | Input | Output Spell |
+| --- | --- | --- |
+| `Element Shaper` | `Fire` | `Cinder Dart` |
+| `Element Shaper` | `Water` | `Tidal Mend` |
+| `Element Shaper` | `Wind` | `Zephyr Cut` |
+| `Element Shaper` | `Earth` | `Stoneguard Sigil` |
+| `Element Shaper` | `Ice` | `Frost Pin` |
+| `Element Shaper` | `Thunder` | `Volt Javelin` |
+| `Element Shaper` | `Light` | `Lumen Prayer` |
+| `Element Shaper` | `Dark` | `Gloam Ward` |
+
+### Spell Fusion I
+
+`Spell Fusion I` combines two copies of the same basic spell into the matching intermediate spell.
+
+| Inputs | Output Spell |
+| --- | --- |
+| `Cinder Dart + Cinder Dart` | `Inferno Brand` |
+| `Tidal Mend + Tidal Mend` | `Tide Chorus` |
+| `Zephyr Cut + Zephyr Cut` | `Razor Monsoon` |
+| `Stoneguard Sigil + Stoneguard Sigil` | `Bastion Pulse` |
+| `Frost Pin + Frost Pin` | `Glacier Bind` |
+| `Volt Javelin + Volt Javelin` | `Stormbreaker` |
+| `Lumen Prayer + Lumen Prayer` | `Dawn Benediction` |
+| `Gloam Ward + Gloam Ward` | `Umbral Bastion` |
+
+### Spell Fusion II
+
+`Spell Fusion II` combines compatible basic spell pairs into secondary intermediate spells.
+
+| Inputs | Output Spell |
+| --- | --- |
+| `Zephyr Cut + Tidal Mend` | `Glacier Bind` |
+| `Tidal Mend + Frost Pin` | `Glacier Bind` |
+| `Zephyr Cut + Frost Pin` | `Glacier Bind` |
+| `Zephyr Cut + Cinder Dart` | `Stormbreaker` |
+| `Cinder Dart + Volt Javelin` | `Stormbreaker` |
+| `Zephyr Cut + Volt Javelin` | `Stormbreaker` |
+| `Stoneguard Sigil + Cinder Dart` | `Dawn Benediction` |
+| `Cinder Dart + Lumen Prayer` | `Dawn Benediction` |
+| `Stoneguard Sigil + Lumen Prayer` | `Dawn Benediction` |
+| `Stoneguard Sigil + Tidal Mend` | `Umbral Bastion` |
+| `Tidal Mend + Gloam Ward` | `Umbral Bastion` |
+| `Stoneguard Sigil + Gloam Ward` | `Umbral Bastion` |
+
+### Spell Fusion III
+
+`Spell Fusion III` combines opposing intermediate spells into advanced cards.
+
+| Inputs | Output Spell |
+| --- | --- |
+| `Inferno Brand + Tide Chorus` | `Steam Requiem` |
+| `Razor Monsoon + Bastion Pulse` | `Worldsplit Tempest` |
+| `Dawn Benediction + Umbral Bastion` | `Eclipse Covenant` |
+| `Glacier Bind + Stormbreaker` | `Absolute Zero Surge` |
+
+---
+
 ## Controls
 
 Current factory controls:
 
-- `Left Click`: place or replace a node
+- `Left Click empty tile`: place the armed palette node
+- `Left Click occupied tile`: select the placed node without replacing it
 - `Right Click`: remove a node
-- `R`: rotate selected node
+- `R`: rotate selected placed node
 - `Q / E`: rotate placement direction
 - `Space`: pause / resume time
 - `Tab`: open / close boon drawer

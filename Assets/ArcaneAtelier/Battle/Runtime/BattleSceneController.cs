@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ArcaneAtelier.Workshop;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace ArcaneAtelier.Battle
 {
@@ -345,6 +346,12 @@ namespace ArcaneAtelier.Battle
 
             Simulation.EndTurn();
             return true;
+        }
+
+        public void ReturnToMainMenu()
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene("MainMenuScene");
         }
 
         public BattleCardDefinition GetCardDefinition(string cardId)
