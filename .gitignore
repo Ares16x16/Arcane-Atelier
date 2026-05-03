@@ -14,6 +14,10 @@ unity-batch.log
 
 # Addressables
 Assets/AddressableAssetsData/*
+Assets/Plugins/
+Assets/Plugins.meta
+Assets/_Recovery/
+Assets/_Recovery.meta
 
 # Visual Studio / Rider
 *.csproj
@@ -41,3 +45,10 @@ Assets/AddressableAssetsData/*
 .DS_Store
 Thumbs.db
 .vsconfig
+
+# Local agent / assistant config
+.agents/
+.claude/
+.codex/
+.mcp.json
+AGENTS.md

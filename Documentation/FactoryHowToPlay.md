@@ -1,5 +1,11 @@
 # Factory Scene Guide
 
+For the full-game run structure, scene flow, story, and reward loop, use these as the primary game-level docs:
+
+- [Game Design Document](GameDesignDocument.md)
+- [Game Flow And Scene Guide](GameFlowAndSceneGuide.md)
+- [Workshop Preparation Design](WorkshopPreparationDesign.md)
+
 ## What this scene is
 
 This scene is the **workshop half** of Arcane Atelier.

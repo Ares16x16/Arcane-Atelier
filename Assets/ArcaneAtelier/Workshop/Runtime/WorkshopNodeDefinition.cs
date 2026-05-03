@@ -47,6 +47,7 @@ namespace ArcaneAtelier.Workshop
         [SerializeField] private WorkshopNodeCategory category = WorkshopNodeCategory.Source;
         [SerializeField] private bool unlockedByDefault = true;
         [SerializeField] private Color tint = new Color(0.32f, 0.36f, 0.42f);
+        [SerializeField] private Sprite nodeSprite;
         [SerializeField] private NodePortMask inputPorts = NodePortMask.None;
         [SerializeField] private NodePortMask outputPorts = NodePortMask.East;
         [SerializeField] private int bufferCapacity = 8;
@@ -60,6 +61,11 @@ namespace ArcaneAtelier.Workshop
         public WorkshopNodeCategory Category => category;
         public bool UnlockedByDefault => unlockedByDefault;
         public Color Tint => tint;
+        public Sprite NodeSprite
+        {
+            get => nodeSprite;
+            set => nodeSprite = value;
+        }
         public NodePortMask InputPorts => inputPorts;
         public NodePortMask OutputPorts => outputPorts;
         public int BufferCapacity => Mathf.Max(1, bufferCapacity);

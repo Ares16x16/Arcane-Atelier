@@ -4,7 +4,6 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace ArcaneAtelier.Workshop.Editor
 {
@@ -12,7 +11,8 @@ namespace ArcaneAtelier.Workshop.Editor
     {
         private const string GeneratedRoot = "Assets/ArcaneAtelier/Workshop/Generated";
         private const string DataRoot = GeneratedRoot + "/Data";
-        private const string ScenePath = "Assets/Scenes/SpellAssemblyScene.unity";
+        private const string ScenePath = "Assets/Scenes/WorkshopScene.unity";
+        private const string DatabaseAssetPath = DataRoot + "/WorkshopContentDatabase.asset";
 
         static WorkshopProjectBootstrap()
         {
@@ -38,31 +38,43 @@ namespace ArcaneAtelier.Workshop.Editor
             }
 
             var sceneExists = AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null;
-            var databaseExists = AssetDatabase.LoadAssetAtPath<WorkshopContentDatabase>($"{DataRoot}/WorkshopContentDatabase.asset") != null;
-            if (!sceneExists || !databaseExists)
+            var databaseExists = AssetDatabase.LoadAssetAtPath<WorkshopContentDatabase>(DatabaseAssetPath) != null;
+            if (!sceneExists || !databaseExists || GeneratedContentNeedsSpriteRefresh())
             {
                 Run();
-                sceneExists = AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null;
+            }
+        }
+
+        private static bool GeneratedContentNeedsSpriteRefresh()
+        {
+            var nodeGuids = AssetDatabase.FindAssets("t:WorkshopNodeDefinition", new[] { $"{DataRoot}/Nodes" });
+            if (nodeGuids == null || nodeGuids.Length == 0)
+            {
+                return true;
             }
 
-            if (!sceneExists)
+            foreach (var guid in nodeGuids)
             {
-                return;
-            }
-
-            var activeScene = SceneManager.GetActiveScene();
-            if (string.IsNullOrEmpty(activeScene.path))
-            {
-                EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-                if (SceneView.lastActiveSceneView != null)
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var node = AssetDatabase.LoadAssetAtPath<WorkshopNodeDefinition>(path);
+                if (node == null)
                 {
-                    SceneView.lastActiveSceneView.in2DMode = true;
+                    continue;
+                }
+
+                var expectedSprite = FindNodeSprite(node.Id);
+                if (expectedSprite == null)
+                {
+                    continue;
+                }
+
+                if (node.NodeSprite != expectedSprite)
+                {
+                    return true;
                 }
             }
-            else if (activeScene.path == ScenePath && SceneView.lastActiveSceneView != null)
-            {
-                SceneView.lastActiveSceneView.in2DMode = true;
-            }
+
+            return false;
         }
 
         private static void Run()
@@ -424,8 +436,28 @@ namespace ArcaneAtelier.Workshop.Editor
         {
             var asset = CreateOrLoadAsset<WorkshopNodeDefinition>($"{DataRoot}/Nodes/{SanitizeAssetName(id)}.asset");
             asset.Configure(id, displayName, description, category, unlockedByDefault, tint, inputPorts, outputPorts, bufferCapacity, maxTransferPerStep, acceptsAnyResource, recipes);
+
+            var sprite = FindNodeSprite(id);
+            if (sprite != null)
+            {
+                asset.NodeSprite = sprite;
+            }
+
             EditorUtility.SetDirty(asset);
             return asset;
+        }
+
+        private static Sprite FindNodeSprite(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return null;
+            }
+
+            var parts = id.Split('.');
+            var subdir = parts.Length >= 2 && parts[1] == "factory" ? "Factories" : "Spirits";
+            var spritePath = $"Assets/ArcaneAtelier/Art/Nodes/{subdir}/{SanitizeAssetName(id)}.png";
+            return AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
         }
 
         private static WorkshopRewardDefinition UpsertReward(

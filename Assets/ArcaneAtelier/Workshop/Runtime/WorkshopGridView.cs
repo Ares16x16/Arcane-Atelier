@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using ArcaneAtelier;
 using UnityEngine;
 
 namespace ArcaneAtelier.Workshop
@@ -19,6 +20,7 @@ namespace ArcaneAtelier.Workshop
         private Camera cachedCamera;
         private WorkshopSceneController controller;
         private Sprite sharedSprite;
+        private Sprite pipesOverlaySprite;
         private Transform gridRoot;
         private Transform nodeRoot;
         private Vector2Int hoveredCell = new Vector2Int(-1, -1);
@@ -26,9 +28,11 @@ namespace ArcaneAtelier.Workshop
         private sealed class NodeVisual
         {
             public GameObject Root;
+            public Transform VisualRoot;  // parent for Body/Frame/Shadow — gets rotation
             public SpriteRenderer Shadow;
             public SpriteRenderer Frame;
             public SpriteRenderer Body;
+            public SpriteRenderer Overlay;
             public List<SpriteRenderer> PortMarkers = new List<SpriteRenderer>();
         }
 
@@ -39,6 +43,7 @@ namespace ArcaneAtelier.Workshop
             controller = sceneController;
             cachedCamera = Camera.main;
             sharedSprite = CreateSquareSprite();
+            pipesOverlaySprite = ArcaneArtCatalog.GetPipesOverlay();
 
             BuildGrid();
             RefreshVisuals();
@@ -184,13 +189,21 @@ namespace ArcaneAtelier.Workshop
             root.transform.position = CellToWorld(cell);
             root.transform.localScale = Vector3.one * cellSize;
 
+            var visualGroup = new GameObject("VisualGroup");
+            visualGroup.transform.SetParent(root.transform, false);
+            visualGroup.transform.localPosition = Vector3.zero;
+
             var visual = new NodeVisual
             {
                 Root = root,
-                Shadow = CreateVisualLayer(root.transform, "Shadow", new Vector3(0.05f, -0.06f, 0f), Vector3.one * 0.92f, new Color(0f, 0f, 0f, 0.35f), 1),
-                Frame = CreateVisualLayer(root.transform, "Frame", Vector3.zero, Vector3.one * 0.88f, new Color(0.24f, 0.21f, 0.18f), 2),
-                Body = CreateVisualLayer(root.transform, "Body", Vector3.zero, Vector3.one * 0.76f, Color.white, 3)
+                VisualRoot = visualGroup.transform,
+                Shadow = CreateVisualLayer(visualGroup.transform, "Shadow", new Vector3(0.05f, -0.06f, 0f), Vector3.one * 0.92f, new Color(0f, 0f, 0f, 0.35f), 1),
+                Frame = CreateVisualLayer(visualGroup.transform, "Frame", Vector3.zero, Vector3.one * 0.88f, new Color(0.24f, 0.21f, 0.18f), 2),
+                Body = CreateVisualLayer(visualGroup.transform, "Body", Vector3.zero, Vector3.one * 0.76f, Color.white, 3),
+                Overlay = CreateVisualLayer(visualGroup.transform, "Overlay", Vector3.zero, Vector3.one * 0.82f, new Color(1f, 1f, 1f, 0.82f), 4)
             };
+
+            visual.Overlay.enabled = false;
 
             foreach (var direction in WorkshopDirectionUtility.CardinalDirections)
             {
@@ -202,7 +215,7 @@ namespace ArcaneAtelier.Workshop
 
                 var portRenderer = portGo.AddComponent<SpriteRenderer>();
                 portRenderer.sprite = sharedSprite;
-                portRenderer.sortingOrder = 4;
+                portRenderer.sortingOrder = 5;
                 visual.PortMarkers.Add(portRenderer);
             }
 
@@ -212,7 +225,20 @@ namespace ArcaneAtelier.Workshop
         private void UpdateNodeVisual(Vector2Int cell, NodeVisual visual, WorkshopNodeState state)
         {
             visual.Root.transform.position = CellToWorld(state.Position);
-            visual.Body.color = state.Definition.Tint;
+            visual.VisualRoot.localRotation = Quaternion.Euler(0, 0, -90f * state.RotationQuarterTurns);
+            var pulseScale = 0.94f + Mathf.PingPong(Time.time * 0.55f, 0.05f);
+            if (state.Definition.NodeSprite != null)
+            {
+                visual.Body.sprite = state.Definition.NodeSprite;
+                visual.Body.color = Color.white;
+                visual.Body.transform.localScale = Vector3.one * CalculateSpriteFitScale(state.Definition.NodeSprite, 0.76f * pulseScale);
+            }
+            else
+            {
+                visual.Body.sprite = sharedSprite;
+                visual.Body.color = state.Definition.Tint;
+                visual.Body.transform.localScale = Vector3.one * (0.76f * pulseScale);
+            }
             visual.Frame.color = controller.SelectedCell == cell
                 ? new Color(0.99f, 0.89f, 0.58f)
                 : new Color(0.24f, 0.21f, 0.18f);
@@ -220,7 +246,14 @@ namespace ArcaneAtelier.Workshop
                 ? new Color(0.92f, 0.74f, 0.33f, 0.22f)
                 : new Color(0f, 0f, 0f, 0.35f);
 
-            visual.Body.transform.localScale = Vector3.one * 0.76f * (0.94f + Mathf.PingPong(Time.time * 0.55f, 0.05f));
+            bool showPipeOverlay = pipesOverlaySprite != null && state.Definition != null && state.Definition.Id == "node.factory.conduit";
+            visual.Overlay.enabled = showPipeOverlay;
+            if (showPipeOverlay)
+            {
+                visual.Overlay.sprite = pipesOverlaySprite;
+                visual.Overlay.color = new Color(1f, 1f, 1f, 0.9f);
+                visual.Overlay.transform.localScale = Vector3.one * CalculateSpriteFitScale(pipesOverlaySprite, 0.84f * pulseScale);
+            }
 
             for (var index = 0; index < WorkshopDirectionUtility.CardinalDirections.Count; index++)
             {
@@ -232,6 +265,23 @@ namespace ArcaneAtelier.Workshop
                 renderer.enabled = isInput || isOutput;
                 renderer.color = isOutput ? new Color(0.91f, 0.62f, 0.24f) : new Color(0.36f, 0.78f, 0.95f);
             }
+        }
+
+        private static float CalculateSpriteFitScale(Sprite sprite, float targetSize)
+        {
+            if (sprite == null)
+            {
+                return targetSize;
+            }
+
+            var bounds = sprite.bounds.size;
+            var largestDimension = Mathf.Max(bounds.x, bounds.y);
+            if (largestDimension <= 0.0001f)
+            {
+                return targetSize;
+            }
+
+            return targetSize / largestDimension;
         }
 
         private SpriteRenderer CreateVisualLayer(Transform parent, string objectName, Vector3 localPosition, Vector3 localScale, Color tint, int sortingOrder)

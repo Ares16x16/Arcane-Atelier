@@ -17,10 +17,15 @@ namespace ArcaneAtelier.Workshop
         [SerializeField] private WorkshopGridView gridView;
         [SerializeField] private WorkshopHudPresenter hudPresenter;
         [SerializeField] private bool autoConfigureSceneEnvironment = true;
+        [SerializeField, Min(1)] private int defaultPreparationTickBudget = 120;
 
         private float accumulatedSimulationTime;
         private string statusMessage = "Spell Assembly ready.";
         private bool isPaused;
+        private bool isDeploying;
+        private int totalPreparationTicks;
+        private int remainingPreparationTicks;
+        private string encounterLabel = "Skirmish";
         private WorkshopContentDatabase ownedRuntimeDatabase;
 
         public WorkshopSimulation Simulation { get; private set; }
@@ -31,6 +36,10 @@ namespace ArcaneAtelier.Workshop
         public string StatusMessage => statusMessage;
         public bool IsPaused => isPaused;
         public float GridCellSize => gridView != null ? gridView.CellSize : 1.22f;
+        public int TotalPreparationTicks => totalPreparationTicks;
+        public int RemainingPreparationTicks => remainingPreparationTicks;
+        public int UsedPreparationTicks => Mathf.Max(0, totalPreparationTicks - remainingPreparationTicks);
+        public string EncounterLabel => encounterLabel;
 
         public WorkshopNodeState SelectedNode =>
             Simulation != null && Simulation.TryGetNode(SelectedCell, out var nodeState) ? nodeState : null;
@@ -66,6 +75,7 @@ namespace ArcaneAtelier.Workshop
             {
                 ownedRuntimeDatabase = WorkshopDefaultContentFactory.CreateRuntimeDatabase();
                 contentDatabase = ownedRuntimeDatabase;
+                Debug.LogWarning("WorkshopSceneController could not find a serialized WorkshopContentDatabase. Falling back to runtime-generated content.", this);
             }
 
             EnsureSceneIs2DPlayable();
@@ -87,6 +97,7 @@ namespace ArcaneAtelier.Workshop
             gridView?.Initialize(this);
             hudPresenter?.Initialize(this);
             SetPaletteNode(PlaceableNodes.FirstOrDefault(node => node != null && Simulation.IsUnlocked(node)));
+            SetPreparationBudget(defaultPreparationTickBudget, "Skirmish");
             HandleSimulationStateChanged();
         }
 
@@ -108,7 +119,7 @@ namespace ArcaneAtelier.Workshop
         {
             HandleGlobalShortcuts();
 
-            if (Simulation == null || isPaused)
+            if (Simulation == null || isPaused || isDeploying)
             {
                 return;
             }
@@ -118,9 +129,14 @@ namespace ArcaneAtelier.Workshop
             var iterations = 0;
             while (accumulatedSimulationTime >= stepSeconds && iterations < MaxSimulationCatchUpStepsPerFrame)
             {
-                Simulation.Step(stepSeconds);
+                AdvancePreparationStep(stepSeconds);
                 accumulatedSimulationTime -= stepSeconds;
                 iterations++;
+
+                if (isDeploying)
+                {
+                    break;
+                }
             }
 
             if (iterations == MaxSimulationCatchUpStepsPerFrame && accumulatedSimulationTime > stepSeconds)
@@ -206,11 +222,66 @@ namespace ArcaneAtelier.Workshop
             statusMessage = $"Applied reward: {reward.DisplayName}.";
         }
 
+        public bool TryApplyRewardById(string rewardId, out WorkshopRewardDefinition reward)
+        {
+            reward = contentDatabase != null ? contentDatabase.FindReward(rewardId) : null;
+            if (reward == null)
+            {
+                return false;
+            }
+
+            ApplyReward(reward);
+            return true;
+        }
+
+        public void SetStatusMessage(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return;
+            }
+
+            statusMessage = message;
+        }
+
         public void ResetWorkshop()
         {
             Simulation.ResetToDefaultLayout();
             PlacementRotationQuarterTurns = 0;
             statusMessage = "Workshop reset to default layout.";
+        }
+
+        public void SetPreparationBudget(int tickBudget, string label)
+        {
+            totalPreparationTicks = Mathf.Max(1, tickBudget);
+            remainingPreparationTicks = totalPreparationTicks;
+            encounterLabel = string.IsNullOrWhiteSpace(label) ? "Skirmish" : label;
+            accumulatedSimulationTime = 0f;
+            isDeploying = false;
+            statusMessage = $"{encounterLabel} preparation started: {remainingPreparationTicks} ticks before breach.";
+        }
+
+        public void StepPreparationOnce()
+        {
+            if (Simulation == null || isDeploying)
+            {
+                return;
+            }
+
+            AdvancePreparationStep(contentDatabase.SimulationStepSeconds);
+        }
+
+        public void DeployToBattle()
+        {
+            if (isDeploying)
+            {
+                return;
+            }
+
+            isDeploying = true;
+            Time.timeScale = 1f;
+            CommitBattlePayload();
+            SceneManager.LoadScene("BattleScene");
         }
 
         public void CommitBattlePayload()
@@ -222,8 +293,15 @@ namespace ArcaneAtelier.Workshop
             }
 
             Simulation.CommitBattlePayload();
+            int openingShieldBonus = remainingPreparationTicks > 0 ? 4 : 0;
+            RunProgressBridge.RegisterPreparation(
+                UsedPreparationTicks,
+                WorkshopBattlePayloadBridge.CurrentPayload,
+                openingShieldBonus);
             statusMessage = WorkshopBattlePayloadBridge.CurrentPayload.HasCards
-                ? "Battle payload committed."
+                ? openingShieldBonus > 0
+                    ? $"Battle payload committed. Early deploy grants +{openingShieldBonus} opening shield."
+                    : "Battle payload committed."
                 : "No crafted cards to commit.";
         }
 
@@ -254,6 +332,24 @@ namespace ArcaneAtelier.Workshop
         {
             gridView?.RefreshVisuals();
             hudPresenter?.Repaint();
+        }
+
+        private void AdvancePreparationStep(float stepSeconds)
+        {
+            if (remainingPreparationTicks <= 0)
+            {
+                DeployToBattle();
+                return;
+            }
+
+            Simulation.Step(stepSeconds);
+            remainingPreparationTicks = Mathf.Max(0, remainingPreparationTicks - 1);
+
+            if (remainingPreparationTicks == 0)
+            {
+                statusMessage = "Breach opened. Deploying battle deck.";
+                DeployToBattle();
+            }
         }
 
         private void HandleGlobalShortcuts()

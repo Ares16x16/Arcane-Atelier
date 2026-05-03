@@ -5,16 +5,18 @@ namespace ArcaneAtelier.Workshop
 {
     public static class WorkshopRuntimeBootstrapper
     {
+        private const string WorkshopSceneName = "WorkshopScene";
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void EnsurePlayableWorkshopInUntitledScene()
         {
             var activeScene = SceneManager.GetActiveScene();
-            if (!string.IsNullOrEmpty(activeScene.path))
+            if (activeScene.name != WorkshopSceneName)
             {
                 return;
             }
 
-            if (Object.FindFirstObjectByType<WorkshopSceneController>() != null)
+            if (Object.FindAnyObjectByType<WorkshopSceneController>() != null)
             {
                 return;
             }
