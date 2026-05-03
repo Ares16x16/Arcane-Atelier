@@ -1,6 +1,8 @@
+# Unity generated
 [Ll]ibrary/
 [Tt]emp/
 [Oo]bj/
+[Bb]in/
 [Bb]uild/
 [Bb]uilds/
 [Ll]ogs/
@@ -12,14 +14,10 @@
 UnitySeed/
 unity-batch.log
 
-# Addressables
-Assets/AddressableAssetsData/*
-Assets/Plugins/
-Assets/Plugins.meta
-Assets/_Recovery/
-Assets/_Recovery.meta
-
-# Visual Studio / Rider
+# IDE / editor
+.vs/
+.idea/
+.vscode/
 *.csproj
 *.unityproj
 *.sln
@@ -35,20 +33,23 @@ Assets/_Recovery.meta
 *.VC.db
 *.DotSettings.user
 
-# AI Agent tools
-.claude/
-.codex/
+# Local AI / agent tooling
 .agents/
-.mcp.json
-
-# OS files
-.DS_Store
-Thumbs.db
-.vsconfig
-
-# Local agent / assistant config
-.agents/
+.agent/
 .claude/
 .codex/
 .mcp.json
 AGENTS.md
+Agent.md
+agent.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Keep project-owned Unity content only
+Assets/AddressableAssetsData/*
+Assets/Plugins/
+Assets/Plugins.meta
+Assets/_Recovery/
+Assets/_Recovery.meta
