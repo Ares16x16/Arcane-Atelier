@@ -485,6 +485,9 @@ namespace ArcaneAtelier.Battle
             float height = Mathf.Lerp(286f, rect.height, easedIntro);
             Rect animatedRect = new Rect(Screen.width * 0.5f - width * 0.5f, Screen.height * 0.5f - height * 0.5f, width, height);
 
+            bool isFinalVictory = result.ResultType == BattleResultType.Victory && controller.CurrentEncounterNumber >= controller.TotalEncounterCount;
+            bool isDefeat = result.ResultType == BattleResultType.Defeat;
+
             DrawRect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0f, 0f, 0f, 0.54f + 0.14f * easedIntro));
             DrawPanelFrame(animatedRect, accent, 0.98f);
             DrawRect(new Rect(animatedRect.x, animatedRect.y, animatedRect.width, 52f), new Color(accent.r, accent.g, accent.b, 0.2f));
@@ -503,10 +506,25 @@ namespace ArcaneAtelier.Battle
             GUI.Label(new Rect(28f, 182f, animatedRect.width - 56f, 18f), $"Final encounter: {result.FinalEncounterId}", bodyStyle);
             GUI.Label(new Rect(28f, 204f, animatedRect.width - 56f, 18f), $"Turns elapsed: {result.TurnsElapsed}", bodyStyle);
             GUI.Label(new Rect(28f, 226f, animatedRect.width - 56f, 18f), "Run summary recorded.", mutedStyle);
-            if (GUI.Button(new Rect(animatedRect.width - 176f, animatedRect.height - 54f, 148f, 30f), "Return To Menu", GUI.skin.button))
+
+            if (isDefeat || isFinalVictory)
             {
-                controller.ReturnToMainMenu();
+                if (GUI.Button(new Rect(animatedRect.width - 176f, animatedRect.height - 54f, 148f, 30f), "Main Menu", GUI.skin.button))
+                {
+                    controller.ReturnToMainMenu();
+                }
             }
+
+            else
+            {
+                if (GUI.Button(new Rect(animatedRect.width - 176f, animatedRect.height - 54f, 148f, 30f), "To Workshop", GUI.skin.button))
+                {
+                    controller.ReturnToWorkshop(); // We will add this method to the controller
+                }
+                
+                // GUI.Label(new Rect(28f, 248f, animatedRect.width - 56f, 18f), "Prepare for the next encounter.", VictoryAccent);
+            }
+
             GUI.EndGroup();
         }
 

@@ -108,7 +108,19 @@ namespace ArcaneAtelier.Battle
                 return;
             }
 
-            currentEncounterIndex = 0;
+            var currentEncounter = RunProgressBridge.CurrentEncounter;
+    
+            if (currentEncounter != null)
+            {
+                this.currentEncounterIndex = currentEncounter.EncounterIndex - 1;                
+                Debug.Log($"Successfully loaded encounter: {currentEncounter.EncounterLabel}");
+            }
+            else
+            {
+                Debug.LogWarning("No encounter data found in RunProgressBridge! Defaulting to 0.");
+                this.currentEncounterIndex = 0;
+            }
+
             totalDamageDealt = 0;
             totalHealingDone = 0;
             totalShieldGained = 0;
@@ -354,6 +366,16 @@ namespace ArcaneAtelier.Battle
             SceneManager.LoadScene("MainMenuScene");
         }
 
+        public void ReturnToWorkshop()
+        {
+            if (CurrentResult != null)
+            {
+                BattleResultBridge.Commit(CurrentResult);
+            }
+            
+            SceneManager.LoadScene("WorkshopScene");
+        }
+
         public BattleCardDefinition GetCardDefinition(string cardId)
         {
             if (contentDatabase == null || string.IsNullOrWhiteSpace(cardId))
@@ -399,22 +421,21 @@ namespace ArcaneAtelier.Battle
         private void OnBattleEnded(BattleResult result)
         {
             AccumulateEncounterStats(result);
-
-            if (result.ResultType == BattleResultType.Victory && currentEncounterIndex < encounterDefinitions.Count - 1)
-            {
-                string clearedName = result.BossDisplayName;
-                currentEncounterIndex++;
-
-                int healAmount = 15;
-                Player.Heal(healAmount);
-                AddRecentEvent($"{clearedName} defeated. Recovered {healAmount} HP. Advancing to next encounter.");
-                Debug.Log($"=== ENCOUNTER CLEARED: {clearedName} === Recovered {healAmount} HP ===");
-                StartEncounter(currentEncounterIndex, resetDeck: false);
-                return;
-            }
-
             BattleResult finalResult = BuildFinalResult(result);
             CurrentResult = finalResult;
+
+            if (result.ResultType == BattleResultType.Victory)
+            {
+                string clearedName = result.BossDisplayName;
+                
+                int healAmount = 15;
+                Player.Heal(healAmount);
+                
+                AddRecentEvent($"{clearedName} defeated. Recovered {healAmount} HP.");
+                Debug.Log($"=== ENCOUNTER CLEARED: {clearedName} === Recovered {healAmount} HP ===");
+                
+            }
+
 
             string outcome = finalResult.ResultType == BattleResultType.Victory ? "VICTORY" : "DEFEAT";
             AddRecentEvent(outcome);
