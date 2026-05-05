@@ -7,6 +7,9 @@ namespace ArcaneAtelier
     public static class ArcaneArtCatalog
     {
         private static readonly Dictionary<string, Sprite> SpriteCache = new Dictionary<string, Sprite>();
+        private const string ConduitSpritePath = "Nodes/Factories/node_factory_conduit.png";
+        private const string TurnConduitSpritePath = "Nodes/Factories/node_factory_turn_conduit.png";
+        private const string TurnSpellConduitSpritePath = "Nodes/Factories/node_factory_turn_spell_conduit.png";
 
         public static Sprite GetElementIcon(ArcaneAtelier.Workshop.WorkshopElementAttribute element)
         {
@@ -31,6 +34,29 @@ namespace ArcaneAtelier
         public static Sprite GetPipesOverlay()
         {
             return LoadSprite("Nodes/Factories/Pipes.png");
+        }
+
+        public static Sprite GetWorkshopNodeSprite(string nodeId)
+        {
+            return nodeId switch
+            {
+                "node.factory.conduit" => LoadSprite(ConduitSpritePath),
+                "node.factory.spell_conduit" => LoadSprite(ConduitSpritePath),
+                Workshop.WorkshopNodeVariantUtility.TurningConduitId => LoadSprite(TurnConduitSpritePath),
+                Workshop.WorkshopNodeVariantUtility.TurningConduitMirrorId => LoadSprite(TurnConduitSpritePath),
+                Workshop.WorkshopNodeVariantUtility.TurningSpellConduitId => LoadSprite(TurnSpellConduitSpritePath),
+                Workshop.WorkshopNodeVariantUtility.TurningSpellConduitMirrorId => LoadSprite(TurnSpellConduitSpritePath),
+                _ => null
+            };
+        }
+
+        public static Color GetWorkshopNodeTint(string nodeId)
+        {
+            return nodeId switch
+            {
+                "node.factory.spell_conduit" => new Color(1f, 0.48f, 0.42f),
+                _ => Color.white
+            };
         }
 
         private static Sprite LoadSprite(string relativePath)

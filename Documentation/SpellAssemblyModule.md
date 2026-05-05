@@ -49,13 +49,17 @@ Runtime code lives in `Assets/ArcaneAtelier/Workshop/Runtime`.
 
 ### Grid + interaction model
 
-- Grid bounds: **9 x 6** cells (configurable in content DB).
+- Grid bounds: **50 x 50** cells.
+- Starter focus: the camera opens on the seeded starter workshop cluster, then the player can pan outward to the rest of the map.
 - Input mapping (current debug UX):
-  - **LMB empty cell**: place the armed palette node.
-  - **LMB occupied cell**: select the placed node without replacing it.
-  - **RMB**: remove node.
-  - **R**: rotate selected placed node clockwise.
-  - **Rotate Placement**: rotate armed placement orientation.
+- **LMB empty cell**: place the armed palette node.
+- **LMB occupied cell**: select the placed node without replacing it.
+- **RMB**: remove node.
+- **RMB on corner conduit palette card**: arm the mirrored L-shape variant instead of the default corner.
+- **R**: rotate selected placed node clockwise.
+- **Rotate Placement**: rotate armed placement orientation.
+  - **Mouse Wheel**: zoom the workshop map in / out.
+  - **Hold Left Click + Drag**: pan the workshop map.
 
 ### Node behavior model
 
@@ -82,7 +86,11 @@ Node input rules:
 
 - **Source** nodes do not need inputs. Their recipes generate elemental resources into their own buffer.
 - **Arcane Conduit** accepts and transfers element resources only.
+- **Turning Conduit** accepts and transfers element resources only, using an L-shaped east-to-north default path that can be rotated.
+- A mirrored `Turning Conduit Mirror` variant provides a west-to-north default path and is armed from the same palette card with right click.
 - **Spell Conduit** accepts and transfers spell cards only.
+- **Turning Spell Conduit** accepts and transfers spell cards only, using an L-shaped east-to-north default path that can be rotated.
+- A mirrored `Turning Spell Conduit Mirror` variant provides a west-to-north default path and is armed from the same palette card with right click.
 - Other future **Storage** nodes may define their own accepted item lanes.
 - **Processor** nodes, including `Element Fusion`, only accept items that appear in one of their recipe inputs.
 - **Crafter** nodes, including `Element Shaper` and `Spell Fusion`, only accept items that appear in one of their recipe inputs.

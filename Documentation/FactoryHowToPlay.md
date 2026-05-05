@@ -129,7 +129,9 @@ You also begin with these nodes unlocked in the palette:
 - Wind Spirit
 - Earth Spirit
 - Arcane Conduit
+- Turning Conduit
 - Spell Conduit
+- Turning Spell Conduit
 - Element Shaper
 - Element Fusion
 - Spell Fusion I
@@ -165,11 +167,25 @@ This is the element relay node.
 
 Use it to carry element resources forward through the line. It does not accept spell cards.
 
+### 2a. Turning Conduit
+
+This is the L-shaped element relay node.
+
+Its default facing accepts an element from the east side and outputs north. Rotate it to make the other corner directions. It follows the same resource-only rules as `Arcane Conduit`.
+Right click its palette card to arm the mirrored west-to-north version without cluttering the palette with a second card.
+
 ### 2b. Spell Conduit
 
 This is the spell-card relay node.
 
 Use it after `Element Shaper` or `Spell Fusion` when you want cards to visibly travel through a card lane before becoming part of the battle deck. It does not accept element resources.
+
+### 2c. Turning Spell Conduit
+
+This is the L-shaped spell-card relay node.
+
+Its default facing accepts a spell card from the east side and outputs north. Rotate it to make the other corner directions. It follows the same card-only rules as `Spell Conduit`.
+Right click its palette card to arm the mirrored west-to-north version.
 
 ### 3. Element Fusion
 
@@ -578,9 +594,11 @@ Current factory controls:
 
 - `Left Click empty tile`: place the armed palette node
 - `Left Click occupied tile`: select the placed node without replacing it
+- `Hold Left Click + Drag`: pan the workshop map
 - `Right Click`: remove a node
 - `R`: rotate selected placed node
 - `Q / E`: rotate placement direction
+- `Mouse Wheel`: zoom the workshop map in / out
 - `Space`: pause / resume time
 - `Tab`: open / close boon drawer
 - `F1`: show / hide control guide

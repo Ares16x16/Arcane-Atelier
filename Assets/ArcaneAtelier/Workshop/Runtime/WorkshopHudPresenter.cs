@@ -324,14 +324,15 @@ namespace ArcaneAtelier.Workshop
             GUI.Label(new Rect(leftX + 14f, 164f, columnWidth - 28f, 48f), "Element line: Water enters Element Fusion from the left, Wind enters from below, then the shaped output becomes Frost Pin.", bodyStyle);
             GUI.Label(new Rect(leftX + 14f, 214f, columnWidth - 28f, 18f), "Broken facing stalls the whole recipe.", tinyLabelStyle);
 
-            DrawRect(new Rect(leftX, 258f, columnWidth, 188f), new Color(0.07f, 0.09f, 0.13f, 0.9f));
-            DrawOutline(new Rect(leftX, 258f, columnWidth, 188f), new Color(0.18f, 0.25f, 0.32f));
+            DrawRect(new Rect(leftX, 258f, columnWidth, 216f), new Color(0.07f, 0.09f, 0.13f, 0.9f));
+            DrawOutline(new Rect(leftX, 258f, columnWidth, 216f), new Color(0.18f, 0.25f, 0.32f));
             GUI.Label(new Rect(leftX + 14f, 272f, columnWidth - 28f, 20f), "Controls", sectionStyle);
-            DrawGuideRow(new Rect(leftX + 14f, 304f, columnWidth - 28f, 22f), "LMB", "Place empty tile / select occupied tile");
-            DrawGuideRow(new Rect(leftX + 14f, 332f, columnWidth - 28f, 22f), "RMB", "Remove selected tile");
-            DrawGuideRow(new Rect(leftX + 14f, 360f, columnWidth - 28f, 22f), "R", "Rotate selected machine");
-            DrawGuideRow(new Rect(leftX + 14f, 388f, columnWidth - 28f, 22f), "Q / E", "Rotate next placement");
-            DrawGuideRow(new Rect(leftX + 14f, 416f, columnWidth - 28f, 22f), "TAB", "Open reward drawer");
+            DrawGuideRow(new Rect(leftX + 14f, 304f, columnWidth - 28f, 22f), "LMB", "Click place/select, hold-drag pan map");
+            DrawGuideRow(new Rect(leftX + 14f, 332f, columnWidth - 28f, 22f), "RMB Tile", "Remove selected tile");
+            DrawGuideRow(new Rect(leftX + 14f, 360f, columnWidth - 28f, 22f), "RMB Card", "Arm mirror corner conduit");
+            DrawGuideRow(new Rect(leftX + 14f, 388f, columnWidth - 28f, 22f), "R", "Rotate selected machine");
+            DrawGuideRow(new Rect(leftX + 14f, 416f, columnWidth - 28f, 22f), "Q / E", "Rotate next placement");
+            DrawGuideRow(new Rect(leftX + 14f, 444f, columnWidth - 28f, 22f), "Wheel", "Zoom workshop map");
 
             DrawRect(new Rect(rightX, 86f, columnWidth, 178f), new Color(0.07f, 0.09f, 0.13f, 0.9f));
             DrawOutline(new Rect(rightX, 86f, columnWidth, 178f), new Color(0.27f, 0.33f, 0.42f));
@@ -357,13 +358,15 @@ namespace ArcaneAtelier.Workshop
 
             GUI.BeginGroup(rect);
             GUI.Label(new Rect(18f, 14f, 220f, 24f), "Workshop Palette", titleStyle);
-            GUI.Label(new Rect(18f, 38f, 520f, 18f), "Choose a blueprint. LMB empty tile places; LMB occupied tile selects.", mutedStyle);
+            GUI.Label(new Rect(18f, 38f, 760f, 18f), "Choose a blueprint. LMB arms default, RMB arms mirror on corner conduits. Short LMB places/selects; hold LMB and drag pans.", mutedStyle);
             DrawElementLegend(new Rect(18f, 58f, 272f, 18f));
 
             var contentRect = new Rect(14f, 82f, rect.width - 28f, rect.height - 92f);
-            var nodes = controller.PlaceableNodes.Where(node => node != null).ToArray();
+            var nodes = controller.PlaceableNodes
+                .Where(node => node != null && !WorkshopNodeVariantUtility.IsMirrorVariant(node.Id))
+                .ToArray();
             const float cardWidth = 220f;
-            const float cardHeight = 88f;
+            const float cardHeight = 96f;
             const float spacing = 12f;
             var spiritNodes = nodes.Where(node => node.Category == WorkshopNodeCategory.Source).ToArray();
             var machineNodes = nodes.Where(node => node.Category != WorkshopNodeCategory.Source).ToArray();
@@ -433,12 +436,27 @@ namespace ArcaneAtelier.Workshop
 
             var simulation = controller != null ? controller.Simulation : null;
             var unlocked = simulation != null && simulation.IsUnlocked(node);
-            var selected = controller != null && controller.SelectedPaletteNode == node;
+            var mirrorNode = FindMirrorPaletteNode(node);
+            var selectedNode = controller != null ? controller.SelectedPaletteNode : null;
+            var selected = controller != null && (selectedNode == node || selectedNode == mirrorNode);
+            var mirrorSelected = mirrorNode != null && selectedNode == mirrorNode;
             var accent = GetCategoryColor(node.Category, node.Tint);
 
             DrawRect(rect, selected ? new Color(accent.r * 0.38f, accent.g * 0.38f, accent.b * 0.38f, 0.95f) : new Color(0.08f, 0.1f, 0.14f, 0.96f));
             DrawOutline(rect, selected ? new Color(0.99f, 0.89f, 0.62f) : accent);
             DrawRect(new Rect(rect.x, rect.y, rect.width, 4f), accent);
+
+            Event current = Event.current;
+            if (unlocked &&
+                mirrorNode != null &&
+                current != null &&
+                current.type == EventType.MouseDown &&
+                current.button == 1 &&
+                rect.Contains(current.mousePosition))
+            {
+                controller.SetPaletteNode(mirrorNode);
+                current.Use();
+            }
 
             if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
             {
@@ -448,7 +466,9 @@ namespace ArcaneAtelier.Workshop
                 }
             }
 
-            if (!DrawSprite(new Rect(rect.x + 10f, rect.y + 12f, 32f, 32f), node.NodeSprite, Color.white))
+            var iconSprite = ResolveNodeSprite(node);
+            var iconTint = ResolveNodeSpriteTint(node);
+            if (!DrawSprite(new Rect(rect.x + 10f, rect.y + 12f, 32f, 32f), iconSprite, iconTint))
             {
                 GUI.Label(new Rect(rect.x + 12f, rect.y + 14f, 28f, 28f), GetCategorySymbol(node.Category), iconStyle);
             }
@@ -457,11 +477,42 @@ namespace ArcaneAtelier.Workshop
             GUI.Label(new Rect(rect.x + 48f, rect.y + 36f, rect.width - 58f, 16f), node.Category.ToString(), tinyLabelStyle);
             GUI.Label(new Rect(rect.x + 48f, rect.y + 54f, rect.width - 58f, 16f), unlocked ? "Ready" : "Locked reward", tinyLabelStyle);
 
+            if (mirrorNode != null)
+            {
+                DrawCornerVariantStrip(new Rect(rect.x + 10f, rect.y + 72f, rect.width - 20f, 18f), node, mirrorNode, mirrorSelected, unlocked);
+            }
+
             if (!unlocked)
             {
                 DrawRect(rect, new Color(0f, 0f, 0f, 0.46f));
                 GUI.Label(new Rect(rect.x, rect.y + rect.height * 0.5f - 10f, rect.width, 20f), "LOCKED", chipStyle);
             }
+        }
+
+        private void DrawCornerVariantStrip(Rect rect, WorkshopNodeDefinition primaryNode, WorkshopNodeDefinition mirrorNode, bool mirrorSelected, bool unlocked)
+        {
+            DrawRect(rect, new Color(0.11f, 0.13f, 0.17f, 0.94f));
+            DrawOutline(rect, new Color(0.28f, 0.31f, 0.36f));
+
+            var leftPreview = new Rect(rect.x + 6f, rect.y + 2f, 14f, 14f);
+            var rightPreview = new Rect(rect.x + 26f, rect.y + 2f, 14f, 14f);
+            var defaultHighlight = new Rect(rect.x + 4f, rect.y + 1f, 18f, 16f);
+            var mirrorHighlight = new Rect(rect.x + 24f, rect.y + 1f, 18f, 16f);
+            if (mirrorSelected)
+            {
+                DrawRect(mirrorHighlight, new Color(0.86f, 0.28f, 0.28f, 0.28f));
+                DrawOutline(mirrorHighlight, new Color(0.98f, 0.71f, 0.42f));
+            }
+            else
+            {
+                DrawRect(defaultHighlight, new Color(0.32f, 0.58f, 0.95f, 0.22f));
+                DrawOutline(defaultHighlight, new Color(0.9f, 0.86f, 0.74f));
+            }
+
+            DrawSprite(leftPreview, ResolveNodeSprite(primaryNode), ResolveNodeSpriteTint(primaryNode));
+            DrawSprite(rightPreview, ResolveNodeSprite(mirrorNode), ResolveNodeSpriteTint(mirrorNode), true);
+            GUI.Label(new Rect(rect.x + 50f, rect.y + 1f, 60f, 16f), mirrorSelected ? "Mirror" : "Default", tinyLabelStyle);
+            GUI.Label(new Rect(rect.x + 108f, rect.y + 1f, rect.width - 114f, 16f), unlocked ? "LMB default  RMB mirror" : "Unlock to arm", tinyLabelStyle);
         }
 
         private void DrawMiniStat(Rect rect, string value, string label)
@@ -470,6 +521,25 @@ namespace ArcaneAtelier.Workshop
             DrawOutline(rect, new Color(0.24f, 0.22f, 0.18f));
             GUI.Label(new Rect(rect.x, rect.y + 3f, rect.width, 14f), value, statValueStyle);
             GUI.Label(new Rect(rect.x, rect.y + 16f, rect.width, 12f), label, statLabelStyle);
+        }
+
+        private static Sprite ResolveNodeSprite(WorkshopNodeDefinition node)
+        {
+            if (node == null)
+            {
+                return null;
+            }
+
+            return node.NodeSprite != null
+                ? node.NodeSprite
+                : ArcaneArtCatalog.GetWorkshopNodeSprite(node.Id);
+        }
+
+        private static Color ResolveNodeSpriteTint(WorkshopNodeDefinition node)
+        {
+            return node == null
+                ? Color.white
+                : ArcaneArtCatalog.GetWorkshopNodeTint(node.Id);
         }
 
         private void DrawChipWrap(float startX, float startY, float maxWidth, (string Text, Color Tint)[] items)
@@ -591,7 +661,22 @@ namespace ArcaneAtelier.Workshop
             DrawRect(new Rect(rect.xMax - 1f, rect.y, 1f, rect.height), color);
         }
 
+        private WorkshopNodeDefinition FindMirrorPaletteNode(WorkshopNodeDefinition node)
+        {
+            if (node == null || controller == null || !WorkshopNodeVariantUtility.TryGetMirrorVariantId(node.Id, out string mirrorNodeId))
+            {
+                return null;
+            }
+
+            return controller.PlaceableNodes.FirstOrDefault(candidate => candidate != null && candidate.Id == mirrorNodeId);
+        }
+
         private bool DrawSprite(Rect rect, Sprite sprite, Color tint)
+        {
+            return DrawSprite(rect, sprite, tint, false);
+        }
+
+        private bool DrawSprite(Rect rect, Sprite sprite, Color tint, bool flipX)
         {
             if (sprite == null || sprite.texture == null)
             {
@@ -606,6 +691,10 @@ namespace ArcaneAtelier.Workshop
                 textureRect.y / sprite.texture.height,
                 textureRect.width / sprite.texture.width,
                 textureRect.height / sprite.texture.height);
+            if (flipX)
+            {
+                uv = new Rect(uv.x + uv.width, uv.y, -uv.width, uv.height);
+            }
             GUI.DrawTextureWithTexCoords(rect, sprite.texture, uv, true);
             GUI.color = previousColor;
             return true;
@@ -731,37 +820,6 @@ namespace ArcaneAtelier.Workshop
             }
 
             camera.rect = new Rect(0f, 0f, 1f, 1f);
-
-            var simulation = controller.Simulation;
-            if (simulation == null || !camera.orthographic)
-            {
-                return;
-            }
-
-            var safeArea = new Rect(
-                Margin,
-                BottomDockHeight + Margin * 1.5f,
-                Screen.width - RightRailWidth - Margin * 3f,
-                Screen.height - TopHudHeight - BottomDockHeight - Margin * 3f);
-
-            var safeWidthRatio = Mathf.Clamp(safeArea.width / Screen.width, 0.35f, 1f);
-            var safeHeightRatio = Mathf.Clamp(safeArea.height / Screen.height, 0.35f, 1f);
-            var boardWidth = Mathf.Max(1f, (simulation.GridSize.x - 1) * controller.GridCellSize + controller.GridCellSize * 1.9f);
-            var boardHeight = Mathf.Max(1f, (simulation.GridSize.y - 1) * controller.GridCellSize + controller.GridCellSize * 1.9f);
-            var fitHeight = boardHeight / (2f * safeHeightRatio);
-            var fitWidth = boardWidth / (2f * camera.aspect * safeWidthRatio);
-            camera.orthographicSize = Mathf.Max(4.7f, fitHeight, fitWidth);
-
-            var boardCenter = new Vector2(
-                (simulation.GridSize.x - 1) * controller.GridCellSize * 0.5f,
-                (simulation.GridSize.y - 1) * controller.GridCellSize * 0.5f);
-            var screenCenter = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-            var pixelOffset = safeArea.center - screenCenter;
-            var worldOffset = new Vector2(
-                pixelOffset.x / Screen.width * camera.orthographicSize * camera.aspect * 2f,
-                pixelOffset.y / Screen.height * camera.orthographicSize * 2f);
-
-            camera.transform.position = new Vector3(boardCenter.x - worldOffset.x, boardCenter.y - worldOffset.y, -10f);
         }
 
         private static string ShortItemName(string displayName)

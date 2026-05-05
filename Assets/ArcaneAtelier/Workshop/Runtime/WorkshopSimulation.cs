@@ -9,7 +9,11 @@ namespace ArcaneAtelier.Workshop
     public sealed class WorkshopNodeState
     {
         private const string ElementConduitId = "node.factory.conduit";
+        private const string TurningConduitId = "node.factory.turn_conduit";
+        private const string TurningConduitMirrorId = "node.factory.turn_conduit.mirror";
         private const string SpellConduitId = "node.factory.spell_conduit";
+        private const string TurningSpellConduitId = "node.factory.turn_spell_conduit";
+        private const string TurningSpellConduitMirrorId = "node.factory.turn_spell_conduit.mirror";
 
         private readonly Dictionary<WorkshopItemDefinition, int> buffer = new Dictionary<WorkshopItemDefinition, int>();
         private int bufferedItemCount;
@@ -73,12 +77,12 @@ namespace ArcaneAtelier.Workshop
                 return false;
             }
 
-            if (definition.Id == ElementConduitId)
+            if (definition.Id == ElementConduitId || definition.Id == TurningConduitId || definition.Id == TurningConduitMirrorId)
             {
                 return item.Kind == WorkshopItemKind.Resource;
             }
 
-            if (definition.Id == SpellConduitId)
+            if (definition.Id == SpellConduitId || definition.Id == TurningSpellConduitId || definition.Id == TurningSpellConduitMirrorId)
             {
                 return item.Kind == WorkshopItemKind.Card;
             }

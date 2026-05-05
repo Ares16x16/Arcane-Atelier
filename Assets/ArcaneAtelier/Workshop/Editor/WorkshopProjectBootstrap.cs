@@ -346,6 +346,34 @@ namespace ArcaneAtelier.Workshop.Editor
                 true,
                 Array.Empty<WorkshopProductionRecipe>());
 
+            var turnConduit = UpsertNode(
+                "node.factory.turn_conduit",
+                "Turning Conduit",
+                "L-shaped relay node that turns element resources around a corner.",
+                WorkshopNodeCategory.Storage,
+                true,
+                new Color(0.46f, 0.42f, 0.34f),
+                NodePortMask.East,
+                NodePortMask.North,
+                12,
+                2,
+                true,
+                Array.Empty<WorkshopProductionRecipe>());
+
+            var turnConduitMirror = UpsertNode(
+                "node.factory.turn_conduit.mirror",
+                "Turning Conduit Mirror",
+                "Mirrored L-shaped relay node that turns element resources around a corner.",
+                WorkshopNodeCategory.Storage,
+                true,
+                new Color(0.46f, 0.42f, 0.34f),
+                NodePortMask.West,
+                NodePortMask.North,
+                12,
+                2,
+                true,
+                Array.Empty<WorkshopProductionRecipe>());
+
             var spellConduit = UpsertNode(
                 "node.factory.spell_conduit",
                 "Spell Conduit",
@@ -355,6 +383,34 @@ namespace ArcaneAtelier.Workshop.Editor
                 new Color(0.58f, 0.42f, 0.78f),
                 NodePortMask.West,
                 NodePortMask.East,
+                12,
+                2,
+                false,
+                Array.Empty<WorkshopProductionRecipe>());
+
+            var turnSpellConduit = UpsertNode(
+                "node.factory.turn_spell_conduit",
+                "Turning Spell Conduit",
+                "L-shaped relay node that turns crafted spell cards around a corner.",
+                WorkshopNodeCategory.Storage,
+                true,
+                new Color(0.78f, 0.34f, 0.3f),
+                NodePortMask.East,
+                NodePortMask.North,
+                12,
+                2,
+                false,
+                Array.Empty<WorkshopProductionRecipe>());
+
+            var turnSpellConduitMirror = UpsertNode(
+                "node.factory.turn_spell_conduit.mirror",
+                "Turning Spell Conduit Mirror",
+                "Mirrored L-shaped relay node that turns crafted spell cards around a corner.",
+                WorkshopNodeCategory.Storage,
+                true,
+                new Color(0.78f, 0.34f, 0.3f),
+                NodePortMask.West,
+                NodePortMask.North,
                 12,
                 2,
                 false,
@@ -378,27 +434,27 @@ namespace ArcaneAtelier.Workshop.Editor
 
             var database = CreateOrLoadAsset<WorkshopContentDatabase>($"{DataRoot}/WorkshopContentDatabase.asset");
             database.Configure(
-                new Vector2Int(9, 6),
+                new Vector2Int(50, 50),
                 0.25f,
-                new[] { fireSpirit, waterSpirit, windSpirit, earthSpirit, iceSpirit, thunderSpirit, lightSpirit, darkSpirit, elementFusionFactory, elementShapingFactory, spellFusionBasicFactory, spellFusionIntermediateFactory, spellFusionAdvancedFactory, conduit, spellConduit },
+                new[] { fireSpirit, waterSpirit, windSpirit, earthSpirit, iceSpirit, thunderSpirit, lightSpirit, darkSpirit, elementFusionFactory, elementShapingFactory, spellFusionBasicFactory, spellFusionIntermediateFactory, spellFusionAdvancedFactory, conduit, turnConduit, turnConduitMirror, spellConduit, turnSpellConduit, turnSpellConduitMirror },
                 new[] { unlockSpellFusionBasic, unlockSpellFusionIntermediate, unlockSpellFusionAdvanced, unlockIceSpirit, unlockThunderSpirit, unlockLightSpirit, unlockDarkSpirit, boostShaping, reserveReward },
                 new[]
                 {
-                    WorkshopPlacedNodeSeed.Create(fireSpirit, new Vector2Int(0, 5), 0),
-                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(1, 5), 0),
-                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(2, 5), 0),
-                    WorkshopPlacedNodeSeed.Create(spellFusionBasicFactory, new Vector2Int(3, 5), 0),
-                    WorkshopPlacedNodeSeed.Create(spellConduit, new Vector2Int(4, 5), 0),
-                    WorkshopPlacedNodeSeed.Create(fireSpirit, new Vector2Int(3, 2), 3),
-                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(3, 3), 3),
-                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(3, 4), 3),
-                    WorkshopPlacedNodeSeed.Create(waterSpirit, new Vector2Int(0, 1), 0),
-                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(1, 1), 0),
-                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(2, 1), 0),
-                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(3, 1), 0),
-                    WorkshopPlacedNodeSeed.Create(elementFusionFactory, new Vector2Int(4, 1), 0),
-                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(5, 1), 0),
-                    WorkshopPlacedNodeSeed.Create(windSpirit, new Vector2Int(4, 0), 3),
+                    WorkshopPlacedNodeSeed.Create(fireSpirit, new Vector2Int(8, 13), 0),
+                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(9, 13), 0),
+                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(10, 13), 0),
+                    WorkshopPlacedNodeSeed.Create(spellFusionBasicFactory, new Vector2Int(11, 13), 0),
+                    WorkshopPlacedNodeSeed.Create(spellConduit, new Vector2Int(12, 13), 0),
+                    WorkshopPlacedNodeSeed.Create(fireSpirit, new Vector2Int(11, 10), 3),
+                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(11, 11), 3),
+                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(11, 12), 3),
+                    WorkshopPlacedNodeSeed.Create(waterSpirit, new Vector2Int(8, 9), 0),
+                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(9, 9), 0),
+                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(10, 9), 0),
+                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(11, 9), 0),
+                    WorkshopPlacedNodeSeed.Create(elementFusionFactory, new Vector2Int(12, 9), 0),
+                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(13, 9), 0),
+                    WorkshopPlacedNodeSeed.Create(windSpirit, new Vector2Int(12, 8), 3),
                 });
 
             var validationErrors = database.ValidateContent();

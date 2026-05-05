@@ -83,12 +83,24 @@ namespace ArcaneAtelier.Battle.Tests
             WorkshopItemDefinition fire = FindItem(database, "element.fire");
             WorkshopItemDefinition fireSpell = FindItem(database, "spell.basic.fire");
             WorkshopNodeDefinition elementConduit = FindNode(database, "node.factory.conduit");
+            WorkshopNodeDefinition turnConduit = FindNode(database, "node.factory.turn_conduit");
+            WorkshopNodeDefinition turnConduitMirror = FindNode(database, "node.factory.turn_conduit.mirror");
             WorkshopNodeDefinition spellConduit = FindNode(database, "node.factory.spell_conduit");
+            WorkshopNodeDefinition turnSpellConduit = FindNode(database, "node.factory.turn_spell_conduit");
+            WorkshopNodeDefinition turnSpellConduitMirror = FindNode(database, "node.factory.turn_spell_conduit.mirror");
 
             Assert.That(new WorkshopNodeState(elementConduit, Vector2Int.zero, 0).CanAccept(fire), Is.True);
             Assert.That(new WorkshopNodeState(elementConduit, Vector2Int.zero, 0).CanAccept(fireSpell), Is.False);
+            Assert.That(new WorkshopNodeState(turnConduit, Vector2Int.zero, 0).CanAccept(fire), Is.True);
+            Assert.That(new WorkshopNodeState(turnConduit, Vector2Int.zero, 0).CanAccept(fireSpell), Is.False);
+            Assert.That(new WorkshopNodeState(turnConduitMirror, Vector2Int.zero, 0).CanAccept(fire), Is.True);
+            Assert.That(new WorkshopNodeState(turnConduitMirror, Vector2Int.zero, 0).CanAccept(fireSpell), Is.False);
             Assert.That(new WorkshopNodeState(spellConduit, Vector2Int.zero, 0).CanAccept(fireSpell), Is.True);
             Assert.That(new WorkshopNodeState(spellConduit, Vector2Int.zero, 0).CanAccept(fire), Is.False);
+            Assert.That(new WorkshopNodeState(turnSpellConduit, Vector2Int.zero, 0).CanAccept(fireSpell), Is.True);
+            Assert.That(new WorkshopNodeState(turnSpellConduit, Vector2Int.zero, 0).CanAccept(fire), Is.False);
+            Assert.That(new WorkshopNodeState(turnSpellConduitMirror, Vector2Int.zero, 0).CanAccept(fireSpell), Is.True);
+            Assert.That(new WorkshopNodeState(turnSpellConduitMirror, Vector2Int.zero, 0).CanAccept(fire), Is.False);
         }
 
         private static void Step(WorkshopSimulation simulation, int count)
