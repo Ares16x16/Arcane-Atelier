@@ -5,14 +5,14 @@ using UnityEngine.SceneManagement;
 
 public sealed class MainMenuManager : MonoBehaviour
 {
-    private const string WorkshopSceneName = "WorkshopScene";
+    private const string PrologueSceneName = "PrologueScene";
 
     public void StartGame()
     {
         WorkshopBattlePayloadBridge.Clear();
         BattleResultBridge.Clear();
         RunProgressBridge.Reset();
-        SceneManager.LoadScene(WorkshopSceneName);
+        SceneManager.LoadScene(PrologueSceneName);
     }
 
     public void QuitGame()
