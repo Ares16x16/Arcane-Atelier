@@ -103,9 +103,14 @@ namespace ArcaneAtelier.Workshop
             Simulation = new WorkshopSimulation(contentDatabase);
             Simulation.StateChanged += HandleSimulationStateChanged;
 
+            if (WorkshopRunStateBridge.TryGet(out WorkshopRunStateSnapshot savedRunState))
+            {
+                Simulation.RestoreRunState(savedRunState);
+            }
+
             gridView?.Initialize(this);
             hudPresenter?.Initialize(this);
-            gridView?.FrameLayout(contentDatabase.DefaultLayout, contentDatabase.GridSize);
+            gridView?.FrameLayout(Simulation.BuildCurrentLayout(), contentDatabase.GridSize);
             SetPaletteNode(PlaceableNodes.FirstOrDefault(node => node != null && Simulation.IsUnlocked(node)));
             SetPreparationBudget(defaultPreparationTickBudget, "Skirmish");
             HandleSimulationStateChanged();
@@ -357,6 +362,7 @@ namespace ArcaneAtelier.Workshop
 
             isDeploying = true;
             Time.timeScale = 1f;
+            WorkshopRunStateBridge.Commit(Simulation != null ? Simulation.CaptureRunState() : null);
             CommitBattlePayload();
             SceneManager.LoadScene("BattleScene");
         }

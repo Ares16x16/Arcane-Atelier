@@ -75,6 +75,7 @@ namespace ArcaneAtelier.Integration
             {
                 WorkshopBattlePayloadBridge.Clear();
                 BattleResultBridge.Clear();
+                WorkshopRunStateBridge.Clear();
                 ResetRunState();
                 return;
             }

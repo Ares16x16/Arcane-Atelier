@@ -208,6 +208,38 @@ namespace ArcaneAtelier.Battle.Tests
         }
 
         [Test]
+        public void RunStateSnapshotRestoresPlacedNodesBuffersAndEditedPorts()
+        {
+            WorkshopContentDatabase database = WorkshopDefaultContentFactory.CreateRuntimeDatabase();
+            var simulation = new WorkshopSimulation(database);
+            ClearDefaultLayout(simulation);
+
+            WorkshopNodeDefinition fireSpirit = FindNode(database, "node.spirit.fire");
+            WorkshopNodeDefinition elementShaper = FindNode(database, "node.factory.element_shaping");
+            WorkshopNodeDefinition spellFusionBasic = FindNode(database, "node.factory.spell_fusion.basic");
+            WorkshopNodeDefinition spellConduit = FindNode(database, "node.factory.spell_conduit");
+            WorkshopNodeDefinition deckCollector = FindNode(database, "node.factory.deck_collector");
+
+            simulation.PlaceNode(new Vector2Int(0, 0), fireSpirit, 0);
+            simulation.PlaceNode(new Vector2Int(1, 0), elementShaper, 0);
+            simulation.PlaceNode(new Vector2Int(2, 0), spellConduit, 0);
+            simulation.PlaceNode(new Vector2Int(3, 0), deckCollector, 0);
+            simulation.PlaceNode(new Vector2Int(6, 6), spellFusionBasic, 0);
+            simulation.CycleNodePort(new Vector2Int(6, 6), NodePortMask.West);
+
+            Step(simulation, 80);
+
+            WorkshopRunStateSnapshot snapshot = simulation.CaptureRunState();
+            var restoredSimulation = new WorkshopSimulation(database);
+            restoredSimulation.RestoreRunState(snapshot);
+
+            Assert.That(restoredSimulation.Nodes.Count, Is.EqualTo(5));
+            Assert.That(restoredSimulation.Nodes[new Vector2Int(6, 6)].RotatedOutputPorts, Is.EqualTo(NodePortMask.West));
+            Assert.That(restoredSimulation.Nodes[new Vector2Int(3, 0)].BufferedItemCount, Is.GreaterThan(0));
+            Assert.That(CountPrepared(restoredSimulation.BuildInventoryView(), "Cinder Dart"), Is.GreaterThan(0));
+        }
+
+        [Test]
         public void ElementFusionProcessesEveryPossiblePairInRecipeOrder()
         {
             WorkshopContentDatabase database = WorkshopDefaultContentFactory.CreateRuntimeDatabase();

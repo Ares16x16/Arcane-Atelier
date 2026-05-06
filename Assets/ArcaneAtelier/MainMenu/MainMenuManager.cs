@@ -11,6 +11,7 @@ public sealed class MainMenuManager : MonoBehaviour
     {
         WorkshopBattlePayloadBridge.Clear();
         BattleResultBridge.Clear();
+        WorkshopRunStateBridge.Clear();
         RunProgressBridge.Reset();
         SceneManager.LoadScene(PrologueSceneName);
     }

@@ -216,6 +216,72 @@ namespace ArcaneAtelier.Workshop
         {
             return buffer.OrderBy(pair => pair.Key.DisplayName);
         }
+
+        public WorkshopRunNodeSnapshot CaptureRunState()
+        {
+            WorkshopRunNodeSnapshot snapshot = new WorkshopRunNodeSnapshot
+            {
+                NodeId = Definition != null ? Definition.Id : string.Empty,
+                Position = Position,
+                RotationQuarterTurns = RotationQuarterTurns,
+                SpeedMultiplier = SpeedMultiplier,
+                CycleProgress = CycleProgress,
+                InputPortsMask = (int)inputPorts,
+                OutputPortsMask = (int)outputPorts
+            };
+
+            foreach (KeyValuePair<WorkshopItemDefinition, int> pair in buffer)
+            {
+                if (pair.Key == null || pair.Value <= 0)
+                {
+                    continue;
+                }
+
+                snapshot.Buffer.Add(new WorkshopRunItemStackSnapshot
+                {
+                    ItemId = pair.Key.Id,
+                    Amount = pair.Value
+                });
+            }
+
+            return snapshot;
+        }
+
+        public void RestoreRunState(WorkshopRunNodeSnapshot snapshot, IReadOnlyDictionary<string, WorkshopItemDefinition> itemLookup)
+        {
+            if (snapshot == null)
+            {
+                return;
+            }
+
+            SpeedMultiplier = Mathf.Max(0.1f, snapshot.SpeedMultiplier);
+            CycleProgress = Mathf.Max(0f, snapshot.CycleProgress);
+            inputPorts = (NodePortMask)snapshot.InputPortsMask;
+            outputPorts = (NodePortMask)snapshot.OutputPortsMask;
+            buffer.Clear();
+            bufferedItemCount = 0;
+            activityPulseSecondsRemaining = 0f;
+
+            if (itemLookup == null)
+            {
+                return;
+            }
+
+            foreach (WorkshopRunItemStackSnapshot itemSnapshot in snapshot.Buffer)
+            {
+                if (itemSnapshot == null || string.IsNullOrWhiteSpace(itemSnapshot.ItemId) || itemSnapshot.Amount <= 0)
+                {
+                    continue;
+                }
+
+                if (!itemLookup.TryGetValue(itemSnapshot.ItemId, out WorkshopItemDefinition itemDefinition) || itemDefinition == null)
+                {
+                    continue;
+                }
+
+                TryAddToBuffer(itemDefinition, itemSnapshot.Amount);
+            }
+        }
     }
 
     public readonly struct PlacementResult
@@ -547,6 +613,15 @@ namespace ArcaneAtelier.Workshop
             return new WorkshopInventoryView(network, BuildPreparedCardSnapshot());
         }
 
+        public WorkshopPlacedNodeSeed[] BuildCurrentLayout()
+        {
+            return nodes.Values
+                .OrderBy(nodeState => nodeState.Position.y)
+                .ThenBy(nodeState => nodeState.Position.x)
+                .Select(nodeState => WorkshopPlacedNodeSeed.Create(nodeState.Definition, nodeState.Position, nodeState.RotationQuarterTurns))
+                .ToArray();
+        }
+
         public void CommitBattlePayload()
         {
             WorkshopBattlePayloadBridge.Commit(BuildPreparedCardSnapshot());
@@ -600,6 +675,108 @@ namespace ArcaneAtelier.Workshop
             return nodeState != null &&
                    nodeState.Definition != null &&
                    nodeState.Definition.Id == "node.factory.deck_collector";
+        }
+
+        public WorkshopRunStateSnapshot CaptureRunState()
+        {
+            WorkshopRunStateSnapshot snapshot = new WorkshopRunStateSnapshot
+            {
+                SimulatedSeconds = simulatedSeconds,
+                TotalElementProduced = totalElementProduced,
+                TotalElementConsumed = totalElementConsumed,
+                TotalSpellsProduced = totalSpellsProduced
+            };
+
+            foreach (string unlockedNodeId in unlockedNodeIds.OrderBy(id => id, StringComparer.Ordinal))
+            {
+                snapshot.UnlockedNodeIds.Add(unlockedNodeId);
+            }
+
+            foreach (KeyValuePair<WorkshopItemDefinition, int> pair in reserveItems.OrderBy(pair => pair.Key != null ? pair.Key.Id : string.Empty, StringComparer.Ordinal))
+            {
+                if (pair.Key == null || pair.Value <= 0)
+                {
+                    continue;
+                }
+
+                snapshot.ReserveItems.Add(new WorkshopRunItemStackSnapshot
+                {
+                    ItemId = pair.Key.Id,
+                    Amount = pair.Value
+                });
+            }
+
+            foreach (WorkshopNodeState nodeState in nodes.Values.OrderBy(nodeState => nodeState.Position.y).ThenBy(nodeState => nodeState.Position.x))
+            {
+                snapshot.Nodes.Add(nodeState.CaptureRunState());
+            }
+
+            return snapshot;
+        }
+
+        public void RestoreRunState(WorkshopRunStateSnapshot snapshot)
+        {
+            if (snapshot == null)
+            {
+                return;
+            }
+
+            Dictionary<string, WorkshopNodeDefinition> nodeLookup = BuildNodeLookup();
+            Dictionary<string, WorkshopItemDefinition> itemLookup = BuildItemLookup();
+
+            BeginNotificationBatch();
+            try
+            {
+                ResetRuntimeState();
+                unlockedNodeIds.Clear();
+                foreach (string unlockedNodeId in snapshot.UnlockedNodeIds.Where(id => !string.IsNullOrWhiteSpace(id)))
+                {
+                    unlockedNodeIds.Add(unlockedNodeId);
+                }
+
+                foreach (WorkshopRunNodeSnapshot nodeSnapshot in snapshot.Nodes)
+                {
+                    if (nodeSnapshot == null || string.IsNullOrWhiteSpace(nodeSnapshot.NodeId))
+                    {
+                        continue;
+                    }
+
+                    if (!nodeLookup.TryGetValue(nodeSnapshot.NodeId, out WorkshopNodeDefinition definition) || definition == null)
+                    {
+                        continue;
+                    }
+
+                    PlaceNodeInternal(nodeSnapshot.Position, definition, nodeSnapshot.RotationQuarterTurns);
+                    if (nodes.TryGetValue(nodeSnapshot.Position, out WorkshopNodeState nodeState))
+                    {
+                        nodeState.RestoreRunState(nodeSnapshot, itemLookup);
+                    }
+                }
+
+                foreach (WorkshopRunItemStackSnapshot itemSnapshot in snapshot.ReserveItems)
+                {
+                    if (itemSnapshot == null || string.IsNullOrWhiteSpace(itemSnapshot.ItemId) || itemSnapshot.Amount <= 0)
+                    {
+                        continue;
+                    }
+
+                    if (!itemLookup.TryGetValue(itemSnapshot.ItemId, out WorkshopItemDefinition itemDefinition) || itemDefinition == null)
+                    {
+                        continue;
+                    }
+
+                    reserveItems[itemDefinition] = itemSnapshot.Amount;
+                }
+
+                simulatedSeconds = Mathf.Max(0f, snapshot.SimulatedSeconds);
+                totalElementProduced = Mathf.Max(0, snapshot.TotalElementProduced);
+                totalElementConsumed = Mathf.Max(0, snapshot.TotalElementConsumed);
+                totalSpellsProduced = Mathf.Max(0, snapshot.TotalSpellsProduced);
+            }
+            finally
+            {
+                EndNotificationBatch();
+            }
         }
 
         private bool TryFindExecutableRecipe(WorkshopNodeState nodeState, out WorkshopProductionRecipe executableRecipe)
@@ -867,6 +1044,50 @@ namespace ArcaneAtelier.Workshop
         private int GetReserveCount(WorkshopItemDefinition item)
         {
             return item != null && reserveItems.TryGetValue(item, out var amount) ? amount : 0;
+        }
+
+        private Dictionary<string, WorkshopNodeDefinition> BuildNodeLookup()
+        {
+            return ContentDatabase.PlaceableNodes
+                .Where(node => node != null && !string.IsNullOrWhiteSpace(node.Id))
+                .GroupBy(node => node.Id, StringComparer.Ordinal)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+        }
+
+        private Dictionary<string, WorkshopItemDefinition> BuildItemLookup()
+        {
+            Dictionary<string, WorkshopItemDefinition> itemLookup = new Dictionary<string, WorkshopItemDefinition>(StringComparer.Ordinal);
+
+            foreach (WorkshopNodeDefinition node in ContentDatabase.PlaceableNodes.Where(node => node != null))
+            {
+                foreach (WorkshopProductionRecipe recipe in node.Recipes.Where(recipe => recipe != null))
+                {
+                    foreach (WorkshopItemStack stack in (recipe.Inputs ?? Array.Empty<WorkshopItemStack>()).Concat(recipe.Outputs ?? Array.Empty<WorkshopItemStack>()))
+                    {
+                        RegisterItem(itemLookup, stack != null ? stack.Item : null);
+                    }
+                }
+            }
+
+            foreach (WorkshopRewardDefinition reward in ContentDatabase.DebugRewards.Where(reward => reward != null))
+            {
+                foreach (WorkshopItemStack stack in reward.GrantedItems ?? Array.Empty<WorkshopItemStack>())
+                {
+                    RegisterItem(itemLookup, stack != null ? stack.Item : null);
+                }
+            }
+
+            return itemLookup;
+        }
+
+        private static void RegisterItem(IDictionary<string, WorkshopItemDefinition> itemLookup, WorkshopItemDefinition item)
+        {
+            if (item == null || string.IsNullOrWhiteSpace(item.Id) || itemLookup.ContainsKey(item.Id))
+            {
+                return;
+            }
+
+            itemLookup.Add(item.Id, item);
         }
 
         private static bool CanTransferItemOut(WorkshopNodeState nodeState, WorkshopItemDefinition item)
