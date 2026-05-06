@@ -11,10 +11,10 @@ namespace ArcaneAtelier.Workshop
         private const float BottomDockHeight = 292f;
         private const float TopHudHeight = 94f;
 
-        private Vector2 paletteScroll;
         private Vector2 rewardScroll;
         private bool showGuide;
         private bool showRewards;
+        private int paletteTabIndex;
         private WorkshopSceneController controller;
 
         private Texture2D whiteTexture;
@@ -31,6 +31,7 @@ namespace ArcaneAtelier.Workshop
         private GUIStyle cardTitleStyle;
         private GUIStyle cardBodyStyle;
         private GUIStyle tinyLabelStyle;
+        private GUIStyle tabButtonStyle;
 
         public void Initialize(WorkshopSceneController sceneController)
         {
@@ -78,7 +79,7 @@ namespace ArcaneAtelier.Workshop
             DrawBackdrop();
 
             const float throughputWidth = 278f;
-            const float controlWidth = 196f;
+            const float controlWidth = 236f;
             var topLeftRect = new Rect(Margin, Margin, throughputWidth, 110f);
             var topCenterRect = new Rect(
                 topLeftRect.xMax + 16f,
@@ -152,10 +153,14 @@ namespace ArcaneAtelier.Workshop
             DrawPanelFrame(rect, new Color(0.92f, 0.45f, 0.24f));
 
             GUI.BeginGroup(rect);
-            const float buttonSize = 28f;
+            const float buttonSize = 26f;
             const float buttonGap = 6f;
-            var buttonStartX = rect.width - 12f - (buttonSize * 5f + buttonGap * 4f);
-            GUI.Label(new Rect(12f, 14f, 22f, 16f), $"{controller.PlacementRotationQuarterTurns * 90}°", tinyLabelStyle);
+            const float rotationChipWidth = 54f;
+            var buttonStartX = rect.width - 12f - (rotationChipWidth + 12f + buttonSize * 5f + buttonGap * 4f);
+            DrawRect(new Rect(buttonStartX, 12f, rotationChipWidth, 24f), new Color(0.1f, 0.12f, 0.16f, 0.94f));
+            DrawOutline(new Rect(buttonStartX, 12f, rotationChipWidth, 24f), new Color(0.32f, 0.28f, 0.22f));
+            GUI.Label(new Rect(buttonStartX, 16f, rotationChipWidth, 14f), $"{controller.PlacementRotationQuarterTurns * 90}°", chipStyle);
+            buttonStartX += rotationChipWidth + 12f;
 
             if (GUI.Button(new Rect(buttonStartX, 10f, buttonSize, buttonSize), "?", smallButtonStyle))
             {
@@ -258,7 +263,7 @@ namespace ArcaneAtelier.Workshop
             DrawRect(new Rect(deckX, payloadTop, columnWidth, payloadHeight), new Color(0.07f, 0.09f, 0.13f, 0.92f));
             DrawOutline(new Rect(deckX, payloadTop, columnWidth, payloadHeight), new Color(0.27f, 0.33f, 0.42f));
             GUI.Label(new Rect(deckX + 12f, payloadTop + 12f, columnWidth - 24f, 20f), "Battle Deck", sectionStyle);
-            GUI.Label(new Rect(deckX + 12f, payloadTop + 32f, columnWidth - 24f, 18f), "Cards sent to combat", tinyLabelStyle);
+            GUI.Label(new Rect(deckX + 12f, payloadTop + 32f, columnWidth - 24f, 18f), "Cards that reached collectors", tinyLabelStyle);
             DrawCompactList(new Rect(deckX + 12f, payloadTop + 58f, columnWidth - 24f, payloadHeight - 70f), deckItems);
 
             if (GUI.Button(new Rect(18f, stepButtonY, contentWidth, 28f), "Advance 1 Prep Tick", buttonStyle))
@@ -368,36 +373,34 @@ namespace ArcaneAtelier.Workshop
             GUI.Label(new Rect(18f, 38f, 760f, 18f), "Choose a blueprint. LMB arms default, RMB arms mirror on corner conduits. Short LMB places/selects; hold LMB and drag pans.", mutedStyle);
             DrawElementLegend(new Rect(18f, 58f, 272f, 18f));
 
-            var contentRect = new Rect(14f, 82f, rect.width - 28f, rect.height - 92f);
-            var nodes = controller.PlaceableNodes
-                .Where(node => node != null && !WorkshopNodeVariantUtility.IsMirrorVariant(node.Id))
-                .ToArray();
-            const float cardWidth = 220f;
-            const float cardHeight = 96f;
+            DrawPaletteTabs(new Rect(18f, 82f, rect.width - 36f, 28f));
+
+            var contentRect = new Rect(14f, 118f, rect.width - 28f, rect.height - 128f);
+            var nodes = GetPaletteNodesForActiveTab();
             const float spacing = 12f;
-            var spiritNodes = nodes.Where(node => node.Category == WorkshopNodeCategory.Source).ToArray();
-            var machineNodes = nodes.Where(node => node.Category != WorkshopNodeCategory.Source).ToArray();
-            var spiritRowWidth = spiritNodes.Length * (cardWidth + spacing) + spacing;
-            var machineRowWidth = machineNodes.Length * (cardWidth + spacing) + spacing;
-            var viewWidth = Mathf.Max(contentRect.width - 18f, spiritRowWidth, machineRowWidth);
-            var viewHeight = spacing + cardHeight * 2f + spacing * 3f;
+            const float cardHeight = 96f;
+            int columns = Mathf.Max(1, Mathf.FloorToInt((contentRect.width + spacing) / (204f + spacing)));
+            float cardWidth = Mathf.Floor((contentRect.width - spacing * (columns + 1)) / columns);
+            int rows = Mathf.Max(1, Mathf.CeilToInt(nodes.Length / (float)columns));
+            int visibleRows = Mathf.Min(rows, 2);
+            float gridHeight = visibleRows * cardHeight + (visibleRows + 1) * spacing;
+            DrawRect(new Rect(contentRect.x, contentRect.y, contentRect.width, gridHeight), new Color(0.04f, 0.05f, 0.08f, 0.86f));
+            DrawOutline(new Rect(contentRect.x, contentRect.y, contentRect.width, gridHeight), new Color(0.22f, 0.2f, 0.17f));
 
-            paletteScroll = GUI.BeginScrollView(contentRect, paletteScroll, new Rect(0f, 0f, viewWidth, viewHeight), viewWidth > contentRect.width, false);
-            DrawBlueprintRow(spiritNodes, spacing, spacing, cardWidth, cardHeight, spacing);
-            DrawBlueprintRow(machineNodes, spacing, spacing * 2f + cardHeight, cardWidth, cardHeight, spacing);
-
-            GUI.EndScrollView();
-            GUI.EndGroup();
-        }
-
-        private void DrawBlueprintRow(WorkshopNodeDefinition[] nodes, float startX, float y, float cardWidth, float cardHeight, float spacing)
-        {
-            var x = startX;
-            foreach (var node in nodes)
+            for (int index = 0; index < nodes.Length; index++)
             {
-                DrawBlueprintCard(new Rect(x, y, cardWidth, cardHeight), node);
-                x += cardWidth + spacing;
+                int row = index / columns;
+                int column = index % columns;
+                if (row >= visibleRows)
+                {
+                    break;
+                }
+
+                float x = contentRect.x + spacing + column * (cardWidth + spacing);
+                float y = contentRect.y + spacing + row * (cardHeight + spacing);
+                DrawBlueprintCard(new Rect(x, y, cardWidth, cardHeight), nodes[index]);
             }
+            GUI.EndGroup();
         }
 
         private void DrawHoverTooltip()
@@ -517,7 +520,7 @@ namespace ArcaneAtelier.Workshop
         private bool IsPointerOverWorkshopUi(Vector2 mousePosition)
         {
             const float throughputWidth = 278f;
-            const float controlWidth = 196f;
+            const float controlWidth = 236f;
             var topLeftRect = new Rect(Margin, Margin, throughputWidth, 110f);
             var topCenterRect = new Rect(
                 topLeftRect.xMax + 16f,
@@ -561,6 +564,54 @@ namespace ArcaneAtelier.Workshop
         private static Rect GetRewardDrawerRect()
         {
             return new Rect(Screen.width - RightRailWidth - 336f, 104f, 320f, Mathf.Min(360f, Screen.height - BottomDockHeight - 138f));
+        }
+
+        private void DrawPaletteTabs(Rect rect)
+        {
+            string[] labels = { "Spirits", "Routing", "Core", "Fusion" };
+            float gap = 8f;
+            float tabWidth = Mathf.Min(148f, (rect.width - gap * (labels.Length - 1)) / labels.Length);
+
+            for (int index = 0; index < labels.Length; index++)
+            {
+                Rect tabRect = new Rect(rect.x + index * (tabWidth + gap), rect.y, tabWidth, rect.height);
+                bool selected = paletteTabIndex == index;
+                DrawRect(tabRect, selected ? new Color(0.86f, 0.7f, 0.28f, 0.28f) : new Color(0.08f, 0.1f, 0.13f, 0.92f));
+                DrawOutline(tabRect, selected ? new Color(0.98f, 0.83f, 0.44f) : new Color(0.26f, 0.24f, 0.2f));
+                if (GUI.Button(tabRect, labels[index], tabButtonStyle))
+                {
+                    paletteTabIndex = index;
+                }
+            }
+        }
+
+        private WorkshopNodeDefinition[] GetPaletteNodesForActiveTab()
+        {
+            var nodes = controller.PlaceableNodes
+                .Where(node => node != null && !WorkshopNodeVariantUtility.IsMirrorVariant(node.Id))
+                .ToArray();
+
+            return paletteTabIndex switch
+            {
+                0 => nodes.Where(node => node.Category == WorkshopNodeCategory.Source).ToArray(),
+                1 => nodes.Where(node =>
+                        node.Id == "node.factory.conduit" ||
+                        node.Id == WorkshopNodeVariantUtility.TurningConduitId ||
+                        node.Id == "node.factory.spell_conduit" ||
+                        node.Id == WorkshopNodeVariantUtility.TurningSpellConduitId)
+                    .ToArray(),
+                2 => nodes.Where(node =>
+                        node.Id == "node.factory.element_fusion" ||
+                        node.Id == "node.factory.element_shaping" ||
+                        node.Id == "node.factory.deck_collector")
+                    .ToArray(),
+                3 => nodes.Where(node =>
+                        node.Id == "node.factory.spell_fusion.basic" ||
+                        node.Id == "node.factory.spell_fusion.intermediate" ||
+                        node.Id == "node.factory.spell_fusion.advanced")
+                    .ToArray(),
+                _ => nodes
+            };
         }
 
         private void DrawBlueprintCard(Rect rect, WorkshopNodeDefinition node)
@@ -918,6 +969,13 @@ namespace ArcaneAtelier.Workshop
             smallButtonStyle = new GUIStyle(GUI.skin.button)
             {
                 fontSize = 16,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter
+            };
+
+            tabButtonStyle = new GUIStyle(GUI.skin.button)
+            {
+                fontSize = 13,
                 fontStyle = FontStyle.Bold,
                 alignment = TextAnchor.MiddleCenter
             };
