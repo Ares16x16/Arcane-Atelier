@@ -42,6 +42,7 @@ namespace ArcaneAtelier
             {
                 "node.factory.conduit" => LoadSprite(ConduitSpritePath),
                 "node.factory.spell_conduit" => LoadSprite(ConduitSpritePath),
+                "node.factory.deck_collector" => LoadSprite(ConduitSpritePath),
                 Workshop.WorkshopNodeVariantUtility.TurningConduitId => LoadSprite(TurnConduitSpritePath),
                 Workshop.WorkshopNodeVariantUtility.TurningConduitMirrorId => LoadSprite(TurnConduitSpritePath),
                 Workshop.WorkshopNodeVariantUtility.TurningSpellConduitId => LoadSprite(TurnSpellConduitSpritePath),
@@ -55,6 +56,7 @@ namespace ArcaneAtelier
             return nodeId switch
             {
                 "node.factory.spell_conduit" => new Color(1f, 0.48f, 0.42f),
+                "node.factory.deck_collector" => new Color(1f, 0.74f, 0.28f),
                 _ => Color.white
             };
         }

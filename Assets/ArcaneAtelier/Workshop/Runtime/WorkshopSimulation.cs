@@ -14,9 +14,13 @@ namespace ArcaneAtelier.Workshop
         private const string SpellConduitId = "node.factory.spell_conduit";
         private const string TurningSpellConduitId = "node.factory.turn_spell_conduit";
         private const string TurningSpellConduitMirrorId = "node.factory.turn_spell_conduit.mirror";
+        private const string DeckCollectorId = "node.factory.deck_collector";
 
         private readonly Dictionary<WorkshopItemDefinition, int> buffer = new Dictionary<WorkshopItemDefinition, int>();
         private int bufferedItemCount;
+        private float activityPulseSecondsRemaining;
+        private NodePortMask inputPorts;
+        private NodePortMask outputPorts;
 
         public WorkshopNodeState(WorkshopNodeDefinition definition, Vector2Int position, int rotationQuarterTurns)
         {
@@ -24,6 +28,8 @@ namespace ArcaneAtelier.Workshop
             Position = position;
             RotationQuarterTurns = ((rotationQuarterTurns % 4) + 4) % 4;
             SpeedMultiplier = 1f;
+            inputPorts = WorkshopDirectionUtility.Rotate(Definition.InputPorts, RotationQuarterTurns);
+            outputPorts = WorkshopDirectionUtility.Rotate(Definition.OutputPorts, RotationQuarterTurns);
         }
 
         public WorkshopNodeDefinition Definition { get; }
@@ -33,18 +39,76 @@ namespace ArcaneAtelier.Workshop
         public float CycleProgress { get; set; }
         public IReadOnlyDictionary<WorkshopItemDefinition, int> Buffer => buffer;
 
-        public NodePortMask RotatedInputPorts => WorkshopDirectionUtility.Rotate(Definition.InputPorts, RotationQuarterTurns);
-        public NodePortMask RotatedOutputPorts => WorkshopDirectionUtility.Rotate(Definition.OutputPorts, RotationQuarterTurns);
+        public NodePortMask RotatedInputPorts => inputPorts;
+        public NodePortMask RotatedOutputPorts => outputPorts;
         public int BufferedItemCount => bufferedItemCount;
+        public bool IsRecentlyActive => activityPulseSecondsRemaining > 0f;
+        public bool HasEditablePorts => Definition != null && !string.IsNullOrWhiteSpace(Definition.Id) && Definition.Id.StartsWith("node.factory.spell_fusion.", StringComparison.Ordinal);
 
         public void RotateClockwise()
         {
             RotationQuarterTurns = (RotationQuarterTurns + 1) % 4;
+            inputPorts = WorkshopDirectionUtility.Rotate(inputPorts, 1);
+            outputPorts = WorkshopDirectionUtility.Rotate(outputPorts, 1);
         }
 
         public void ApplyEfficiencyBonus(float bonus)
         {
             SpeedMultiplier = Mathf.Max(0.1f, SpeedMultiplier + bonus);
+        }
+
+        public void AdvanceActivity(float deltaTime)
+        {
+            activityPulseSecondsRemaining = Mathf.Max(0f, activityPulseSecondsRemaining - Mathf.Max(0f, deltaTime));
+        }
+
+        public void MarkActive(float durationSeconds = 0.45f)
+        {
+            activityPulseSecondsRemaining = Mathf.Max(activityPulseSecondsRemaining, durationSeconds);
+        }
+
+        public string CycleEditablePort(NodePortMask direction)
+        {
+            if (!HasEditablePorts || !WorkshopDirectionUtility.IsCardinalDirection(direction))
+            {
+                return "Ports on this node cannot be edited.";
+            }
+
+            if ((inputPorts & direction) != 0)
+            {
+                inputPorts &= ~direction;
+                outputPorts = NodePortMask.None;
+                outputPorts |= direction;
+                return $"Set {direction} as output.";
+            }
+
+            if ((outputPorts & direction) != 0)
+            {
+                outputPorts &= ~direction;
+                return $"Cleared {direction} port.";
+            }
+
+            if (CountPorts(inputPorts) >= 2)
+            {
+                return "Spell fusion can only have two inputs.";
+            }
+
+            inputPorts |= direction;
+            return $"Set {direction} as input.";
+        }
+
+        private static int CountPorts(NodePortMask mask)
+        {
+            var count = 0;
+            foreach (var direction in WorkshopDirectionUtility.CardinalDirections)
+            {
+                if ((mask & direction) != 0)
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         public bool CanAccept(WorkshopItemDefinition item)
@@ -82,7 +146,7 @@ namespace ArcaneAtelier.Workshop
                 return item.Kind == WorkshopItemKind.Resource;
             }
 
-            if (definition.Id == SpellConduitId || definition.Id == TurningSpellConduitId || definition.Id == TurningSpellConduitMirrorId)
+            if (definition.Id == SpellConduitId || definition.Id == TurningSpellConduitId || definition.Id == TurningSpellConduitMirrorId || definition.Id == DeckCollectorId)
             {
                 return item.Kind == WorkshopItemKind.Card;
             }
@@ -293,6 +357,18 @@ namespace ArcaneAtelier.Workshop
             RaiseStateChanged();
         }
 
+        public PlacementResult CycleNodePort(Vector2Int cell, NodePortMask direction)
+        {
+            if (!nodes.TryGetValue(cell, out var nodeState))
+            {
+                return new PlacementResult(false, "No node on that cell.");
+            }
+
+            string message = nodeState.CycleEditablePort(direction);
+            RaiseStateChanged();
+            return new PlacementResult(true, message);
+        }
+
         public void UnlockNode(WorkshopNodeDefinition definition)
         {
             if (definition == null)
@@ -346,24 +422,17 @@ namespace ArcaneAtelier.Workshop
 
         public void ResetToDefaultLayout()
         {
+            ResetToLayout(ContentDatabase.DefaultLayout);
+        }
+
+        public void ResetToLayout(IEnumerable<WorkshopPlacedNodeSeed> layout)
+        {
             BeginNotificationBatch();
             try
             {
-                nodes.Clear();
-                preparedCards.Clear();
-                reserveItems.Clear();
-                unlockedNodeIds.Clear();
-                simulatedSeconds = 0f;
-                totalElementProduced = 0;
-                totalElementConsumed = 0;
-                totalSpellsProduced = 0;
+                ResetRuntimeState();
 
-                foreach (var node in (ContentDatabase.PlaceableNodes ?? Array.Empty<WorkshopNodeDefinition>()).Where(node => node != null && node.UnlockedByDefault))
-                {
-                    unlockedNodeIds.Add(node.Id);
-                }
-
-                foreach (var seed in (ContentDatabase.DefaultLayout ?? Array.Empty<WorkshopPlacedNodeSeed>()).Where(seed => seed != null && seed.NodeDefinition != null))
+                foreach (var seed in (layout ?? Array.Empty<WorkshopPlacedNodeSeed>()).Where(seed => seed != null && seed.NodeDefinition != null))
                 {
                     PlaceNodeInternal(seed.Position, seed.NodeDefinition, seed.RotationQuarterTurns);
                 }
@@ -371,6 +440,23 @@ namespace ArcaneAtelier.Workshop
             finally
             {
                 EndNotificationBatch();
+            }
+        }
+
+        private void ResetRuntimeState()
+        {
+            nodes.Clear();
+            preparedCards.Clear();
+            reserveItems.Clear();
+            unlockedNodeIds.Clear();
+            simulatedSeconds = 0f;
+            totalElementProduced = 0;
+            totalElementConsumed = 0;
+            totalSpellsProduced = 0;
+
+            foreach (var node in (ContentDatabase.PlaceableNodes ?? Array.Empty<WorkshopNodeDefinition>()).Where(node => node != null && node.UnlockedByDefault))
+            {
+                unlockedNodeIds.Add(node.Id);
             }
         }
 
@@ -389,6 +475,7 @@ namespace ArcaneAtelier.Workshop
 
                 foreach (var nodeState in stepNodeIterationCache)
                 {
+                    nodeState.AdvanceActivity(deltaTime);
                     nodeState.CycleProgress += deltaTime * nodeState.SpeedMultiplier;
 
                     // Cap progress so stalled nodes don't fire a burst of catch-up cycles
@@ -471,10 +558,15 @@ namespace ArcaneAtelier.Workshop
 
         private Dictionary<WorkshopItemDefinition, int> BuildPreparedCardSnapshot()
         {
-            var snapshot = new Dictionary<WorkshopItemDefinition, int>(preparedCards);
+            var snapshot = new Dictionary<WorkshopItemDefinition, int>();
 
             foreach (var nodeState in nodes.Values)
             {
+                if (!IsDeckCollector(nodeState))
+                {
+                    continue;
+                }
+
                 foreach (var pair in nodeState.EnumerateBufferUnsorted())
                 {
                     if (pair.Key == null || pair.Key.Kind != WorkshopItemKind.Card || pair.Value <= 0)
@@ -495,6 +587,13 @@ namespace ArcaneAtelier.Workshop
             }
 
             return snapshot;
+        }
+
+        private static bool IsDeckCollector(WorkshopNodeState nodeState)
+        {
+            return nodeState != null &&
+                   nodeState.Definition != null &&
+                   nodeState.Definition.Id == "node.factory.deck_collector";
         }
 
         private bool TryFindExecutableRecipe(WorkshopNodeState nodeState, out WorkshopProductionRecipe executableRecipe)
@@ -619,6 +718,7 @@ namespace ArcaneAtelier.Workshop
                     totalElementProduced += output.Amount;
                 }
 
+                nodeState.MarkActive();
                 return true;
             }
         }
@@ -657,12 +757,6 @@ namespace ArcaneAtelier.Workshop
                             continue;
                         }
 
-                        var targetDirection = WorkshopDirectionUtility.Opposite(direction);
-                        if ((targetNode.RotatedInputPorts & targetDirection) == 0)
-                        {
-                            continue;
-                        }
-
                         transferBufferCache.Clear();
                         transferBufferCache.AddRange(nodeState.EnumerateBufferUnsorted());
 
@@ -674,6 +768,11 @@ namespace ArcaneAtelier.Workshop
                             }
 
                             if (!CanTransferItemOut(nodeState, pair.Key))
+                            {
+                                continue;
+                            }
+
+                            if (!HasTransferLink(nodeState, targetNode, direction, pair.Key))
                             {
                                 continue;
                             }
@@ -698,6 +797,8 @@ namespace ArcaneAtelier.Workshop
                                     break;
                                 }
 
+                                nodeState.MarkActive();
+                                targetNode.MarkActive();
                                 transferredThisStep++;
                                 dirty = true;
                             }
@@ -711,40 +812,7 @@ namespace ArcaneAtelier.Workshop
 
         private bool AutoCollectBufferedCards()
         {
-            var dirty = false;
-
-            foreach (var nodeState in nodes.Values)
-            {
-                if (nodeState.Definition.Category == WorkshopNodeCategory.Storage)
-                {
-                    continue;
-                }
-
-                transferBufferCache.Clear();
-                transferBufferCache.AddRange(nodeState.EnumerateBufferUnsorted().Where(pair => pair.Key != null && pair.Key.Kind == WorkshopItemKind.Card));
-                foreach (var pair in transferBufferCache)
-                {
-                    if (pair.Value <= 0 || HasConnectedTransferTarget(nodeState, pair.Key))
-                    {
-                        continue;
-                    }
-
-                    var moved = RemoveFromBuffer(nodeState, pair.Key, pair.Value);
-                    if (moved <= 0)
-                    {
-                        continue;
-                    }
-
-                    if (!preparedCards.TryAdd(pair.Key, moved))
-                    {
-                        preparedCards[pair.Key] += moved;
-                    }
-
-                    dirty = true;
-                }
-            }
-
-            return dirty;
+            return false;
         }
 
         private void CacheNodesForStep()
@@ -820,7 +888,39 @@ namespace ArcaneAtelier.Workshop
 
         private static bool ShouldBufferCardOutput(WorkshopNodeState nodeState)
         {
-            return nodeState != null && nodeState.RotatedOutputPorts != NodePortMask.None && nodeState.Definition.MaxTransferPerStep > 0;
+            return nodeState != null;
+        }
+
+        private static bool HasTransferLink(WorkshopNodeState sourceNode, WorkshopNodeState targetNode, NodePortMask direction, WorkshopItemDefinition item)
+        {
+            if (sourceNode == null || targetNode == null)
+            {
+                return false;
+            }
+
+            var targetDirection = WorkshopDirectionUtility.Opposite(direction);
+            if ((targetNode.RotatedInputPorts & targetDirection) != 0)
+            {
+                return true;
+            }
+
+            return SupportsDirectFactoryCardDock(sourceNode, targetNode, item);
+        }
+
+        private static bool SupportsDirectFactoryCardDock(WorkshopNodeState sourceNode, WorkshopNodeState targetNode, WorkshopItemDefinition item)
+        {
+            if (sourceNode == null || targetNode == null || item == null || item.Kind != WorkshopItemKind.Card)
+            {
+                return false;
+            }
+
+            if (targetNode.Definition.Category == WorkshopNodeCategory.Storage)
+            {
+                return false;
+            }
+
+            return !string.IsNullOrWhiteSpace(targetNode.Definition.Id) &&
+                   targetNode.Definition.Id.StartsWith("node.factory.spell_fusion.", StringComparison.Ordinal);
         }
 
         private bool HasConnectedTransferTarget(WorkshopNodeState nodeState, WorkshopItemDefinition item)
@@ -838,8 +938,7 @@ namespace ArcaneAtelier.Workshop
                     continue;
                 }
 
-                var targetDirection = WorkshopDirectionUtility.Opposite(direction);
-                if ((targetNode.RotatedInputPorts & targetDirection) == 0)
+                if (!HasTransferLink(nodeState, targetNode, direction, item))
                 {
                     continue;
                 }

@@ -112,7 +112,7 @@ When the generated scene first opens, the starter layout is already producing sp
 The opening layout demonstrates two working lines:
 
 - **Top lane**
-  - `Fire Spirit -> Arcane Conduit -> Element Shaper -> Spell Fusion I -> Spell Conduit`
+  - `Fire Spirit -> Arcane Conduit -> Element Shaper -> Spell Fusion I -> Spell Conduit -> Battle Deck Collector`
   - `Fire Spirit -> vertical Arcane Conduit -> rotated Element Shaper -> Spell Fusion I`
   - result: `Inferno Brand`
 
@@ -132,6 +132,7 @@ You also begin with these nodes unlocked in the palette:
 - Turning Conduit
 - Spell Conduit
 - Turning Spell Conduit
+- Battle Deck Collector
 - Element Shaper
 - Element Fusion
 - Spell Fusion I
@@ -147,10 +148,10 @@ To try the default fusion features:
 
 1. open `WorkshopScene`
 2. press `Advance 1 Prep Tick` several times, or let time run
-3. select `Spell Conduit` to see fused spell cards waiting in its buffer
+3. select `Spell Conduit` to see cards moving through the lane
 4. `Inferno Brand` proves Spell Fusion I is working
 5. `Frost Pin` proves Element Fusion plus Element Shaper is working
-6. watch the right-side `Battle Deck`; it includes terminal `Spell Conduit` cards
+6. watch the right-side `Battle Deck`; it only includes cards that reached `Battle Deck Collector`
 
 To see the higher fusion tiers:
 
@@ -178,7 +179,7 @@ Right click its palette card to arm the mirrored west-to-north version without c
 
 This is the spell-card relay node.
 
-Use it after `Element Shaper` or `Spell Fusion` when you want cards to visibly travel through a card lane before becoming part of the battle deck. It does not accept element resources.
+Use it after `Element Shaper` or `Spell Fusion` when you want cards to visibly travel through a card lane toward a `Battle Deck Collector`. It does not accept element resources.
 
 ### 2c. Turning Spell Conduit
 
@@ -186,6 +187,12 @@ This is the L-shaped spell-card relay node.
 
 Its default facing accepts a spell card from the east side and outputs north. Rotate it to make the other corner directions. It follows the same card-only rules as `Spell Conduit`.
 Right click its palette card to arm the mirrored west-to-north version.
+
+### 2d. Battle Deck Collector
+
+This is the spell-card collection point.
+
+Only cards routed into this block are counted by the battle deck. Cards sitting in a spell fusion machine or spell conduit buffer are visible for debugging, but they are not deployed until they reach a collector.
 
 ### 3. Element Fusion
 
@@ -222,13 +229,13 @@ This is the second spell fusion tier.
 
 It combines:
 
-- two different basic spells that are not opposing
+- two compatible intermediate spells produced by `Spell Fusion I`
 
 Example:
 
-- Fire spell + Thunder spell -> stronger mixed thunder-aligned result
+- Inferno Brand + Tide Chorus -> Steam Requiem
 
-This factory is meant to represent the "different but compatible" fusion rule from the design.
+This factory now sits after `Spell Fusion I`. Feed it intermediate spell cards produced by `Spell Fusion I`.
 
 ### 7. Spell Fusion III
 
@@ -236,11 +243,11 @@ This is the final spell fusion tier.
 
 It combines:
 
-- opposing intermediate spells
+- two matching advanced spells produced by `Spell Fusion II`
 
 Example:
 
-- Intermediate Fire + Intermediate Water -> advanced spell
+- Steam Requiem + Steam Requiem -> final steam spell
 
 ---
 
@@ -354,40 +361,40 @@ Goal:
 
 Example pair:
 
-- `Fire spell + Thunder spell`
+- `Inferno Brand + Tide Chorus`
 
 What to do:
 
 1. unlock `Spell Fusion II`
-2. produce both source spells
+2. produce both source intermediate spells through `Spell Fusion I`
 3. route both lines into the same `Spell Fusion II`
 4. keep both lines supplied
 
 What happens:
 
 - the factory consumes the compatible pair
-- it outputs a stronger mixed intermediate result
+- it outputs an advanced spell
 
-### Example F: Make an advanced spell
+### Example F: Make a final spell
 
 Goal:
 
-- combine opposing intermediate spells
+- combine matching advanced spells
 
 Example pair:
 
-- `Intermediate Fire + Intermediate Water`
+- `Steam Requiem + Steam Requiem`
 
 What to do:
 
 1. unlock `Spell Fusion III`
-2. first build the earlier lines that produce the two intermediate spells
-3. route both intermediate outputs into `Spell Fusion III`
+2. first build the earlier lines that produce the advanced spell through `Spell Fusion II`
+3. route the advanced output into `Spell Fusion III`
 
 What happens:
 
-- the machine consumes the opposing intermediate pair
-- it produces one advanced spell card
+- the machine consumes two matching advanced cards
+- it produces one final advanced spell card
 
 ---
 
@@ -442,7 +449,8 @@ Spell cards do not always go straight to the player immediately.
 Current rule:
 
 - if a spell card still has a valid downstream machine, it can continue through the line
-- if it reaches the end of a valid line, it is auto-collected into the workshop's prepared card inventory
+- if it reaches a normal machine or conduit with no valid output, it stays in that block's buffer
+- only cards delivered into a `Battle Deck Collector` are counted in the workshop's prepared battle deck
 
 That is how the factory scene feeds the battle scene later.
 
@@ -498,14 +506,18 @@ The exact keyword semantics are still current-implementation rules rather than f
 | `Tide Chorus` | Intermediate | Water | Healing | Restore 11 HP x2. SecondaryValue: 14. | `Regen` | `Spell Fusion I` from `Tidal Mend + Tidal Mend` |
 | `Razor Monsoon` | Intermediate | Wind | Attack | Deal 8 damage x3. SecondaryValue: 12. | `Expose` | `Spell Fusion I` from `Zephyr Cut + Zephyr Cut` |
 | `Bastion Pulse` | Intermediate | Earth | Defense | Gain 12 shield. SecondaryValue: 28. | `Ward` | `Spell Fusion I` from `Stoneguard Sigil + Stoneguard Sigil` |
-| `Glacier Bind` | Intermediate | Ice | Attack | Deal 9 damage x2. SecondaryValue: 24. | `Freeze` | `Spell Fusion II` from `Zephyr Cut + Tidal Mend` |
-| `Stormbreaker` | Intermediate | Thunder | Attack | Deal 16 damage. SecondaryValue: 18. | `Stun` | `Spell Fusion II` from `Zephyr Cut + Cinder Dart` |
-| `Dawn Benediction` | Intermediate | Light | Healing | Restore 9 HP x3. SecondaryValue: 18. | `Radiance` | `Spell Fusion II` from `Stoneguard Sigil + Cinder Dart` |
-| `Umbral Bastion` | Intermediate | Dark | Defense | Gain 10 shield x2. SecondaryValue: 24. | `Shade` | `Spell Fusion II` from `Stoneguard Sigil + Tidal Mend` |
-| `Steam Requiem` | Advanced | Fire | Attack | Deal 20 damage x2. SecondaryValue: 28. | `Scald` | `Spell Fusion III` from `Inferno Brand + Tide Chorus` |
-| `Worldsplit Tempest` | Advanced | Wind | Attack | Deal 12 damage x3. SecondaryValue: 20. | `Rend` | `Spell Fusion III` from `Razor Monsoon + Bastion Pulse` |
-| `Eclipse Covenant` | Advanced | Light | Healing | Restore 14 HP x3. SecondaryValue: 24. | `Radiance` | `Spell Fusion III` from `Dawn Benediction + Umbral Bastion` |
-| `Absolute Zero Surge` | Advanced | Ice | Defense | Gain 16 shield x2. SecondaryValue: 35. | `Static Shell` | `Spell Fusion III` from `Glacier Bind + Stormbreaker` |
+| `Glacier Bind` | Intermediate | Ice | Attack | Deal 9 damage x2. SecondaryValue: 24. | `Freeze` | `Spell Fusion I` from `Frost Pin + Frost Pin` |
+| `Stormbreaker` | Intermediate | Thunder | Attack | Deal 16 damage. SecondaryValue: 18. | `Stun` | `Spell Fusion I` from `Volt Javelin + Volt Javelin` |
+| `Dawn Benediction` | Intermediate | Light | Healing | Restore 9 HP x3. SecondaryValue: 18. | `Radiance` | `Spell Fusion I` from `Lumen Prayer + Lumen Prayer` |
+| `Umbral Bastion` | Intermediate | Dark | Defense | Gain 10 shield x2. SecondaryValue: 24. | `Shade` | `Spell Fusion I` from `Gloam Ward + Gloam Ward` |
+| `Steam Requiem` | Advanced | Fire | Attack | Deal 20 damage x2. SecondaryValue: 28. | `Scald` | `Spell Fusion II` from `Inferno Brand + Tide Chorus` |
+| `Worldsplit Tempest` | Advanced | Wind | Attack | Deal 12 damage x3. SecondaryValue: 20. | `Rend` | `Spell Fusion II` from `Razor Monsoon + Bastion Pulse` |
+| `Eclipse Covenant` | Advanced | Light | Healing | Restore 14 HP x3. SecondaryValue: 24. | `Radiance` | `Spell Fusion II` from `Dawn Benediction + Umbral Bastion` |
+| `Absolute Zero Surge` | Advanced | Ice | Defense | Gain 16 shield x2. SecondaryValue: 35. | `Static Shell` | `Spell Fusion II` from `Glacier Bind + Stormbreaker` |
+| `Boiling Star Requiem` | Advanced | Fire | Attack | Deal 30 damage x2. SecondaryValue: 36. | `Scald` | `Spell Fusion III` from `Steam Requiem + Steam Requiem` |
+| `Heavenbreaker Tempest` | Advanced | Wind | Attack | Deal 18 damage x4. SecondaryValue: 28. | `Rend` | `Spell Fusion III` from `Worldsplit Tempest + Worldsplit Tempest` |
+| `Eclipse Apotheosis` | Advanced | Light | Healing | Restore 20 HP x4. SecondaryValue: 32. | `Radiance` | `Spell Fusion III` from `Eclipse Covenant + Eclipse Covenant` |
+| `Zero Point Citadel` | Advanced | Ice | Defense | Gain 24 shield x3. SecondaryValue: 42. | `Static Shell` | `Spell Fusion III` from `Absolute Zero Surge + Absolute Zero Surge` |
 
 ---
 
@@ -544,6 +556,7 @@ If more than two valid elements are buffered, `Element Fusion` resolves every po
 ### Spell Fusion I
 
 `Spell Fusion I` combines two copies of the same basic spell into the matching intermediate spell.
+It can receive those cards through `Spell Conduit` routing or directly from a neighboring producer if that producer is outputting into the fusion machine.
 
 | Inputs | Output Spell |
 | --- | --- |
@@ -558,26 +571,8 @@ If more than two valid elements are buffered, `Element Fusion` resolves every po
 
 ### Spell Fusion II
 
-`Spell Fusion II` combines compatible basic spell pairs into secondary intermediate spells.
-
-| Inputs | Output Spell |
-| --- | --- |
-| `Zephyr Cut + Tidal Mend` | `Glacier Bind` |
-| `Tidal Mend + Frost Pin` | `Glacier Bind` |
-| `Zephyr Cut + Frost Pin` | `Glacier Bind` |
-| `Zephyr Cut + Cinder Dart` | `Stormbreaker` |
-| `Cinder Dart + Volt Javelin` | `Stormbreaker` |
-| `Zephyr Cut + Volt Javelin` | `Stormbreaker` |
-| `Stoneguard Sigil + Cinder Dart` | `Dawn Benediction` |
-| `Cinder Dart + Lumen Prayer` | `Dawn Benediction` |
-| `Stoneguard Sigil + Lumen Prayer` | `Dawn Benediction` |
-| `Stoneguard Sigil + Tidal Mend` | `Umbral Bastion` |
-| `Tidal Mend + Gloam Ward` | `Umbral Bastion` |
-| `Stoneguard Sigil + Gloam Ward` | `Umbral Bastion` |
-
-### Spell Fusion III
-
-`Spell Fusion III` combines opposing intermediate spells into advanced cards.
+`Spell Fusion II` combines compatible intermediate spell pairs produced by `Spell Fusion I` into advanced spells.
+It follows the same direct-adjacent handoff rule as `Spell Fusion I`, so a neighboring spell-fusion factory or spell conduit can feed it when that node outputs toward the fusion machine.
 
 | Inputs | Output Spell |
 | --- | --- |
@@ -585,6 +580,19 @@ If more than two valid elements are buffered, `Element Fusion` resolves every po
 | `Razor Monsoon + Bastion Pulse` | `Worldsplit Tempest` |
 | `Dawn Benediction + Umbral Bastion` | `Eclipse Covenant` |
 | `Glacier Bind + Stormbreaker` | `Absolute Zero Surge` |
+
+### Spell Fusion III
+
+`Spell Fusion III` combines matching advanced spell pairs produced by `Spell Fusion II` into final advanced cards.
+It also supports direct adjacent feeds from neighboring spell-fusion producers or spell conduits.
+Like the earlier spell-fusion machines, it outputs east into a card lane, so a `Spell Conduit` can visibly hold its final cards.
+
+| Inputs | Output Spell |
+| --- | --- |
+| `Steam Requiem + Steam Requiem` | `Boiling Star Requiem` |
+| `Worldsplit Tempest + Worldsplit Tempest` | `Heavenbreaker Tempest` |
+| `Eclipse Covenant + Eclipse Covenant` | `Eclipse Apotheosis` |
+| `Absolute Zero Surge + Absolute Zero Surge` | `Zero Point Citadel` |
 
 ---
 
@@ -594,13 +602,16 @@ Current factory controls:
 
 - `Left Click empty tile`: place the armed palette node
 - `Left Click occupied tile`: select the placed node without replacing it
+- `Left Click spell-fusion edge`: cycle that edge through input, output, and off
 - `Hold Left Click + Drag`: pan the workshop map
 - `Right Click`: remove a node
 - `R`: rotate selected placed node
 - `Q / E`: rotate placement direction
+- `Hover tile + T`: show the hovered block buffer contents
 - `Mouse Wheel`: zoom the workshop map in / out
 - `Space`: pause / resume time
 - `Tab`: open / close boon drawer
+- `H`: debug-load a complete endgame factory, warm it for inspection, and reset the debug preparation timer. The hack layout demonstrates Element Fusion plus four final-card routes. Each `Spell Fusion III` receives two independent `Spell Fusion II` branches and routes final cards into `Battle Deck Collector` blocks.
 - `F1`: show / hide control guide
 
 ---

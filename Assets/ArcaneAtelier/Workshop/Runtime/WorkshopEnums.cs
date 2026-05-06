@@ -108,6 +108,14 @@ namespace ArcaneAtelier.Workshop
             };
         }
 
+        public static bool IsCardinalDirection(NodePortMask direction)
+        {
+            return direction == NodePortMask.North ||
+                   direction == NodePortMask.East ||
+                   direction == NodePortMask.South ||
+                   direction == NodePortMask.West;
+        }
+
         public static NodePortMask Rotate(NodePortMask mask, int quarterTurnsClockwise)
         {
             var turns = ((quarterTurnsClockwise % 4) + 4) % 4;

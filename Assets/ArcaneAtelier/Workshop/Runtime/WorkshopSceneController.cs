@@ -11,6 +11,8 @@ namespace ArcaneAtelier.Workshop
     public sealed class WorkshopSceneController : MonoBehaviour
     {
         private const int MaxSimulationCatchUpStepsPerFrame = 16;
+        private const int HackPreparationTickBudget = 700;
+        private const int HackWarmupSteps = 160;
         private const string GeneratedWorkshopScenePath = "Assets/Scenes/SpellAssemblyScene.unity";
         private const float DefaultWorkshopCellSize = 1.22f;
 
@@ -103,6 +105,7 @@ namespace ArcaneAtelier.Workshop
 
             gridView?.Initialize(this);
             hudPresenter?.Initialize(this);
+            gridView?.FrameLayout(contentDatabase.DefaultLayout, contentDatabase.GridSize);
             SetPaletteNode(PlaceableNodes.FirstOrDefault(node => node != null && Simulation.IsUnlocked(node)));
             SetPreparationBudget(defaultPreparationTickBudget, "Skirmish");
             HandleSimulationStateChanged();
@@ -223,6 +226,13 @@ namespace ArcaneAtelier.Workshop
             statusMessage = SelectedNode == null ? "No node selected." : $"Rotated {SelectedNode.Definition.DisplayName}.";
         }
 
+        public void CyclePlacedNodePort(Vector2Int cell, NodePortMask direction)
+        {
+            SetSelectedCell(cell);
+            var result = Simulation.CycleNodePort(cell, direction);
+            statusMessage = result.Message;
+        }
+
         public void ApplyReward(WorkshopRewardDefinition reward)
         {
             if (reward == null)
@@ -260,8 +270,62 @@ namespace ArcaneAtelier.Workshop
         public void ResetWorkshop()
         {
             Simulation.ResetToDefaultLayout();
+            SelectedCell = new Vector2Int(-1, -1);
+            HoveredCell = new Vector2Int(-1, -1);
             PlacementRotationQuarterTurns = 0;
+            gridView?.FrameLayout(contentDatabase.DefaultLayout, contentDatabase.GridSize);
+            HandleSimulationStateChanged();
             statusMessage = "Workshop reset to default layout.";
+        }
+
+        public void LoadHackFactoryLayout()
+        {
+            if (Simulation == null || contentDatabase == null)
+            {
+                return;
+            }
+
+            WorkshopPlacedNodeSeed[] hackLayout = BuildHackFactoryLayout(contentDatabase);
+            Simulation.ResetToLayout(hackLayout);
+            SelectedCell = new Vector2Int(-1, -1);
+            HoveredCell = new Vector2Int(-1, -1);
+            PlacementRotationQuarterTurns = 0;
+            totalPreparationTicks = HackPreparationTickBudget;
+            remainingPreparationTicks = HackPreparationTickBudget;
+            accumulatedSimulationTime = 0f;
+            isPaused = false;
+            isDeploying = false;
+            Time.timeScale = 1f;
+            WarmHackFactory();
+            int finalCardCount = CountFinalHackCards();
+            gridView?.FrameLayout(hackLayout, contentDatabase.GridSize);
+            HandleSimulationStateChanged();
+            statusMessage = $"Hack factory loaded: dual Fusion II branches feed each Fusion III. Final cards warmed: {finalCardCount}.";
+        }
+
+        private void WarmHackFactory()
+        {
+            if (Simulation == null || contentDatabase == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < HackWarmupSteps; i++)
+            {
+                Simulation.Step(contentDatabase.SimulationStepSeconds);
+            }
+        }
+
+        private int CountFinalHackCards()
+        {
+            if (Simulation == null)
+            {
+                return 0;
+            }
+
+            return Simulation.BuildInventoryView().PreparedCards
+                .Where(pair => pair.Key != null && pair.Key.Id.StartsWith("spell.ultimate.", System.StringComparison.Ordinal))
+                .Sum(pair => pair.Value);
         }
 
         public void SetPreparationBudget(int tickBudget, string label)
@@ -429,7 +493,9 @@ namespace ArcaneAtelier.Workshop
             }
 
             float cellSize = gridView != null ? gridView.CellSize : DefaultWorkshopCellSize;
-            Vector2 focusCenter = new Vector2(11.5f * cellSize, 11f * cellSize);
+            Vector2 focusCenter = new Vector2(
+                (contentDatabase != null ? contentDatabase.GridSize.x - 1 : 49) * cellSize * 0.5f,
+                (contentDatabase != null ? contentDatabase.GridSize.y - 1 : 49) * cellSize * 0.5f);
             float targetOrthographicSize = activeCamera.orthographicSize;
             if (contentDatabase != null && contentDatabase.DefaultLayout.Length > 0)
             {
@@ -533,13 +599,18 @@ namespace ArcaneAtelier.Workshop
             }
 
             var fusionTwo = nodes.FirstOrDefault(node => node != null && node.Id == "node.factory.spell_fusion.intermediate");
-            if (fusionTwo == null || fusionTwo.Recipes.Count < 12)
+            if (fusionTwo == null || fusionTwo.Recipes.Count < 4)
             {
                 return false;
             }
 
             var fusionThree = nodes.FirstOrDefault(node => node != null && node.Id == "node.factory.spell_fusion.advanced");
             if (fusionThree == null || fusionThree.Recipes.Count < 4)
+            {
+                return false;
+            }
+
+            if (!nodes.Any(node => node != null && node.Id == "node.factory.deck_collector"))
             {
                 return false;
             }
@@ -567,18 +638,10 @@ namespace ArcaneAtelier.Workshop
                 "recipe.fusion.basic.thunder",
                 "recipe.fusion.basic.light",
                 "recipe.fusion.basic.dark",
-                "recipe.fusion.intermediate.ice",
-                "recipe.fusion.intermediate.ice_alt_a",
-                "recipe.fusion.intermediate.ice_alt_b",
-                "recipe.fusion.intermediate.thunder",
-                "recipe.fusion.intermediate.thunder_alt_a",
-                "recipe.fusion.intermediate.thunder_alt_b",
-                "recipe.fusion.intermediate.light",
-                "recipe.fusion.intermediate.light_alt_a",
-                "recipe.fusion.intermediate.light_alt_b",
-                "recipe.fusion.intermediate.dark",
-                "recipe.fusion.intermediate.dark_alt_a",
-                "recipe.fusion.intermediate.dark_alt_b",
+                "recipe.fusion.intermediate.steam",
+                "recipe.fusion.intermediate.tempest",
+                "recipe.fusion.intermediate.prism",
+                "recipe.fusion.intermediate.polarity",
                 "recipe.fusion.advanced.steam",
                 "recipe.fusion.advanced.tempest",
                 "recipe.fusion.advanced.prism",
@@ -597,16 +660,124 @@ namespace ArcaneAtelier.Workshop
         private static bool HasCurrentDefaultDemoLayout(WorkshopContentDatabase database)
         {
             var layout = database.DefaultLayout;
-            return ContainsSeed(layout, "node.spirit.fire", new Vector2Int(8, 13), 0) &&
-                   ContainsSeed(layout, "node.factory.element_shaping", new Vector2Int(10, 13), 0) &&
-                   ContainsSeed(layout, "node.factory.spell_fusion.basic", new Vector2Int(11, 13), 0) &&
-                   ContainsSeed(layout, "node.factory.spell_conduit", new Vector2Int(12, 13), 0) &&
-                   ContainsSeed(layout, "node.spirit.fire", new Vector2Int(11, 10), 3) &&
-                   ContainsSeed(layout, "node.factory.element_shaping", new Vector2Int(11, 12), 3) &&
-                   ContainsSeed(layout, "node.spirit.water", new Vector2Int(8, 9), 0) &&
-                   ContainsSeed(layout, "node.factory.element_fusion", new Vector2Int(12, 9), 0) &&
-                   ContainsSeed(layout, "node.factory.element_shaping", new Vector2Int(13, 9), 0) &&
-                   ContainsSeed(layout, "node.spirit.wind", new Vector2Int(12, 8), 3);
+            return ContainsSeed(layout, "node.spirit.fire", new Vector2Int(22, 27), 0) &&
+                   ContainsSeed(layout, "node.factory.element_shaping", new Vector2Int(24, 27), 0) &&
+                   ContainsSeed(layout, "node.factory.spell_fusion.basic", new Vector2Int(25, 27), 0) &&
+                   ContainsSeed(layout, "node.factory.spell_conduit", new Vector2Int(26, 27), 0) &&
+                   ContainsSeed(layout, "node.factory.deck_collector", new Vector2Int(27, 27), 0) &&
+                   ContainsSeed(layout, "node.spirit.fire", new Vector2Int(25, 24), 3) &&
+                   ContainsSeed(layout, "node.factory.element_shaping", new Vector2Int(25, 26), 3) &&
+                   ContainsSeed(layout, "node.spirit.water", new Vector2Int(22, 23), 0) &&
+                   ContainsSeed(layout, "node.factory.element_fusion", new Vector2Int(26, 23), 0) &&
+                   ContainsSeed(layout, "node.factory.element_shaping", new Vector2Int(27, 23), 0) &&
+                   ContainsSeed(layout, "node.spirit.wind", new Vector2Int(26, 22), 3);
+        }
+
+        public static WorkshopPlacedNodeSeed[] BuildHackFactoryLayout(WorkshopContentDatabase database)
+        {
+            if (database == null)
+            {
+                return new WorkshopPlacedNodeSeed[0];
+            }
+
+            WorkshopNodeDefinition fireSpirit = FindNodeDefinition(database, "node.spirit.fire");
+            WorkshopNodeDefinition waterSpirit = FindNodeDefinition(database, "node.spirit.water");
+            WorkshopNodeDefinition windSpirit = FindNodeDefinition(database, "node.spirit.wind");
+            WorkshopNodeDefinition earthSpirit = FindNodeDefinition(database, "node.spirit.earth");
+            WorkshopNodeDefinition iceSpirit = FindNodeDefinition(database, "node.spirit.ice");
+            WorkshopNodeDefinition thunderSpirit = FindNodeDefinition(database, "node.spirit.thunder");
+            WorkshopNodeDefinition lightSpirit = FindNodeDefinition(database, "node.spirit.light");
+            WorkshopNodeDefinition darkSpirit = FindNodeDefinition(database, "node.spirit.dark");
+            WorkshopNodeDefinition elementFusion = FindNodeDefinition(database, "node.factory.element_fusion");
+            WorkshopNodeDefinition elementShaper = FindNodeDefinition(database, "node.factory.element_shaping");
+            WorkshopNodeDefinition spellFusionBasic = FindNodeDefinition(database, "node.factory.spell_fusion.basic");
+            WorkshopNodeDefinition spellFusionIntermediate = FindNodeDefinition(database, "node.factory.spell_fusion.intermediate");
+            WorkshopNodeDefinition spellFusionAdvanced = FindNodeDefinition(database, "node.factory.spell_fusion.advanced");
+            WorkshopNodeDefinition spellConduit = FindNodeDefinition(database, "node.factory.spell_conduit");
+            WorkshopNodeDefinition deckCollector = FindNodeDefinition(database, "node.factory.deck_collector");
+
+            var layout = new List<WorkshopPlacedNodeSeed>();
+
+            AddElementFusionCluster(layout, waterSpirit, windSpirit, elementFusion, elementShaper, new Vector2Int(12, 40));
+            AddElementFusionCluster(layout, fireSpirit, windSpirit, elementFusion, elementShaper, new Vector2Int(20, 40));
+            AddElementFusionCluster(layout, earthSpirit, fireSpirit, elementFusion, elementShaper, new Vector2Int(28, 40));
+            AddElementFusionCluster(layout, earthSpirit, waterSpirit, elementFusion, elementShaper, new Vector2Int(36, 40));
+
+            AddFinalSpellChain(layout, fireSpirit, waterSpirit, elementShaper, spellFusionBasic, spellFusionIntermediate, spellFusionAdvanced, spellConduit, deckCollector, new Vector2Int(15, 34));
+            AddFinalSpellChain(layout, windSpirit, earthSpirit, elementShaper, spellFusionBasic, spellFusionIntermediate, spellFusionAdvanced, spellConduit, deckCollector, new Vector2Int(35, 34));
+            AddFinalSpellChain(layout, lightSpirit, darkSpirit, elementShaper, spellFusionBasic, spellFusionIntermediate, spellFusionAdvanced, spellConduit, deckCollector, new Vector2Int(15, 18));
+            AddFinalSpellChain(layout, iceSpirit, thunderSpirit, elementShaper, spellFusionBasic, spellFusionIntermediate, spellFusionAdvanced, spellConduit, deckCollector, new Vector2Int(35, 18));
+
+            return layout.ToArray();
+        }
+
+        private static WorkshopNodeDefinition FindNodeDefinition(WorkshopContentDatabase database, string nodeId)
+        {
+            return database.PlaceableNodes.First(node => node != null && node.Id == nodeId);
+        }
+
+        private static void AddElementFusionCluster(List<WorkshopPlacedNodeSeed> layout, WorkshopNodeDefinition westSpirit, WorkshopNodeDefinition southSpirit, WorkshopNodeDefinition elementFusion, WorkshopNodeDefinition elementShaper, Vector2Int fusionCell)
+        {
+            layout.Add(WorkshopPlacedNodeSeed.Create(westSpirit, fusionCell + Vector2Int.left, 0));
+            layout.Add(WorkshopPlacedNodeSeed.Create(southSpirit, fusionCell + Vector2Int.down, 3));
+            layout.Add(WorkshopPlacedNodeSeed.Create(elementFusion, fusionCell, 0));
+            layout.Add(WorkshopPlacedNodeSeed.Create(elementShaper, fusionCell + Vector2Int.right, 0));
+        }
+
+        private static void AddFinalSpellChain(List<WorkshopPlacedNodeSeed> layout, WorkshopNodeDefinition westFusionSpirit, WorkshopNodeDefinition southFusionSpirit, WorkshopNodeDefinition elementShaper, WorkshopNodeDefinition spellFusionBasic, WorkshopNodeDefinition spellFusionIntermediate, WorkshopNodeDefinition spellFusionAdvanced, WorkshopNodeDefinition spellConduit, WorkshopNodeDefinition deckCollector, Vector2Int finalFusionCell)
+        {
+            Vector2Int westFusionTwoCell = finalFusionCell + new Vector2Int(-4, 0);
+            Vector2Int southFusionTwoCell = finalFusionCell + new Vector2Int(0, -4);
+
+            AddSpellFusionTwoBranch(layout, westFusionSpirit, southFusionSpirit, elementShaper, spellFusionBasic, spellFusionIntermediate, westFusionTwoCell, 0);
+            AddSpellFusionTwoBranch(layout, westFusionSpirit, southFusionSpirit, elementShaper, spellFusionBasic, spellFusionIntermediate, southFusionTwoCell, 3);
+            AddSpellConduitRun(layout, spellConduit, westFusionTwoCell + Vector2Int.right, finalFusionCell + Vector2Int.left, 0);
+            AddSpellConduitRun(layout, spellConduit, southFusionTwoCell + Vector2Int.up, finalFusionCell + Vector2Int.down, 3);
+
+            layout.Add(WorkshopPlacedNodeSeed.Create(spellFusionAdvanced, finalFusionCell, 0));
+            layout.Add(WorkshopPlacedNodeSeed.Create(spellConduit, finalFusionCell + Vector2Int.right, 0));
+            layout.Add(WorkshopPlacedNodeSeed.Create(deckCollector, finalFusionCell + new Vector2Int(2, 0), 0));
+        }
+
+        private static void AddSpellFusionTwoBranch(List<WorkshopPlacedNodeSeed> layout, WorkshopNodeDefinition westFusionSpirit, WorkshopNodeDefinition southFusionSpirit, WorkshopNodeDefinition elementShaper, WorkshopNodeDefinition spellFusionBasic, WorkshopNodeDefinition spellFusionIntermediate, Vector2Int fusionTwoCell, int fusionTwoRotation)
+        {
+            AddSpellFusionBasicWestFeed(layout, westFusionSpirit, elementShaper, spellFusionBasic, fusionTwoCell + Vector2Int.left);
+            AddSpellFusionBasicNorthFeed(layout, southFusionSpirit, elementShaper, spellFusionBasic, fusionTwoCell + Vector2Int.down);
+            layout.Add(WorkshopPlacedNodeSeed.Create(spellFusionIntermediate, fusionTwoCell, fusionTwoRotation));
+        }
+
+        private static void AddSpellConduitRun(List<WorkshopPlacedNodeSeed> layout, WorkshopNodeDefinition spellConduit, Vector2Int startCell, Vector2Int endCell, int rotation)
+        {
+            Vector2Int direction = new Vector2Int(Mathf.Clamp(endCell.x - startCell.x, -1, 1), Mathf.Clamp(endCell.y - startCell.y, -1, 1));
+            Vector2Int cell = startCell;
+            while (true)
+            {
+                layout.Add(WorkshopPlacedNodeSeed.Create(spellConduit, cell, rotation));
+                if (cell == endCell)
+                {
+                    break;
+                }
+
+                cell += direction;
+            }
+        }
+
+        private static void AddSpellFusionBasicWestFeed(List<WorkshopPlacedNodeSeed> layout, WorkshopNodeDefinition spirit, WorkshopNodeDefinition elementShaper, WorkshopNodeDefinition spellFusionBasic, Vector2Int fusionCell)
+        {
+            layout.Add(WorkshopPlacedNodeSeed.Create(spirit, fusionCell + new Vector2Int(-2, 0), 0));
+            layout.Add(WorkshopPlacedNodeSeed.Create(elementShaper, fusionCell + new Vector2Int(-1, 0), 0));
+            layout.Add(WorkshopPlacedNodeSeed.Create(spirit, fusionCell + new Vector2Int(0, -2), 3));
+            layout.Add(WorkshopPlacedNodeSeed.Create(elementShaper, fusionCell + new Vector2Int(0, -1), 3));
+            layout.Add(WorkshopPlacedNodeSeed.Create(spellFusionBasic, fusionCell, 0));
+        }
+
+        private static void AddSpellFusionBasicNorthFeed(List<WorkshopPlacedNodeSeed> layout, WorkshopNodeDefinition spirit, WorkshopNodeDefinition elementShaper, WorkshopNodeDefinition spellFusionBasic, Vector2Int fusionCell)
+        {
+            layout.Add(WorkshopPlacedNodeSeed.Create(spirit, fusionCell + new Vector2Int(0, -2), 3));
+            layout.Add(WorkshopPlacedNodeSeed.Create(elementShaper, fusionCell + new Vector2Int(0, -1), 3));
+            layout.Add(WorkshopPlacedNodeSeed.Create(spirit, fusionCell + new Vector2Int(2, 0), 2));
+            layout.Add(WorkshopPlacedNodeSeed.Create(elementShaper, fusionCell + new Vector2Int(1, 0), 2));
+            layout.Add(WorkshopPlacedNodeSeed.Create(spellFusionBasic, fusionCell, 3));
         }
 
         private static bool ContainsSeed(WorkshopPlacedNodeSeed[] layout, string nodeId, Vector2Int position, int rotation)

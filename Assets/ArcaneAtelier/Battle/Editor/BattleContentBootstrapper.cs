@@ -595,6 +595,31 @@ namespace ArcaneAtelier.Battle.Editor
                 BattleEffectInstruction.Shield(16, 2),
                 BattleEffectInstruction.ApplyStatus("Static Shell", 3, 35, BattleEffectTarget.Self)));
 
+            // Final workshop fusion spells (4)
+            definitions.Add(CreateCardDefinition(
+                "combat.spell.ultimate.steam", "Boiling Star Requiem",
+                WorkshopElementAttribute.Fire, WorkshopSpellTier.Advanced,
+                BattleEffectInstruction.Damage(30, 2),
+                BattleEffectInstruction.ApplyStatus("Scald", 3, 36)));
+
+            definitions.Add(CreateCardDefinition(
+                "combat.spell.ultimate.tempest", "Heavenbreaker Tempest",
+                WorkshopElementAttribute.Wind, WorkshopSpellTier.Advanced,
+                BattleEffectInstruction.Damage(18, 4),
+                BattleEffectInstruction.ApplyStatus("Rend", 3, 28)));
+
+            definitions.Add(CreateCardDefinition(
+                "combat.spell.ultimate.prism", "Eclipse Apotheosis",
+                WorkshopElementAttribute.Light, WorkshopSpellTier.Advanced,
+                BattleEffectInstruction.Heal(20, 4),
+                BattleEffectInstruction.ApplyStatus("Radiance", 3, 32, BattleEffectTarget.Self)));
+
+            definitions.Add(CreateCardDefinition(
+                "combat.spell.ultimate.polarity", "Zero Point Citadel",
+                WorkshopElementAttribute.Ice, WorkshopSpellTier.Advanced,
+                BattleEffectInstruction.Shield(24, 3),
+                BattleEffectInstruction.ApplyStatus("Static Shell", 3, 42, BattleEffectTarget.Self)));
+
             // Runtime fallback workshop cards (3) — for current runtime compatibility
             definitions.Add(CreateCardDefinition(
                 "combat.flame_bolt", "Flame Bolt",

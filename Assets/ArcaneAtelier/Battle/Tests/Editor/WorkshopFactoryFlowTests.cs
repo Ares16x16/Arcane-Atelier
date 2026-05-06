@@ -42,12 +42,174 @@ namespace ArcaneAtelier.Battle.Tests
             Step(simulation, 220);
 
             WorkshopInventoryView inventory = simulation.BuildInventoryView();
-            WorkshopNodeState spellConduitState = simulation.Nodes[new Vector2Int(4, 5)];
+            WorkshopNodeState deckCollectorState = simulation.Nodes[new Vector2Int(27, 27)];
+            WorkshopNodeState iceShaperState = simulation.Nodes[new Vector2Int(27, 23)];
+            WorkshopItemDefinition frostPin = FindItem(database, "spell.basic.ice");
 
-            Assert.That(spellConduitState.BufferedItemCount, Is.GreaterThan(0));
+            Assert.That(deckCollectorState.BufferedItemCount, Is.GreaterThan(0));
             Assert.That(CountPrepared(inventory, "Inferno Brand"), Is.GreaterThan(0));
-            Assert.That(CountPrepared(inventory, "Frost Pin"), Is.GreaterThan(0));
+            Assert.That(iceShaperState.CountItem(frostPin), Is.GreaterThan(0));
+            Assert.That(CountPrepared(inventory, "Frost Pin"), Is.EqualTo(0));
             Assert.That(CountPrepared(inventory, "Tidal Mend"), Is.EqualTo(0));
+        }
+
+        [Test]
+        public void SpellFusionAcceptsDirectAdjacentCardFeedsWithoutSpellConduit()
+        {
+            WorkshopContentDatabase database = WorkshopDefaultContentFactory.CreateRuntimeDatabase();
+            var simulation = new WorkshopSimulation(database);
+            ClearDefaultLayout(simulation);
+
+            WorkshopNodeDefinition fireSpirit = FindNode(database, "node.spirit.fire");
+            WorkshopNodeDefinition elementShaper = FindNode(database, "node.factory.element_shaping");
+            WorkshopNodeDefinition spellFusionBasic = FindNode(database, "node.factory.spell_fusion.basic");
+
+            simulation.PlaceNode(new Vector2Int(2, 2), spellFusionBasic, 0);
+
+            simulation.PlaceNode(new Vector2Int(4, 2), fireSpirit, 2);
+            simulation.PlaceNode(new Vector2Int(3, 2), elementShaper, 2);
+
+            simulation.PlaceNode(new Vector2Int(2, 0), fireSpirit, 3);
+            simulation.PlaceNode(new Vector2Int(2, 1), elementShaper, 3);
+
+            Step(simulation, 160);
+
+            WorkshopItemDefinition infernoBrand = FindItem(database, "spell.intermediate.fire");
+            Assert.That(simulation.Nodes[new Vector2Int(2, 2)].CountItem(infernoBrand), Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void SpellFusionTwoConsumesAdjacentFusionOneOutputs()
+        {
+            WorkshopContentDatabase database = WorkshopDefaultContentFactory.CreateRuntimeDatabase();
+            var simulation = new WorkshopSimulation(database);
+            ClearDefaultLayout(simulation);
+
+            WorkshopNodeDefinition fireSpirit = FindNode(database, "node.spirit.fire");
+            WorkshopNodeDefinition waterSpirit = FindNode(database, "node.spirit.water");
+            WorkshopNodeDefinition elementShaper = FindNode(database, "node.factory.element_shaping");
+            WorkshopNodeDefinition spellFusionBasic = FindNode(database, "node.factory.spell_fusion.basic");
+            WorkshopNodeDefinition spellFusionIntermediate = FindNode(database, "node.factory.spell_fusion.intermediate");
+            WorkshopNodeDefinition spellConduit = FindNode(database, "node.factory.spell_conduit");
+            WorkshopNodeDefinition deckCollector = FindNode(database, "node.factory.deck_collector");
+
+            AddSpellFusionBasicWestFeed(simulation, fireSpirit, elementShaper, spellFusionBasic, new Vector2Int(2, 3));
+            AddSpellFusionBasicNorthFeed(simulation, waterSpirit, elementShaper, spellFusionBasic, new Vector2Int(3, 2));
+            simulation.PlaceNode(new Vector2Int(3, 3), spellFusionIntermediate, 0, true);
+            simulation.PlaceNode(new Vector2Int(4, 3), spellConduit, 0);
+            simulation.PlaceNode(new Vector2Int(5, 3), deckCollector, 0);
+
+            Step(simulation, 360);
+
+            WorkshopInventoryView inventory = simulation.BuildInventoryView();
+            Assert.That(simulation.Nodes[new Vector2Int(5, 3)].BufferedItemCount, Is.GreaterThan(0));
+            Assert.That(CountPrepared(inventory, "Steam Requiem"), Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void SpellFusionThreeConsumesAdjacentFusionTwoOutputs()
+        {
+            WorkshopContentDatabase database = WorkshopDefaultContentFactory.CreateRuntimeDatabase();
+            var simulation = new WorkshopSimulation(database);
+            ClearDefaultLayout(simulation);
+
+            WorkshopNodeDefinition fireSpirit = FindNode(database, "node.spirit.fire");
+            WorkshopNodeDefinition waterSpirit = FindNode(database, "node.spirit.water");
+            WorkshopNodeDefinition elementShaper = FindNode(database, "node.factory.element_shaping");
+            WorkshopNodeDefinition spellFusionBasic = FindNode(database, "node.factory.spell_fusion.basic");
+            WorkshopNodeDefinition spellFusionIntermediate = FindNode(database, "node.factory.spell_fusion.intermediate");
+            WorkshopNodeDefinition spellFusionAdvanced = FindNode(database, "node.factory.spell_fusion.advanced");
+            WorkshopNodeDefinition spellConduit = FindNode(database, "node.factory.spell_conduit");
+            WorkshopNodeDefinition deckCollector = FindNode(database, "node.factory.deck_collector");
+
+            AddSpellFusionBasicWestFeed(simulation, fireSpirit, elementShaper, spellFusionBasic, new Vector2Int(2, 3));
+            AddSpellFusionBasicNorthFeed(simulation, waterSpirit, elementShaper, spellFusionBasic, new Vector2Int(3, 2));
+            simulation.PlaceNode(new Vector2Int(3, 3), spellFusionIntermediate, 0, true);
+            simulation.PlaceNode(new Vector2Int(4, 3), spellFusionAdvanced, 0, true);
+            simulation.PlaceNode(new Vector2Int(5, 3), spellConduit, 0);
+            simulation.PlaceNode(new Vector2Int(6, 3), deckCollector, 0);
+
+            Step(simulation, 700);
+
+            WorkshopInventoryView inventory = simulation.BuildInventoryView();
+            Assert.That(simulation.Nodes[new Vector2Int(6, 3)].BufferedItemCount, Is.GreaterThan(0));
+            Assert.That(CountPrepared(inventory, "Boiling Star Requiem"), Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void HackFactoryLayoutProducesFinalSpellCards()
+        {
+            WorkshopContentDatabase database = WorkshopDefaultContentFactory.CreateRuntimeDatabase();
+            WorkshopPlacedNodeSeed[] hackLayout = WorkshopSceneController.BuildHackFactoryLayout(database);
+            var duplicateCells = hackLayout
+                .GroupBy(seed => seed.Position)
+                .Where(group => group.Count() > 1)
+                .Select(group => group.Key)
+                .ToArray();
+
+            Assert.That(duplicateCells, Is.Empty);
+
+            var simulation = new WorkshopSimulation(database);
+            simulation.ResetToLayout(hackLayout);
+
+            Step(simulation, 260);
+
+            WorkshopInventoryView inventory = simulation.BuildInventoryView();
+            Assert.That(CountPrepared(inventory, "Boiling Star Requiem"), Is.GreaterThan(0));
+            Assert.That(CountPrepared(inventory, "Heavenbreaker Tempest"), Is.GreaterThan(0));
+            Assert.That(CountPrepared(inventory, "Eclipse Apotheosis"), Is.GreaterThan(0));
+            Assert.That(CountPrepared(inventory, "Zero Point Citadel"), Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void SpellConduitCanDockIntoFusionFromAnyOutputSide()
+        {
+            WorkshopContentDatabase database = WorkshopDefaultContentFactory.CreateRuntimeDatabase();
+            var simulation = new WorkshopSimulation(database);
+            ClearDefaultLayout(simulation);
+
+            WorkshopItemDefinition steam = FindItem(database, "spell.advanced.steam");
+            WorkshopNodeDefinition spellConduit = FindNode(database, "node.factory.spell_conduit");
+            WorkshopNodeDefinition spellFusionAdvanced = FindNode(database, "node.factory.spell_fusion.advanced");
+            WorkshopNodeDefinition deckCollector = FindNode(database, "node.factory.deck_collector");
+
+            simulation.PlaceNode(new Vector2Int(2, 2), spellConduit, 1);
+            simulation.PlaceNode(new Vector2Int(2, 1), spellFusionAdvanced, 0, true);
+            simulation.PlaceNode(new Vector2Int(3, 1), deckCollector, 0);
+
+            WorkshopNodeState conduitState = simulation.Nodes[new Vector2Int(2, 2)];
+            conduitState.TryAddToBuffer(steam, 2);
+
+            Step(simulation, 40);
+
+            WorkshopInventoryView inventory = simulation.BuildInventoryView();
+            Assert.That(CountPrepared(inventory, "Boiling Star Requiem"), Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void SpellFusionPortsCanBeEditedPerPlacedNode()
+        {
+            WorkshopContentDatabase database = WorkshopDefaultContentFactory.CreateRuntimeDatabase();
+            var simulation = new WorkshopSimulation(database);
+            ClearDefaultLayout(simulation);
+
+            WorkshopNodeDefinition spellFusionBasic = FindNode(database, "node.factory.spell_fusion.basic");
+            simulation.PlaceNode(new Vector2Int(1, 1), spellFusionBasic, 0);
+
+            WorkshopNodeState node = simulation.Nodes[new Vector2Int(1, 1)];
+            Assert.That(node.RotatedInputPorts, Is.EqualTo(NodePortMask.West | NodePortMask.South));
+            Assert.That(node.RotatedOutputPorts, Is.EqualTo(NodePortMask.East));
+
+            simulation.CycleNodePort(new Vector2Int(1, 1), NodePortMask.West);
+            Assert.That(node.RotatedInputPorts, Is.EqualTo(NodePortMask.South));
+            Assert.That(node.RotatedOutputPorts, Is.EqualTo(NodePortMask.West));
+
+            simulation.CycleNodePort(new Vector2Int(1, 1), NodePortMask.West);
+            Assert.That(node.RotatedInputPorts, Is.EqualTo(NodePortMask.South));
+            Assert.That(node.RotatedOutputPorts, Is.EqualTo(NodePortMask.None));
+
+            simulation.CycleNodePort(new Vector2Int(1, 1), NodePortMask.North);
+            Assert.That(node.RotatedInputPorts, Is.EqualTo(NodePortMask.North | NodePortMask.South));
         }
 
         [Test]
@@ -88,6 +250,7 @@ namespace ArcaneAtelier.Battle.Tests
             WorkshopNodeDefinition spellConduit = FindNode(database, "node.factory.spell_conduit");
             WorkshopNodeDefinition turnSpellConduit = FindNode(database, "node.factory.turn_spell_conduit");
             WorkshopNodeDefinition turnSpellConduitMirror = FindNode(database, "node.factory.turn_spell_conduit.mirror");
+            WorkshopNodeDefinition deckCollector = FindNode(database, "node.factory.deck_collector");
 
             Assert.That(new WorkshopNodeState(elementConduit, Vector2Int.zero, 0).CanAccept(fire), Is.True);
             Assert.That(new WorkshopNodeState(elementConduit, Vector2Int.zero, 0).CanAccept(fireSpell), Is.False);
@@ -101,6 +264,8 @@ namespace ArcaneAtelier.Battle.Tests
             Assert.That(new WorkshopNodeState(turnSpellConduit, Vector2Int.zero, 0).CanAccept(fire), Is.False);
             Assert.That(new WorkshopNodeState(turnSpellConduitMirror, Vector2Int.zero, 0).CanAccept(fireSpell), Is.True);
             Assert.That(new WorkshopNodeState(turnSpellConduitMirror, Vector2Int.zero, 0).CanAccept(fire), Is.False);
+            Assert.That(new WorkshopNodeState(deckCollector, Vector2Int.zero, 0).CanAccept(fireSpell), Is.True);
+            Assert.That(new WorkshopNodeState(deckCollector, Vector2Int.zero, 0).CanAccept(fire), Is.False);
         }
 
         private static void Step(WorkshopSimulation simulation, int count)
@@ -142,5 +307,24 @@ namespace ArcaneAtelier.Battle.Tests
                 .Where(pair => pair.Key != null && pair.Key.DisplayName == displayName)
                 .Sum(pair => pair.Value);
         }
+
+        private static void AddSpellFusionBasicWestFeed(WorkshopSimulation simulation, WorkshopNodeDefinition spirit, WorkshopNodeDefinition elementShaper, WorkshopNodeDefinition spellFusionBasic, Vector2Int fusionCell)
+        {
+            simulation.PlaceNode(fusionCell + new Vector2Int(-2, 0), spirit, 0);
+            simulation.PlaceNode(fusionCell + new Vector2Int(-1, 0), elementShaper, 0);
+            simulation.PlaceNode(fusionCell + new Vector2Int(0, -2), spirit, 3);
+            simulation.PlaceNode(fusionCell + new Vector2Int(0, -1), elementShaper, 3);
+            simulation.PlaceNode(fusionCell, spellFusionBasic, 0);
+        }
+
+        private static void AddSpellFusionBasicNorthFeed(WorkshopSimulation simulation, WorkshopNodeDefinition spirit, WorkshopNodeDefinition elementShaper, WorkshopNodeDefinition spellFusionBasic, Vector2Int fusionCell)
+        {
+            simulation.PlaceNode(fusionCell + new Vector2Int(0, -2), spirit, 3);
+            simulation.PlaceNode(fusionCell + new Vector2Int(0, -1), elementShaper, 3);
+            simulation.PlaceNode(fusionCell + new Vector2Int(2, 0), spirit, 2);
+            simulation.PlaceNode(fusionCell + new Vector2Int(1, 0), elementShaper, 2);
+            simulation.PlaceNode(fusionCell, spellFusionBasic, 3);
+        }
+
     }
 }

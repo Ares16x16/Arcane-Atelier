@@ -98,12 +98,13 @@ namespace ArcaneAtelier.Workshop
             DrawControlPanel(topRightRect);
             DrawRightRail(rightRailRect);
             DrawPaletteDock(paletteRect);
-            DrawHoverTooltip();
 
             if (showRewards)
             {
-                DrawRewardDrawer(new Rect(Screen.width - RightRailWidth - 336f, 104f, 320f, Mathf.Min(360f, Screen.height - BottomDockHeight - 138f)));
+                DrawRewardDrawer(GetRewardDrawerRect());
             }
+
+            DrawHoverTooltip();
 
             if (showGuide)
             {
@@ -151,9 +152,9 @@ namespace ArcaneAtelier.Workshop
             DrawPanelFrame(rect, new Color(0.92f, 0.45f, 0.24f));
 
             GUI.BeginGroup(rect);
-            const float buttonSize = 32f;
+            const float buttonSize = 28f;
             const float buttonGap = 6f;
-            var buttonStartX = rect.width - 12f - (buttonSize * 4f + buttonGap * 3f);
+            var buttonStartX = rect.width - 12f - (buttonSize * 5f + buttonGap * 4f);
             GUI.Label(new Rect(12f, 14f, 22f, 16f), $"{controller.PlacementRotationQuarterTurns * 90}°", tinyLabelStyle);
 
             if (GUI.Button(new Rect(buttonStartX, 10f, buttonSize, buttonSize), "?", smallButtonStyle))
@@ -175,6 +176,11 @@ namespace ArcaneAtelier.Workshop
             if (GUI.Button(new Rect(buttonStartX + (buttonSize + buttonGap) * 3f, 10f, buttonSize, buttonSize), "↺", smallButtonStyle))
             {
                 controller.ResetWorkshop();
+            }
+
+            if (GUI.Button(new Rect(buttonStartX + (buttonSize + buttonGap) * 4f, 10f, buttonSize, buttonSize), "H", smallButtonStyle))
+            {
+                controller.LoadHackFactoryLayout();
             }
             GUI.EndGroup();
         }
@@ -332,7 +338,8 @@ namespace ArcaneAtelier.Workshop
             DrawGuideRow(new Rect(leftX + 14f, 360f, columnWidth - 28f, 22f), "RMB Card", "Arm mirror corner conduit");
             DrawGuideRow(new Rect(leftX + 14f, 388f, columnWidth - 28f, 22f), "R", "Rotate selected machine");
             DrawGuideRow(new Rect(leftX + 14f, 416f, columnWidth - 28f, 22f), "Q / E", "Rotate next placement");
-            DrawGuideRow(new Rect(leftX + 14f, 444f, columnWidth - 28f, 22f), "Wheel", "Zoom workshop map");
+            DrawGuideRow(new Rect(leftX + 14f, 444f, columnWidth - 28f, 22f), "Fusion Edge", "Click edge cycles input, output, off");
+            DrawGuideRow(new Rect(leftX + 14f, 472f, columnWidth - 28f, 22f), "Wheel", "Zoom workshop map");
 
             DrawRect(new Rect(rightX, 86f, columnWidth, 178f), new Color(0.07f, 0.09f, 0.13f, 0.9f));
             DrawOutline(new Rect(rightX, 86f, columnWidth, 178f), new Color(0.27f, 0.33f, 0.42f));
@@ -347,8 +354,8 @@ namespace ArcaneAtelier.Workshop
             GUI.Label(new Rect(rightX + 14f, 296f, columnWidth - 28f, 20f), "Spell Ladder", sectionStyle);
             GUI.Label(new Rect(rightX + 14f, 324f, columnWidth - 28f, 28f), "Element Shaper: one element becomes one basic spell.", bodyStyle);
             GUI.Label(new Rect(rightX + 14f, 356f, columnWidth - 28f, 28f), "Spell Fusion I: two same-element basic spells become an intermediate spell.", bodyStyle);
-            GUI.Label(new Rect(rightX + 14f, 388f, columnWidth - 28f, 28f), "Spell Fusion II: compatible basic spell pairs become Ice, Thunder, Light, or Dark intermediates.", bodyStyle);
-            GUI.Label(new Rect(rightX + 14f, 420f, columnWidth - 28f, 18f), "Spell Fusion III: opposing intermediates become advanced cards.", tinyLabelStyle);
+            GUI.Label(new Rect(rightX + 14f, 388f, columnWidth - 28f, 28f), "Spell Fusion II: compatible intermediate spells become advanced spells.", bodyStyle);
+            GUI.Label(new Rect(rightX + 14f, 420f, columnWidth - 28f, 18f), "Spell Fusion III: two matching advanced spells become final cards.", tinyLabelStyle);
             GUI.EndGroup();
         }
 
@@ -402,11 +409,18 @@ namespace ArcaneAtelier.Workshop
 
             var node = controller.HoveredNode;
             var mouse = Event.current.mousePosition;
-            var tooltipWidth = 238f;
-            var tooltipHeight = node == null ? 82f : 126f;
-            var x = Mathf.Min(mouse.x + 18f, Screen.width - tooltipWidth - 16f);
-            var y = Mathf.Min(mouse.y + 18f, Screen.height - tooltipHeight - 16f);
-            var rect = new Rect(x, y, tooltipWidth, tooltipHeight);
+            if (IsPointerOverWorkshopUi(mouse))
+            {
+                return;
+            }
+
+            bool showBufferDetails = node != null && Input.GetKey(KeyCode.T);
+            var bufferEntries = !showBufferDetails
+                ? System.Array.Empty<System.Collections.Generic.KeyValuePair<WorkshopItemDefinition, int>>()
+                : node.EnumerateBuffer().Where(pair => pair.Key != null && pair.Value > 0).Take(8).ToArray();
+            var tooltipWidth = showBufferDetails ? 386f : node == null ? 238f : 304f;
+            var tooltipHeight = node == null ? 82f : showBufferDetails ? 168f + Mathf.Min(bufferEntries.Length, 8) * 42f : 132f;
+            Rect rect = PositionTooltip(mouse, tooltipWidth, tooltipHeight);
 
             DrawPanelFrame(rect, node == null ? new Color(0.42f, 0.54f, 0.7f) : GetCategoryColor(node.Definition.Category, node.Definition.Tint));
             GUI.BeginGroup(rect);
@@ -421,10 +435,132 @@ namespace ArcaneAtelier.Workshop
             {
                 GUI.Label(new Rect(14f, 50f, rect.width - 28f, 18f), node.Definition.Category.ToString(), tinyLabelStyle);
                 GUI.Label(new Rect(14f, 68f, rect.width - 28f, 34f), node.Definition.Description, bodyStyle);
-                GUI.Label(new Rect(14f, 104f, rect.width - 28f, 18f), $"Rot {node.RotationQuarterTurns * 90}°  Buffer {node.BufferedItemCount}/{node.Definition.BufferCapacity}", tinyLabelStyle);
+                string activeText = node.IsRecentlyActive ? "Active" : "Idle";
+                GUI.Label(new Rect(14f, 104f, rect.width - 28f, 18f), $"Rot {node.RotationQuarterTurns * 90}°  Buffer {node.BufferedItemCount}/{node.Definition.BufferCapacity}  {activeText}", tinyLabelStyle);
+                if (showBufferDetails)
+                {
+                    DrawTooltipBuffer(new Rect(14f, 126f, rect.width - 28f, rect.height - 138f), node, bufferEntries);
+                }
             }
 
             GUI.EndGroup();
+        }
+
+        private Rect PositionTooltip(Vector2 mouse, float tooltipWidth, float tooltipHeight)
+        {
+            Rect viewport = GetFactoryViewportRect();
+            if (showRewards)
+            {
+                Rect rewardRect = GetRewardDrawerRect();
+                viewport.xMax = Mathf.Min(viewport.xMax, rewardRect.xMin - 8f);
+            }
+
+            float x = mouse.x + 18f;
+            float y = mouse.y + 18f;
+
+            if (x + tooltipWidth > viewport.xMax)
+            {
+                x = mouse.x - tooltipWidth - 18f;
+            }
+
+            if (y + tooltipHeight > viewport.yMax)
+            {
+                y = mouse.y - tooltipHeight - 18f;
+            }
+
+            x = Mathf.Clamp(x, viewport.xMin + 8f, viewport.xMax - tooltipWidth - 8f);
+            y = Mathf.Clamp(y, viewport.yMin + 8f, viewport.yMax - tooltipHeight - 8f);
+            return new Rect(x, y, tooltipWidth, tooltipHeight);
+        }
+
+        private void DrawTooltipBuffer(Rect rect, WorkshopNodeState node, System.Collections.Generic.KeyValuePair<WorkshopItemDefinition, int>[] bufferEntries)
+        {
+            GUI.Label(new Rect(rect.x, rect.y, rect.width, 18f), "Buffer", sectionStyle);
+            var listY = rect.y + 24f;
+            if (node == null || bufferEntries.Length == 0)
+            {
+                DrawRect(new Rect(rect.x, listY, rect.width, 30f), new Color(0.05f, 0.06f, 0.08f, 0.84f));
+                GUI.Label(new Rect(rect.x + 10f, listY + 6f, rect.width - 20f, 18f), "Empty", mutedStyle);
+                return;
+            }
+
+            foreach (var pair in bufferEntries)
+            {
+                var rowRect = new Rect(rect.x, listY, rect.width, 38f);
+                DrawRect(rowRect, new Color(pair.Key.Tint.r * 0.22f, pair.Key.Tint.g * 0.22f, pair.Key.Tint.b * 0.22f, 0.82f));
+                DrawItemIcon(new Rect(rowRect.x + 6f, rowRect.y + 6f, 26f, 26f), pair.Key);
+                GUI.Label(new Rect(rowRect.x + 40f, rowRect.y + 5f, rowRect.width - 94f, 17f), pair.Key.DisplayName, tinyLabelStyle);
+                GUI.Label(new Rect(rowRect.x + 40f, rowRect.y + 22f, rowRect.width - 94f, 14f), pair.Key.Kind == WorkshopItemKind.Card ? pair.Key.SpellTier.ToString() : pair.Key.Element.ToString(), mutedStyle);
+                GUI.Label(new Rect(rowRect.xMax - 44f, rowRect.y + 10f, 36f, 16f), $"x{pair.Value}", tinyLabelStyle);
+                listY += 42f;
+            }
+        }
+
+        private void DrawItemIcon(Rect rect, WorkshopItemDefinition item)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            Sprite sprite = ArcaneArtCatalog.GetElementIcon(item.Element);
+            if (sprite != null && sprite.texture != null)
+            {
+                GUI.DrawTexture(rect, sprite.texture, ScaleMode.ScaleToFit, true);
+                return;
+            }
+
+            DrawRect(rect, item.Tint);
+            DrawOutline(rect, new Color(1f, 1f, 1f, 0.28f));
+        }
+
+        private bool IsPointerOverWorkshopUi(Vector2 mousePosition)
+        {
+            const float throughputWidth = 278f;
+            const float controlWidth = 196f;
+            var topLeftRect = new Rect(Margin, Margin, throughputWidth, 110f);
+            var topCenterRect = new Rect(
+                topLeftRect.xMax + 16f,
+                Margin,
+                Mathf.Max(240f, Screen.width - topLeftRect.width - RightRailWidth - controlWidth - Margin * 4f - 16f),
+                60f);
+            var topRightRect = new Rect(Screen.width - controlWidth - Margin, Margin, controlWidth, 60f);
+            var rightRailRect = new Rect(
+                Screen.width - RightRailWidth - Margin,
+                TopHudHeight + 10f,
+                RightRailWidth,
+                Screen.height - BottomDockHeight - TopHudHeight - Margin * 2f);
+            var paletteRect = new Rect(Margin, Screen.height - BottomDockHeight - Margin, Screen.width - Margin * 2f, BottomDockHeight);
+
+            if (topLeftRect.Contains(mousePosition) || topCenterRect.Contains(mousePosition) || topRightRect.Contains(mousePosition) || rightRailRect.Contains(mousePosition) || paletteRect.Contains(mousePosition))
+            {
+                return true;
+            }
+
+            if (showRewards)
+            {
+                var rewardRect = GetRewardDrawerRect();
+                if (rewardRect.Contains(mousePosition))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static Rect GetFactoryViewportRect()
+        {
+            return new Rect(
+                Margin,
+                TopHudHeight + Margin,
+                Screen.width - RightRailWidth - Margin * 3f,
+                Screen.height - BottomDockHeight - TopHudHeight - Margin * 3f);
+        }
+
+        private static Rect GetRewardDrawerRect()
+        {
+            return new Rect(Screen.width - RightRailWidth - 336f, 104f, 320f, Mathf.Min(360f, Screen.height - BottomDockHeight - 138f));
         }
 
         private void DrawBlueprintCard(Rect rect, WorkshopNodeDefinition node)
