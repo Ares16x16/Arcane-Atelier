@@ -32,6 +32,9 @@ namespace ArcaneAtelier.Workshop
         private GUIStyle cardBodyStyle;
         private GUIStyle tinyLabelStyle;
         private GUIStyle tabButtonStyle;
+        private GUIStyle tooltipPrimaryStyle;
+        private GUIStyle tooltipSecondaryStyle;
+        private GUIStyle tooltipEmptyStyle;
 
         public void Initialize(WorkshopSceneController sceneController)
         {
@@ -422,7 +425,7 @@ namespace ArcaneAtelier.Workshop
                 ? System.Array.Empty<System.Collections.Generic.KeyValuePair<WorkshopItemDefinition, int>>()
                 : node.EnumerateBuffer().Where(pair => pair.Key != null && pair.Value > 0).Take(8).ToArray();
             var tooltipWidth = showBufferDetails ? 386f : node == null ? 238f : 304f;
-            var tooltipHeight = node == null ? 82f : showBufferDetails ? 168f + Mathf.Min(bufferEntries.Length, 8) * 42f : 132f;
+            var tooltipHeight = node == null ? 82f : showBufferDetails ? 172f + Mathf.Min(bufferEntries.Length, 8) * 48f : 132f;
             Rect rect = PositionTooltip(mouse, tooltipWidth, tooltipHeight);
 
             DrawPanelFrame(rect, node == null ? new Color(0.42f, 0.54f, 0.7f) : GetCategoryColor(node.Definition.Category, node.Definition.Tint));
@@ -482,20 +485,20 @@ namespace ArcaneAtelier.Workshop
             var listY = rect.y + 24f;
             if (node == null || bufferEntries.Length == 0)
             {
-                DrawRect(new Rect(rect.x, listY, rect.width, 30f), new Color(0.05f, 0.06f, 0.08f, 0.84f));
-                GUI.Label(new Rect(rect.x + 10f, listY + 6f, rect.width - 20f, 18f), "Empty", mutedStyle);
+                DrawRect(new Rect(rect.x, listY, rect.width, 34f), new Color(0.05f, 0.06f, 0.08f, 0.84f));
+                GUI.Label(new Rect(rect.x + 10f, listY + 5f, rect.width - 20f, 24f), "Empty", tooltipEmptyStyle);
                 return;
             }
 
             foreach (var pair in bufferEntries)
             {
-                var rowRect = new Rect(rect.x, listY, rect.width, 38f);
+                var rowRect = new Rect(rect.x, listY, rect.width, 44f);
                 DrawRect(rowRect, new Color(pair.Key.Tint.r * 0.22f, pair.Key.Tint.g * 0.22f, pair.Key.Tint.b * 0.22f, 0.82f));
-                DrawItemIcon(new Rect(rowRect.x + 6f, rowRect.y + 6f, 26f, 26f), pair.Key);
-                GUI.Label(new Rect(rowRect.x + 40f, rowRect.y + 5f, rowRect.width - 94f, 17f), pair.Key.DisplayName, tinyLabelStyle);
-                GUI.Label(new Rect(rowRect.x + 40f, rowRect.y + 22f, rowRect.width - 94f, 14f), pair.Key.Kind == WorkshopItemKind.Card ? pair.Key.SpellTier.ToString() : pair.Key.Element.ToString(), mutedStyle);
-                GUI.Label(new Rect(rowRect.xMax - 44f, rowRect.y + 10f, 36f, 16f), $"x{pair.Value}", tinyLabelStyle);
-                listY += 42f;
+                DrawItemIcon(new Rect(rowRect.x + 7f, rowRect.y + 7f, 30f, 30f), pair.Key);
+                GUI.Label(new Rect(rowRect.x + 46f, rowRect.y + 5f, rowRect.width - 104f, 18f), pair.Key.DisplayName, tooltipPrimaryStyle);
+                GUI.Label(new Rect(rowRect.x + 46f, rowRect.y + 23f, rowRect.width - 104f, 18f), pair.Key.Kind == WorkshopItemKind.Card ? pair.Key.SpellTier.ToString() : pair.Key.Element.ToString(), tooltipSecondaryStyle);
+                GUI.Label(new Rect(rowRect.xMax - 48f, rowRect.y + 12f, 40f, 18f), $"x{pair.Value}", tooltipPrimaryStyle);
+                listY += 48f;
             }
         }
 
@@ -1001,6 +1004,34 @@ namespace ArcaneAtelier.Workshop
                 fontSize = 10,
                 wordWrap = true,
                 alignment = TextAnchor.UpperLeft,
+                normal = { textColor = new Color(0.67f, 0.72f, 0.79f) }
+            };
+
+            tooltipPrimaryStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 11,
+                fontStyle = FontStyle.Bold,
+                wordWrap = false,
+                clipping = TextClipping.Clip,
+                alignment = TextAnchor.MiddleLeft,
+                normal = { textColor = new Color(0.94f, 0.93f, 0.89f) }
+            };
+
+            tooltipSecondaryStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 11,
+                wordWrap = false,
+                clipping = TextClipping.Clip,
+                alignment = TextAnchor.MiddleLeft,
+                normal = { textColor = new Color(0.67f, 0.72f, 0.79f) }
+            };
+
+            tooltipEmptyStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 12,
+                wordWrap = false,
+                clipping = TextClipping.Clip,
+                alignment = TextAnchor.MiddleLeft,
                 normal = { textColor = new Color(0.67f, 0.72f, 0.79f) }
             };
         }
