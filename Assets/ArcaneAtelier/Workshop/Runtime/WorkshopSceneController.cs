@@ -660,17 +660,9 @@ namespace ArcaneAtelier.Workshop
         private static bool HasCurrentDefaultDemoLayout(WorkshopContentDatabase database)
         {
             var layout = database.DefaultLayout;
-            return ContainsSeed(layout, "node.spirit.fire", new Vector2Int(22, 27), 0) &&
-                   ContainsSeed(layout, "node.factory.element_shaping", new Vector2Int(24, 27), 0) &&
-                   ContainsSeed(layout, "node.factory.spell_fusion.basic", new Vector2Int(25, 27), 0) &&
-                   ContainsSeed(layout, "node.factory.spell_conduit", new Vector2Int(26, 27), 0) &&
-                   ContainsSeed(layout, "node.factory.deck_collector", new Vector2Int(27, 27), 0) &&
-                   ContainsSeed(layout, "node.spirit.fire", new Vector2Int(25, 24), 3) &&
-                   ContainsSeed(layout, "node.factory.element_shaping", new Vector2Int(25, 26), 3) &&
-                   ContainsSeed(layout, "node.spirit.water", new Vector2Int(22, 23), 0) &&
-                   ContainsSeed(layout, "node.factory.element_fusion", new Vector2Int(26, 23), 0) &&
-                   ContainsSeed(layout, "node.factory.element_shaping", new Vector2Int(27, 23), 0) &&
-                   ContainsSeed(layout, "node.spirit.wind", new Vector2Int(26, 22), 3);
+            return layout != null &&
+                   layout.Length == 1 &&
+                   ContainsSeed(layout, "node.factory.deck_collector", new Vector2Int(24, 24), 0);
         }
 
         public static WorkshopPlacedNodeSeed[] BuildHackFactoryLayout(WorkshopContentDatabase database)

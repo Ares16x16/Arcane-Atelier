@@ -34,23 +34,14 @@ namespace ArcaneAtelier.Battle.Tests
         }
 
         [Test]
-        public void DefaultLayoutDemonstratesSpellAndElementFusion()
+        public void DefaultLayoutStartsWithSingleCenteredCollector()
         {
             WorkshopContentDatabase database = WorkshopDefaultContentFactory.CreateRuntimeDatabase();
             var simulation = new WorkshopSimulation(database);
 
-            Step(simulation, 220);
-
-            WorkshopInventoryView inventory = simulation.BuildInventoryView();
-            WorkshopNodeState deckCollectorState = simulation.Nodes[new Vector2Int(27, 27)];
-            WorkshopNodeState iceShaperState = simulation.Nodes[new Vector2Int(27, 23)];
-            WorkshopItemDefinition frostPin = FindItem(database, "spell.basic.ice");
-
-            Assert.That(deckCollectorState.BufferedItemCount, Is.GreaterThan(0));
-            Assert.That(CountPrepared(inventory, "Inferno Brand"), Is.GreaterThan(0));
-            Assert.That(iceShaperState.CountItem(frostPin), Is.GreaterThan(0));
-            Assert.That(CountPrepared(inventory, "Frost Pin"), Is.EqualTo(0));
-            Assert.That(CountPrepared(inventory, "Tidal Mend"), Is.EqualTo(0));
+            Assert.That(simulation.Nodes.Count, Is.EqualTo(1));
+            Assert.That(simulation.Nodes.ContainsKey(new Vector2Int(24, 24)), Is.True);
+            Assert.That(simulation.Nodes[new Vector2Int(24, 24)].Definition.Id, Is.EqualTo("node.factory.deck_collector"));
         }
 
         [Test]
@@ -210,6 +201,10 @@ namespace ArcaneAtelier.Battle.Tests
 
             simulation.CycleNodePort(new Vector2Int(1, 1), NodePortMask.North);
             Assert.That(node.RotatedInputPorts, Is.EqualTo(NodePortMask.North | NodePortMask.South));
+
+            simulation.CycleNodePort(new Vector2Int(1, 1), NodePortMask.East);
+            Assert.That(node.RotatedInputPorts, Is.EqualTo(NodePortMask.North | NodePortMask.South));
+            Assert.That(node.RotatedOutputPorts, Is.EqualTo(NodePortMask.East));
         }
 
         [Test]

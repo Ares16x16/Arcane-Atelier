@@ -88,13 +88,19 @@ namespace ArcaneAtelier.Workshop
                 return $"Cleared {direction} port.";
             }
 
-            if (CountPorts(inputPorts) >= 2)
+            if (CountPorts(inputPorts) < 2)
             {
-                return "Spell fusion can only have two inputs.";
+                inputPorts |= direction;
+                return $"Set {direction} as input.";
             }
 
-            inputPorts |= direction;
-            return $"Set {direction} as input.";
+            if (outputPorts == NodePortMask.None)
+            {
+                outputPorts = direction;
+                return $"Set {direction} as output.";
+            }
+
+            return "Spell fusion can only have two inputs and one output.";
         }
 
         private static int CountPorts(NodePortMask mask)

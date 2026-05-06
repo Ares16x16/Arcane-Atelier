@@ -320,7 +320,7 @@ namespace ArcaneAtelier.Workshop
             var boostShaping = CreateReward("reward.boost.shaping", "Shaping Factory Overclock", "Applies +20% speed to Element Shaping Factories.", WorkshopRewardKind.EfficiencyBoost, elementShapingFactory, 0.2f, Array.Empty<WorkshopItemStack>());
             var reserveReward = CreateReward("reward.resources.recovery", "Emergency Element Cache", "Adds a small reserve of all basic elements.", WorkshopRewardKind.GrantItems, null, 0f, new[] { WorkshopItemStack.Create(fire, 3), WorkshopItemStack.Create(water, 3), WorkshopItemStack.Create(wind, 3), WorkshopItemStack.Create(earth, 3) });
 
-            Vector2Int starterOffset = new Vector2Int(14, 14);
+            Vector2Int starterCollectorCell = new Vector2Int(24, 24);
 
             var database = ScriptableObject.CreateInstance<WorkshopContentDatabase>();
             database.hideFlags = HideFlags.HideAndDontSave;
@@ -331,22 +331,7 @@ namespace ArcaneAtelier.Workshop
                 new[] { unlockSpellFusionBasic, unlockSpellFusionIntermediate, unlockSpellFusionAdvanced, unlockIceSpirit, unlockThunderSpirit, unlockLightSpirit, unlockDarkSpirit, boostShaping, reserveReward },
                 new[]
                 {
-                    WorkshopPlacedNodeSeed.Create(fireSpirit, starterOffset + new Vector2Int(8, 13), 0),
-                    WorkshopPlacedNodeSeed.Create(conduit, starterOffset + new Vector2Int(9, 13), 0),
-                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, starterOffset + new Vector2Int(10, 13), 0),
-                    WorkshopPlacedNodeSeed.Create(spellFusionBasicFactory, starterOffset + new Vector2Int(11, 13), 0),
-                    WorkshopPlacedNodeSeed.Create(spellConduit, starterOffset + new Vector2Int(12, 13), 0),
-                    WorkshopPlacedNodeSeed.Create(deckCollector, starterOffset + new Vector2Int(13, 13), 0),
-                    WorkshopPlacedNodeSeed.Create(fireSpirit, starterOffset + new Vector2Int(11, 10), 3),
-                    WorkshopPlacedNodeSeed.Create(conduit, starterOffset + new Vector2Int(11, 11), 3),
-                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, starterOffset + new Vector2Int(11, 12), 3),
-                    WorkshopPlacedNodeSeed.Create(waterSpirit, starterOffset + new Vector2Int(8, 9), 0),
-                    WorkshopPlacedNodeSeed.Create(conduit, starterOffset + new Vector2Int(9, 9), 0),
-                    WorkshopPlacedNodeSeed.Create(conduit, starterOffset + new Vector2Int(10, 9), 0),
-                    WorkshopPlacedNodeSeed.Create(conduit, starterOffset + new Vector2Int(11, 9), 0),
-                    WorkshopPlacedNodeSeed.Create(elementFusionFactory, starterOffset + new Vector2Int(12, 9), 0),
-                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, starterOffset + new Vector2Int(13, 9), 0),
-                    WorkshopPlacedNodeSeed.Create(windSpirit, starterOffset + new Vector2Int(12, 8), 3),
+                    WorkshopPlacedNodeSeed.Create(deckCollector, starterCollectorCell, 0),
                 });
             return database;
         }
