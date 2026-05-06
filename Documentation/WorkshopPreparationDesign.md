@@ -244,7 +244,7 @@ The workshop screen should clearly surface:
 - remaining prep ticks
 - current route node type
 - encounter preview
-- prepared card inventory
+- battle deck collector inventory
 - throughput by resource and spell family
 - locked versus unlocked node palette entries
 - deploy button state

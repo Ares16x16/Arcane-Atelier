@@ -118,6 +118,10 @@ namespace ArcaneAtelier.Workshop.Editor
             var advancedTempestSpell = UpsertItem("spell.advanced.tempest", "Worldsplit Tempest", "Tier-3 wind-earth opposition spell that tears through defenses.", WorkshopItemKind.Card, new Color(0.8f, 0.93f, 0.84f), "combat.spell.advanced.tempest", WorkshopElementAttribute.Wind, WorkshopSpellTier.Advanced, WorkshopSpellRole.Attack, 58f, 12, 3, 20f, "Rend");
             var advancedSteamSpell = UpsertItem("spell.advanced.steam", "Steam Requiem", "Tier-3 fire-water opposition spell that scalds in layered bursts.", WorkshopItemKind.Card, new Color(0.89f, 0.78f, 0.72f), "combat.spell.advanced.steam", WorkshopElementAttribute.Fire, WorkshopSpellTier.Advanced, WorkshopSpellRole.Attack, 58f, 20, 2, 28f, "Scald");
             var advancedPolaritySpell = UpsertItem("spell.advanced.polarity", "Absolute Zero Surge", "Tier-3 ice-thunder opposition spell that locks down incoming damage.", WorkshopItemKind.Card, new Color(0.86f, 0.92f, 1f), "combat.spell.advanced.polarity", WorkshopElementAttribute.Ice, WorkshopSpellTier.Advanced, WorkshopSpellRole.Defense, 58f, 16, 2, 35f, "Static Shell");
+            var ultimateSteamSpell = UpsertItem("spell.ultimate.steam", "Boiling Star Requiem", "Final steam spell stabilized by repeated advanced fusion.", WorkshopItemKind.Card, new Color(1f, 0.72f, 0.55f), "combat.spell.ultimate.steam", WorkshopElementAttribute.Fire, WorkshopSpellTier.Advanced, WorkshopSpellRole.Attack, 90f, 30, 2, 36f, "Scald");
+            var ultimateTempestSpell = UpsertItem("spell.ultimate.tempest", "Heavenbreaker Tempest", "Final tempest spell that turns pressure into a cutting storm.", WorkshopItemKind.Card, new Color(0.7f, 1f, 0.82f), "combat.spell.ultimate.tempest", WorkshopElementAttribute.Wind, WorkshopSpellTier.Advanced, WorkshopSpellRole.Attack, 90f, 18, 4, 28f, "Rend");
+            var ultimatePrismSpell = UpsertItem("spell.ultimate.prism", "Eclipse Apotheosis", "Final prism spell that converts opposition into radiant recovery.", WorkshopItemKind.Card, new Color(1f, 0.88f, 1f), "combat.spell.ultimate.prism", WorkshopElementAttribute.Light, WorkshopSpellTier.Advanced, WorkshopSpellRole.Healing, 90f, 20, 4, 32f, "Radiance");
+            var ultimatePolaritySpell = UpsertItem("spell.ultimate.polarity", "Zero Point Citadel", "Final polarity spell that compresses lightning and ice into a ward.", WorkshopItemKind.Card, new Color(0.75f, 0.88f, 1f), "combat.spell.ultimate.polarity", WorkshopElementAttribute.Ice, WorkshopSpellTier.Advanced, WorkshopSpellRole.Defense, 90f, 24, 3, 42f, "Static Shell");
 
             var fireSpirit = UpsertNode(
                 "node.spirit.fire",
@@ -293,7 +297,7 @@ namespace ArcaneAtelier.Workshop.Editor
             var spellFusionIntermediateFactory = UpsertNode(
                 "node.factory.spell_fusion.intermediate",
                 "Spell Fusion II",
-                "Fuses non-opposing basic spells into secondary intermediate spells.",
+                "Fuses Spell Fusion I outputs into advanced spells.",
                 WorkshopNodeCategory.Crafter,
                 false,
                 new Color(0.77f, 0.42f, 0.79f),
@@ -302,35 +306,27 @@ namespace ArcaneAtelier.Workshop.Editor
                 12,
                 2,
                 false,
-                WorkshopProductionRecipe.Create("recipe.fusion.intermediate.ice", "Fuse Intermediate Ice", 2.4f, new[] { WorkshopItemStack.Create(basicWindSpell, 1), WorkshopItemStack.Create(basicWaterSpell, 1) }, new[] { WorkshopItemStack.Create(intermediateIceSpell, 1) }),
-                WorkshopProductionRecipe.Create("recipe.fusion.intermediate.ice_alt_a", "Fuse Glacier Bind", 2.4f, new[] { WorkshopItemStack.Create(basicWaterSpell, 1), WorkshopItemStack.Create(basicIceSpell, 1) }, new[] { WorkshopItemStack.Create(intermediateIceSpell, 1) }),
-                WorkshopProductionRecipe.Create("recipe.fusion.intermediate.ice_alt_b", "Fuse Glacier Bind", 2.4f, new[] { WorkshopItemStack.Create(basicWindSpell, 1), WorkshopItemStack.Create(basicIceSpell, 1) }, new[] { WorkshopItemStack.Create(intermediateIceSpell, 1) }),
-                WorkshopProductionRecipe.Create("recipe.fusion.intermediate.thunder", "Fuse Intermediate Thunder", 2.4f, new[] { WorkshopItemStack.Create(basicWindSpell, 1), WorkshopItemStack.Create(basicFireSpell, 1) }, new[] { WorkshopItemStack.Create(intermediateThunderSpell, 1) }),
-                WorkshopProductionRecipe.Create("recipe.fusion.intermediate.thunder_alt_a", "Fuse Stormbreaker", 2.4f, new[] { WorkshopItemStack.Create(basicFireSpell, 1), WorkshopItemStack.Create(basicThunderSpell, 1) }, new[] { WorkshopItemStack.Create(intermediateThunderSpell, 1) }),
-                WorkshopProductionRecipe.Create("recipe.fusion.intermediate.thunder_alt_b", "Fuse Stormbreaker", 2.4f, new[] { WorkshopItemStack.Create(basicWindSpell, 1), WorkshopItemStack.Create(basicThunderSpell, 1) }, new[] { WorkshopItemStack.Create(intermediateThunderSpell, 1) }),
-                WorkshopProductionRecipe.Create("recipe.fusion.intermediate.light", "Fuse Intermediate Light", 2.4f, new[] { WorkshopItemStack.Create(basicEarthSpell, 1), WorkshopItemStack.Create(basicFireSpell, 1) }, new[] { WorkshopItemStack.Create(intermediateLightSpell, 1) }),
-                WorkshopProductionRecipe.Create("recipe.fusion.intermediate.light_alt_a", "Fuse Dawn Benediction", 2.4f, new[] { WorkshopItemStack.Create(basicFireSpell, 1), WorkshopItemStack.Create(basicLightSpell, 1) }, new[] { WorkshopItemStack.Create(intermediateLightSpell, 1) }),
-                WorkshopProductionRecipe.Create("recipe.fusion.intermediate.light_alt_b", "Fuse Dawn Benediction", 2.4f, new[] { WorkshopItemStack.Create(basicEarthSpell, 1), WorkshopItemStack.Create(basicLightSpell, 1) }, new[] { WorkshopItemStack.Create(intermediateLightSpell, 1) }),
-                WorkshopProductionRecipe.Create("recipe.fusion.intermediate.dark", "Fuse Intermediate Dark", 2.4f, new[] { WorkshopItemStack.Create(basicEarthSpell, 1), WorkshopItemStack.Create(basicWaterSpell, 1) }, new[] { WorkshopItemStack.Create(intermediateDarkSpell, 1) }),
-                WorkshopProductionRecipe.Create("recipe.fusion.intermediate.dark_alt_a", "Fuse Umbral Bastion", 2.4f, new[] { WorkshopItemStack.Create(basicWaterSpell, 1), WorkshopItemStack.Create(basicDarkSpell, 1) }, new[] { WorkshopItemStack.Create(intermediateDarkSpell, 1) }),
-                WorkshopProductionRecipe.Create("recipe.fusion.intermediate.dark_alt_b", "Fuse Umbral Bastion", 2.4f, new[] { WorkshopItemStack.Create(basicEarthSpell, 1), WorkshopItemStack.Create(basicDarkSpell, 1) }, new[] { WorkshopItemStack.Create(intermediateDarkSpell, 1) }));
+                WorkshopProductionRecipe.Create("recipe.fusion.intermediate.steam", "Fuse Advanced Steam", 2.6f, new[] { WorkshopItemStack.Create(intermediateFireSpell, 1), WorkshopItemStack.Create(intermediateWaterSpell, 1) }, new[] { WorkshopItemStack.Create(advancedSteamSpell, 1) }),
+                WorkshopProductionRecipe.Create("recipe.fusion.intermediate.tempest", "Fuse Advanced Tempest", 2.6f, new[] { WorkshopItemStack.Create(intermediateWindSpell, 1), WorkshopItemStack.Create(intermediateEarthSpell, 1) }, new[] { WorkshopItemStack.Create(advancedTempestSpell, 1) }),
+                WorkshopProductionRecipe.Create("recipe.fusion.intermediate.prism", "Fuse Advanced Prism", 2.6f, new[] { WorkshopItemStack.Create(intermediateLightSpell, 1), WorkshopItemStack.Create(intermediateDarkSpell, 1) }, new[] { WorkshopItemStack.Create(advancedPrismSpell, 1) }),
+                WorkshopProductionRecipe.Create("recipe.fusion.intermediate.polarity", "Fuse Advanced Polarity", 2.6f, new[] { WorkshopItemStack.Create(intermediateIceSpell, 1), WorkshopItemStack.Create(intermediateThunderSpell, 1) }, new[] { WorkshopItemStack.Create(advancedPolaritySpell, 1) }));
 
             var spellFusionAdvancedFactory = UpsertNode(
                 "node.factory.spell_fusion.advanced",
                 "Spell Fusion III",
-                "Fuses opposing intermediate spells into advanced cards.",
+                "Fuses Spell Fusion II outputs into final advanced cards.",
                 WorkshopNodeCategory.Crafter,
                 false,
                 new Color(0.59f, 0.31f, 0.72f),
                 NodePortMask.West | NodePortMask.South,
-                NodePortMask.None,
+                NodePortMask.East,
                 12,
-                0,
+                2,
                 false,
-                WorkshopProductionRecipe.Create("recipe.fusion.advanced.steam", "Forge Advanced Steam", 3f, new[] { WorkshopItemStack.Create(intermediateFireSpell, 1), WorkshopItemStack.Create(intermediateWaterSpell, 1) }, new[] { WorkshopItemStack.Create(advancedSteamSpell, 1) }),
-                WorkshopProductionRecipe.Create("recipe.fusion.advanced.tempest", "Forge Advanced Tempest", 3f, new[] { WorkshopItemStack.Create(intermediateWindSpell, 1), WorkshopItemStack.Create(intermediateEarthSpell, 1) }, new[] { WorkshopItemStack.Create(advancedTempestSpell, 1) }),
-                WorkshopProductionRecipe.Create("recipe.fusion.advanced.prism", "Forge Advanced Prism", 3f, new[] { WorkshopItemStack.Create(intermediateLightSpell, 1), WorkshopItemStack.Create(intermediateDarkSpell, 1) }, new[] { WorkshopItemStack.Create(advancedPrismSpell, 1) }),
-                WorkshopProductionRecipe.Create("recipe.fusion.advanced.polarity", "Forge Advanced Polarity", 3f, new[] { WorkshopItemStack.Create(intermediateIceSpell, 1), WorkshopItemStack.Create(intermediateThunderSpell, 1) }, new[] { WorkshopItemStack.Create(advancedPolaritySpell, 1) }));
+                WorkshopProductionRecipe.Create("recipe.fusion.advanced.steam", "Forge Final Steam", 3f, new[] { WorkshopItemStack.Create(advancedSteamSpell, 2) }, new[] { WorkshopItemStack.Create(ultimateSteamSpell, 1) }),
+                WorkshopProductionRecipe.Create("recipe.fusion.advanced.tempest", "Forge Final Tempest", 3f, new[] { WorkshopItemStack.Create(advancedTempestSpell, 2) }, new[] { WorkshopItemStack.Create(ultimateTempestSpell, 1) }),
+                WorkshopProductionRecipe.Create("recipe.fusion.advanced.prism", "Forge Final Prism", 3f, new[] { WorkshopItemStack.Create(advancedPrismSpell, 2) }, new[] { WorkshopItemStack.Create(ultimatePrismSpell, 1) }),
+                WorkshopProductionRecipe.Create("recipe.fusion.advanced.polarity", "Forge Final Polarity", 3f, new[] { WorkshopItemStack.Create(advancedPolaritySpell, 2) }, new[] { WorkshopItemStack.Create(ultimatePolaritySpell, 1) }));
 
             var conduit = UpsertNode(
                 "node.factory.conduit",
@@ -377,7 +373,7 @@ namespace ArcaneAtelier.Workshop.Editor
             var spellConduit = UpsertNode(
                 "node.factory.spell_conduit",
                 "Spell Conduit",
-                "Relay node that forwards crafted spell cards into the battle deck.",
+                "Relay node that forwards crafted spell cards toward a deck collector.",
                 WorkshopNodeCategory.Storage,
                 true,
                 new Color(0.58f, 0.42f, 0.78f),
@@ -416,9 +412,23 @@ namespace ArcaneAtelier.Workshop.Editor
                 false,
                 Array.Empty<WorkshopProductionRecipe>());
 
+            var deckCollector = UpsertNode(
+                "node.factory.deck_collector",
+                "Battle Deck Collector",
+                "Collection point. Only spell cards routed into this block are added to the battle deck.",
+                WorkshopNodeCategory.Storage,
+                true,
+                new Color(0.94f, 0.72f, 0.28f),
+                NodePortMask.All,
+                NodePortMask.None,
+                60,
+                0,
+                false,
+                Array.Empty<WorkshopProductionRecipe>());
+
             var unlockSpellFusionBasic = UpsertReward("reward.unlock.spell_fusion_basic", "Unlock Spell Fusion Basic", "Unlocks same-element spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionBasicFactory, 0f, Array.Empty<WorkshopItemStack>());
-            var unlockSpellFusionIntermediate = UpsertReward("reward.unlock.spell_fusion_intermediate", "Unlock Spell Fusion Intermediate", "Unlocks non-opposing mixed spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionIntermediateFactory, 0f, Array.Empty<WorkshopItemStack>());
-            var unlockSpellFusionAdvanced = UpsertReward("reward.unlock.spell_fusion_advanced", "Unlock Spell Fusion Advanced", "Unlocks opposing-element advanced fusion.", WorkshopRewardKind.UnlockNode, spellFusionAdvancedFactory, 0f, Array.Empty<WorkshopItemStack>());
+            var unlockSpellFusionIntermediate = UpsertReward("reward.unlock.spell_fusion_intermediate", "Unlock Spell Fusion Intermediate", "Unlocks intermediate-to-advanced spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionIntermediateFactory, 0f, Array.Empty<WorkshopItemStack>());
+            var unlockSpellFusionAdvanced = UpsertReward("reward.unlock.spell_fusion_advanced", "Unlock Spell Fusion Advanced", "Unlocks advanced-to-final spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionAdvancedFactory, 0f, Array.Empty<WorkshopItemStack>());
             var unlockIceSpirit = UpsertReward("reward.unlock.spirit.ice", "Unlock Ice Spirit Node", "Adds the Ice spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, iceSpirit, 0f, Array.Empty<WorkshopItemStack>());
             var unlockThunderSpirit = UpsertReward("reward.unlock.spirit.thunder", "Unlock Thunder Spirit Node", "Adds the Thunder spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, thunderSpirit, 0f, Array.Empty<WorkshopItemStack>());
             var unlockLightSpirit = UpsertReward("reward.unlock.spirit.light", "Unlock Light Spirit Node", "Adds the Light spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, lightSpirit, 0f, Array.Empty<WorkshopItemStack>());
@@ -433,28 +443,30 @@ namespace ArcaneAtelier.Workshop.Editor
             });
 
             var database = CreateOrLoadAsset<WorkshopContentDatabase>($"{DataRoot}/WorkshopContentDatabase.asset");
+            Vector2Int starterOffset = new Vector2Int(14, 14);
             database.Configure(
                 new Vector2Int(50, 50),
                 0.25f,
-                new[] { fireSpirit, waterSpirit, windSpirit, earthSpirit, iceSpirit, thunderSpirit, lightSpirit, darkSpirit, elementFusionFactory, elementShapingFactory, spellFusionBasicFactory, spellFusionIntermediateFactory, spellFusionAdvancedFactory, conduit, turnConduit, turnConduitMirror, spellConduit, turnSpellConduit, turnSpellConduitMirror },
+                new[] { fireSpirit, waterSpirit, windSpirit, earthSpirit, iceSpirit, thunderSpirit, lightSpirit, darkSpirit, elementFusionFactory, elementShapingFactory, spellFusionBasicFactory, spellFusionIntermediateFactory, spellFusionAdvancedFactory, conduit, turnConduit, turnConduitMirror, spellConduit, turnSpellConduit, turnSpellConduitMirror, deckCollector },
                 new[] { unlockSpellFusionBasic, unlockSpellFusionIntermediate, unlockSpellFusionAdvanced, unlockIceSpirit, unlockThunderSpirit, unlockLightSpirit, unlockDarkSpirit, boostShaping, reserveReward },
                 new[]
                 {
-                    WorkshopPlacedNodeSeed.Create(fireSpirit, new Vector2Int(8, 13), 0),
-                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(9, 13), 0),
-                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(10, 13), 0),
-                    WorkshopPlacedNodeSeed.Create(spellFusionBasicFactory, new Vector2Int(11, 13), 0),
-                    WorkshopPlacedNodeSeed.Create(spellConduit, new Vector2Int(12, 13), 0),
-                    WorkshopPlacedNodeSeed.Create(fireSpirit, new Vector2Int(11, 10), 3),
-                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(11, 11), 3),
-                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(11, 12), 3),
-                    WorkshopPlacedNodeSeed.Create(waterSpirit, new Vector2Int(8, 9), 0),
-                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(9, 9), 0),
-                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(10, 9), 0),
-                    WorkshopPlacedNodeSeed.Create(conduit, new Vector2Int(11, 9), 0),
-                    WorkshopPlacedNodeSeed.Create(elementFusionFactory, new Vector2Int(12, 9), 0),
-                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, new Vector2Int(13, 9), 0),
-                    WorkshopPlacedNodeSeed.Create(windSpirit, new Vector2Int(12, 8), 3),
+                    WorkshopPlacedNodeSeed.Create(fireSpirit, starterOffset + new Vector2Int(8, 13), 0),
+                    WorkshopPlacedNodeSeed.Create(conduit, starterOffset + new Vector2Int(9, 13), 0),
+                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, starterOffset + new Vector2Int(10, 13), 0),
+                    WorkshopPlacedNodeSeed.Create(spellFusionBasicFactory, starterOffset + new Vector2Int(11, 13), 0),
+                    WorkshopPlacedNodeSeed.Create(spellConduit, starterOffset + new Vector2Int(12, 13), 0),
+                    WorkshopPlacedNodeSeed.Create(deckCollector, starterOffset + new Vector2Int(13, 13), 0),
+                    WorkshopPlacedNodeSeed.Create(fireSpirit, starterOffset + new Vector2Int(11, 10), 3),
+                    WorkshopPlacedNodeSeed.Create(conduit, starterOffset + new Vector2Int(11, 11), 3),
+                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, starterOffset + new Vector2Int(11, 12), 3),
+                    WorkshopPlacedNodeSeed.Create(waterSpirit, starterOffset + new Vector2Int(8, 9), 0),
+                    WorkshopPlacedNodeSeed.Create(conduit, starterOffset + new Vector2Int(9, 9), 0),
+                    WorkshopPlacedNodeSeed.Create(conduit, starterOffset + new Vector2Int(10, 9), 0),
+                    WorkshopPlacedNodeSeed.Create(conduit, starterOffset + new Vector2Int(11, 9), 0),
+                    WorkshopPlacedNodeSeed.Create(elementFusionFactory, starterOffset + new Vector2Int(12, 9), 0),
+                    WorkshopPlacedNodeSeed.Create(elementShapingFactory, starterOffset + new Vector2Int(13, 9), 0),
+                    WorkshopPlacedNodeSeed.Create(windSpirit, starterOffset + new Vector2Int(12, 8), 3),
                 });
 
             var validationErrors = database.ValidateContent();

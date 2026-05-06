@@ -74,9 +74,11 @@ namespace ArcaneAtelier.Workshop
 
             HandleCameraNavigation(simulation);
 
-            var worldPosition = ScreenToWorldUsingTargetCamera(Input.mousePosition);
-            var cell = WorldToCell(worldPosition);
-            var isInsideGrid = simulation.IsInsideGrid(cell);
+            var mouseGuiPosition = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+            var pointerOverFactory = IsPointerOverFactoryViewport(mouseGuiPosition);
+            var worldPosition = pointerOverFactory ? ScreenToWorldUsingTargetCamera(Input.mousePosition) : Vector3.zero;
+            var cell = pointerOverFactory ? WorldToCell(worldPosition) : new Vector2Int(-1, -1);
+            var isInsideGrid = pointerOverFactory && simulation.IsInsideGrid(cell);
             var nextHoveredCell = isInsideGrid ? cell : new Vector2Int(-1, -1);
             if (nextHoveredCell != hoveredCell)
             {
@@ -85,7 +87,7 @@ namespace ArcaneAtelier.Workshop
                 RefreshVisuals();
             }
 
-            if (Input.GetMouseButtonDown(1) && isInsideGrid)
+            if (pointerOverFactory && Input.GetMouseButtonDown(1) && isInsideGrid)
             {
                 controller.TryRemoveNode(cell);
             }
@@ -184,10 +186,45 @@ namespace ArcaneAtelier.Workshop
                     var releasedCell = WorldToCell(releasedWorldPosition);
                     if (simulation.IsInsideGrid(releasedCell))
                     {
+                        if (simulation.TryGetNode(releasedCell, out var releasedNode) &&
+                            releasedNode.HasEditablePorts &&
+                            TryGetClickedEdgeDirection(releasedWorldPosition, releasedCell, out NodePortMask direction))
+                        {
+                            controller.CyclePlacedNodePort(releasedCell, direction);
+                            return;
+                        }
+
                         controller.TryPlaceSelectedNode(releasedCell);
                     }
                 }
             }
+        }
+
+        private bool TryGetClickedEdgeDirection(Vector3 worldPosition, Vector2Int cell, out NodePortMask direction)
+        {
+            Vector3 center = CellToWorld(cell);
+            Vector2 local = new Vector2(worldPosition.x - center.x, worldPosition.y - center.y);
+            float edgeThreshold = cellSize * 0.28f;
+            direction = NodePortMask.None;
+
+            if (Mathf.Abs(local.x) >= Mathf.Abs(local.y))
+            {
+                if (Mathf.Abs(local.x) < edgeThreshold)
+                {
+                    return false;
+                }
+
+                direction = local.x > 0f ? NodePortMask.East : NodePortMask.West;
+                return true;
+            }
+
+            if (Mathf.Abs(local.y) < edgeThreshold)
+            {
+                return false;
+            }
+
+            direction = local.y > 0f ? NodePortMask.North : NodePortMask.South;
+            return true;
         }
 
         private void ZoomAtScreenPosition(WorkshopSimulation simulation, Vector3 screenPosition, float wheelDelta)
@@ -218,7 +255,13 @@ namespace ArcaneAtelier.Workshop
         {
             const float rightRailWidth = 404f;
             const float bottomDockHeight = 292f;
+            const float topHudHeight = 94f;
             const float margin = 10f;
+
+            if (guiPosition.y <= topHudHeight + margin)
+            {
+                return false;
+            }
 
             if (guiPosition.x >= Screen.width - rightRailWidth - margin)
             {
@@ -434,7 +477,7 @@ namespace ArcaneAtelier.Workshop
         {
             visual.Root.transform.position = CellToWorld(state.Position);
             visual.VisualRoot.localRotation = Quaternion.Euler(0, 0, -90f * state.RotationQuarterTurns);
-            var pulseScale = 0.94f + Mathf.PingPong(Time.time * 0.55f, 0.05f);
+            var pulseScale = state.IsRecentlyActive ? 0.94f + Mathf.PingPong(Time.time * 1.8f, 0.05f) : 0.94f;
             var nodeSprite = ResolveNodeSprite(state.Definition);
             var nodeTint = ResolveNodeSpriteTint(state.Definition);
             if (nodeSprite != null)
@@ -467,8 +510,13 @@ namespace ArcaneAtelier.Workshop
 
                 var isInput = (state.RotatedInputPorts & direction) != 0;
                 var isOutput = (state.RotatedOutputPorts & direction) != 0;
-                renderer.enabled = isInput || isOutput;
-                renderer.color = isOutput ? new Color(0.91f, 0.62f, 0.24f) : new Color(0.36f, 0.78f, 0.95f);
+                var showEditablePreview = state.HasEditablePorts && (controller.SelectedCell == cell || hoveredCell == cell);
+                renderer.enabled = isInput || isOutput || showEditablePreview;
+                renderer.color = isOutput
+                    ? new Color(0.91f, 0.62f, 0.24f, 1f)
+                    : isInput
+                        ? new Color(0.36f, 0.78f, 0.95f, 1f)
+                        : new Color(0.82f, 0.9f, 1f, 0.28f);
             }
         }
 
@@ -539,12 +587,78 @@ namespace ArcaneAtelier.Workshop
                 Mathf.RoundToInt(worldPosition.y / cellSize));
         }
 
+        public void FrameLayout(IEnumerable<WorkshopPlacedNodeSeed> layout, Vector2Int gridSize)
+        {
+            if (cachedCamera == null || !cachedCamera.orthographic)
+            {
+                return;
+            }
+
+            InitializeCameraState();
+
+            var seeds = layout?
+                .Where(seed => seed != null && seed.NodeDefinition != null)
+                .ToArray() ?? System.Array.Empty<WorkshopPlacedNodeSeed>();
+
+            Vector2 focusCenter;
+            float targetSize;
+            if (seeds.Length == 0)
+            {
+                focusCenter = new Vector2((gridSize.x - 1) * cellSize * 0.5f, (gridSize.y - 1) * cellSize * 0.5f);
+                targetSize = Mathf.Clamp(8f, minZoom, maxZoom);
+            }
+            else
+            {
+                Vector2Int min = seeds[0].Position;
+                Vector2Int max = seeds[0].Position;
+                foreach (WorkshopPlacedNodeSeed seed in seeds)
+                {
+                    min = Vector2Int.Min(min, seed.Position);
+                    max = Vector2Int.Max(max, seed.Position);
+                }
+
+                Vector2 minWorld = new Vector2(min.x * cellSize, min.y * cellSize) - Vector2.one * (cellSize * 1.8f);
+                Vector2 maxWorld = new Vector2(max.x * cellSize, max.y * cellSize) + Vector2.one * (cellSize * 1.8f);
+                focusCenter = (minWorld + maxWorld) * 0.5f;
+
+                float contentHeight = Mathf.Max(cellSize * 5f, maxWorld.y - minWorld.y);
+                float contentWidth = Mathf.Max(cellSize * 7f, maxWorld.x - minWorld.x);
+                float fitHeight = contentHeight * 0.5f;
+                float fitWidth = contentWidth * 0.5f / Mathf.Max(0.01f, cachedCamera.aspect);
+                targetSize = Mathf.Clamp(Mathf.Max(4.8f, fitHeight, fitWidth), minZoom, maxZoom);
+            }
+
+            targetOrthographicSize = targetSize;
+            targetCameraPosition = new Vector3(focusCenter.x, focusCenter.y, cachedCamera.transform.position.z);
+            ClampCameraTargetToBoard(gridSize);
+        }
+
         private static Sprite CreateSquareSprite()
         {
             var texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
             texture.SetPixel(0, 0, Color.white);
             texture.Apply();
             return Sprite.Create(texture, new Rect(0, 0, 1, 1), Vector2.one * 0.5f, 1f);
+        }
+
+        private void ClampCameraTargetToBoard(Vector2Int gridSize)
+        {
+            if (cachedCamera == null)
+            {
+                return;
+            }
+
+            var minX = -cameraBoundsPadding;
+            var minY = -cameraBoundsPadding;
+            var maxX = (gridSize.x - 1) * cellSize + cameraBoundsPadding;
+            var maxY = (gridSize.y - 1) * cellSize + cameraBoundsPadding;
+            var verticalExtent = targetOrthographicSize;
+            var horizontalExtent = verticalExtent * cachedCamera.aspect;
+            var position = targetCameraPosition;
+
+            position.x = ClampAxis(position.x, minX, maxX, horizontalExtent);
+            position.y = ClampAxis(position.y, minY, maxY, verticalExtent);
+            targetCameraPosition = position;
         }
     }
 }

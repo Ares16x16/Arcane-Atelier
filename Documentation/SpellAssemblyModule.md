@@ -91,15 +91,18 @@ Node input rules:
 - **Spell Conduit** accepts and transfers spell cards only.
 - **Turning Spell Conduit** accepts and transfers spell cards only, using an L-shaped east-to-north default path that can be rotated.
 - A mirrored `Turning Spell Conduit Mirror` variant provides a west-to-north default path and is armed from the same palette card with right click.
+- **Battle Deck Collector** accepts spell cards only and has no output. Only spell cards buffered in this node are included in the battle deck snapshot.
 - Other future **Storage** nodes may define their own accepted item lanes.
 - **Processor** nodes, including `Element Fusion`, only accept items that appear in one of their recipe inputs.
 - **Crafter** nodes, including `Element Shaper` and `Spell Fusion`, only accept items that appear in one of their recipe inputs.
+- `Spell Fusion I / II / III` also allow direct adjacent card injection when the neighboring node is outputting a spell card into the fusion machine, even when the target-side port marker is not on that edge.
 
 Node output rules:
 
 - **Storage** nodes may output any buffered item they were allowed to accept. This is the only pass-through behavior.
 - **Source**, **Processor**, and **Crafter** nodes may only output items that are declared as outputs of one of their own recipes.
 - A processor/crafter must not leak raw recipe inputs through its output port. Example: `Element Fusion` may hold `Wind` and `Earth`, but it must not forward either token unless a recipe turns them into a valid output.
+- `Spell Fusion I / II / III` all expose an east-facing spell-card output by default so their completed cards can be routed through `Spell Conduit` into `Battle Deck Collector`.
 
 Recipe execution rules:
 
@@ -109,8 +112,9 @@ Recipe execution rules:
 - If a recipe succeeds, its outputs are added to the node buffer.
 - If several recipes are possible in one buffer, the machine resolves the first matching recipe in recipe-list order, then scans from the top again on the next available cycle.
 - After recipes execute, transfer moves only legal output items to connected downstream nodes.
-- End-of-line spell cards in crafters auto-collect into `PreparedCards`.
-- End-of-line spell cards in `Spell Conduit` stay visible in the conduit buffer and are also included in the battle deck snapshot.
+- End-of-line spell cards stay visible in their machine or conduit buffer.
+- Only spell cards inside `Battle Deck Collector` are included in the battle deck snapshot.
+- `Spell Fusion I / II / III` ports are editable after placement. Click an edge to cycle that edge through input, output, and off. A placed spell-fusion node allows at most two inputs and one output.
 
 Important invalid-input example:
 
@@ -124,7 +128,8 @@ Important invalid-input example:
 - Per-node recipe execution consumes inputs from local buffer first, then reserve inventory.
 - Resource outputs enter node buffers.
 - Spell cards travel through the line while a valid downstream receiver exists.
-- End-of-line spell cards inside `Spell Conduit` remain visible as the card-lane buffer. The battle deck view and deploy payload include those terminal buffered cards.
+- End-of-line spell cards inside `Spell Conduit` remain visible as the card-lane buffer, but they are not included in the battle deck until routed into a `Battle Deck Collector`.
+- The debug hack layout intentionally feeds every `Spell Fusion III` from two separate `Spell Fusion II` branches, warms the network for inspection, routes final cards into `Battle Deck Collector` blocks, and resets the debug preparation timer. This mirrors the recipe requirement that final cards consume two matching advanced spells and makes the buffers easier to inspect with `Hover + T`.
 
 ---
 
@@ -141,14 +146,14 @@ Important invalid-input example:
    - 1 element -> 1 basic spell card (supports all 8 elements).
 4. **Spell fusion (3 tiers)**
    - Basic: same-element basic spell fusion -> intermediate spell.
-   - Intermediate: non-opposing mixed basic spell fusion -> secondary intermediate spell.
-   - Advanced: opposing intermediate spell fusion -> advanced spell card.
+   - Intermediate: compatible intermediate spell fusion -> advanced spell.
+   - Advanced: matching advanced spell fusion -> final advanced spell card.
 5. **Reward-fed spirit expansion**
    - Secondary spirit nodes can be unlocked as post-battle rewards and dropped into the same production network.
 
 Starter scene note:
 
-- The generated opening layout already produces `Inferno Brand` through `Spell Fusion I -> Spell Conduit` and `Frost Pin` through `Element Fusion`.
+- The generated opening layout already produces `Inferno Brand` through `Spell Fusion I -> Spell Conduit -> Battle Deck Collector` and `Frost Pin` through `Element Fusion`.
 - `Element Fusion` is available from the start so players can immediately understand secondary-element crafting.
 - `Spell Fusion I` is available from the start for feature testing; `Spell Fusion II / III` remain reward-gated.
 
