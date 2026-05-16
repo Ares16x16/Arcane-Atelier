@@ -8,11 +8,11 @@ namespace ArcaneAtelier.Workshop
     public sealed class WorkshopGridView : MonoBehaviour
     {
         [SerializeField] private float cellSize = 1.22f;
-        [SerializeField] private Color gridTintA = new Color(0.12f, 0.14f, 0.18f);
-        [SerializeField] private Color gridTintB = new Color(0.16f, 0.18f, 0.22f);
-        [SerializeField] private Color selectedTint = new Color(0.88f, 0.75f, 0.34f);
-        [SerializeField] private Color hoverTint = new Color(0.36f, 0.48f, 0.64f);
-        [SerializeField] private Color boardTint = new Color(0.06f, 0.07f, 0.1f);
+        [SerializeField] private Color gridTintA = new Color(0.08f, 0.1f, 0.14f, 0.92f);
+        [SerializeField] private Color gridTintB = new Color(0.1f, 0.13f, 0.18f, 0.92f);
+        [SerializeField] private Color selectedTint = new Color(0.93f, 0.73f, 0.28f, 0.98f);
+        [SerializeField] private Color hoverTint = new Color(0.32f, 0.58f, 0.76f, 0.9f);
+        [SerializeField] private Color boardTint = new Color(0.025f, 0.035f, 0.06f, 1f);
         [SerializeField, Min(1.01f)] private float wheelZoomFactor = 1.12f;
         [SerializeField, Min(1f)] private float minZoom = 2.8f;
         [SerializeField, Min(1f)] private float maxZoom = 18f;
@@ -21,6 +21,7 @@ namespace ArcaneAtelier.Workshop
 
         private const float BodySpriteTargetScale = 0.76f;
         private const float ActivityZoomBoostStart = 6f;
+        private const int MajorGridStep = 5;
 
         private readonly Dictionary<Vector2Int, SpriteRenderer> cellRenderers = new Dictionary<Vector2Int, SpriteRenderer>();
         private readonly Dictionary<Vector2Int, NodeVisual> nodeVisuals = new Dictionary<Vector2Int, NodeVisual>();
@@ -62,6 +63,7 @@ namespace ArcaneAtelier.Workshop
             controller = sceneController;
             cachedCamera = Camera.main;
             sharedSprite = CreateSquareSprite();
+            ApplyWorkshopTheme();
             InitializeCameraState();
 
             BuildGrid();
@@ -428,6 +430,10 @@ namespace ArcaneAtelier.Workshop
             boardRenderer.color = boardTint;
             boardRenderer.sortingOrder = -2;
 
+            CreateBoardLayer("Board Shadow", 2.4f, new Color(0f, 0f, 0f, 0.32f), -5, new Vector3(0.12f, -0.14f, 0f));
+            CreateBoardLayer("Outer Brass Frame", 1.95f, new Color(0.58f, 0.43f, 0.18f, 0.32f), -4, Vector3.zero);
+            CreateBoardLayer("Inner Arcane Wash", 0.62f, new Color(0.1f, 0.2f, 0.28f, 0.2f), -1, Vector3.zero);
+
             for (var y = 0; y < controller.Simulation.GridSize.y; y++)
             {
                 for (var x = 0; x < controller.Simulation.GridSize.x; x++)
@@ -445,6 +451,8 @@ namespace ArcaneAtelier.Workshop
                     cellRenderers.Add(cell, spriteRenderer);
                 }
             }
+
+            BuildMajorGridLines();
         }
 
         private NodeVisual CreateNodeVisual(Vector2Int cell)
@@ -462,13 +470,13 @@ namespace ArcaneAtelier.Workshop
             {
                 Root = root,
                 VisualRoot = visualGroup.transform,
-                Shadow = CreateVisualLayer(visualGroup.transform, "Shadow", new Vector3(0.05f, -0.06f, 0f), Vector3.one * 0.92f, new Color(0f, 0f, 0f, 0.35f), 1),
-                Aura = CreateVisualLayer(root.transform, "Activity Aura", Vector3.zero, Vector3.one * 1.08f, new Color(0.35f, 0.85f, 1f, 0f), 2),
-                BreathRing = CreateVisualLayer(root.transform, "Neon Breath Ring", Vector3.zero, Vector3.one * 1.18f, new Color(0.35f, 0.85f, 1f, 0f), 2),
-                Frame = CreateVisualLayer(visualGroup.transform, "Frame", Vector3.zero, Vector3.one * 0.88f, new Color(0.24f, 0.21f, 0.18f), 3),
-                Body = CreateVisualLayer(visualGroup.transform, "Body", Vector3.zero, Vector3.one * BodySpriteTargetScale, Color.white, 4),
-                CoreGlow = CreateVisualLayer(root.transform, "Activity Core Glow", Vector3.zero, Vector3.one * 0.78f, new Color(0.35f, 0.85f, 1f, 0f), 5),
-                FlowComet = CreateVisualLayer(root.transform, "Activity Flow Comet", Vector3.zero, Vector3.one * 0.14f, Color.white, 8)
+                Shadow = CreateVisualLayer(visualGroup.transform, "Shadow", new Vector3(0.05f, -0.06f, 0f), Vector3.one * 0.96f, new Color(0f, 0f, 0f, 0.44f), 2),
+                Aura = CreateVisualLayer(root.transform, "Activity Aura", Vector3.zero, Vector3.one * 1.08f, new Color(0.35f, 0.85f, 1f, 0f), 3),
+                BreathRing = CreateVisualLayer(root.transform, "Neon Breath Ring", Vector3.zero, Vector3.one * 1.18f, new Color(0.35f, 0.85f, 1f, 0f), 3),
+                Frame = CreateVisualLayer(visualGroup.transform, "Frame", Vector3.zero, Vector3.one * 0.9f, new Color(0.24f, 0.21f, 0.18f), 4),
+                Body = CreateVisualLayer(visualGroup.transform, "Body", Vector3.zero, Vector3.one * BodySpriteTargetScale, Color.white, 5),
+                CoreGlow = CreateVisualLayer(root.transform, "Activity Core Glow", Vector3.zero, Vector3.one * 0.78f, new Color(0.35f, 0.85f, 1f, 0f), 6),
+                FlowComet = CreateVisualLayer(root.transform, "Activity Flow Comet", Vector3.zero, Vector3.one * 0.14f, Color.white, 9)
             };
 
             CreateActivityEdge(visual, "North Edge Glow", new Vector3(0f, 0.47f, 0f), new Vector3(0.9f, 0.055f, 1f));
@@ -485,7 +493,7 @@ namespace ArcaneAtelier.Workshop
 
                 var beamRenderer = beamGo.AddComponent<SpriteRenderer>();
                 beamRenderer.sprite = sharedSprite;
-                beamRenderer.sortingOrder = 7;
+                beamRenderer.sortingOrder = 8;
                 visual.OutputBeams.Add(beamRenderer);
 
                 var portGo = new GameObject(direction.ToString());
@@ -496,7 +504,7 @@ namespace ArcaneAtelier.Workshop
 
                 var portRenderer = portGo.AddComponent<SpriteRenderer>();
                 portRenderer.sprite = sharedSprite;
-                portRenderer.sortingOrder = 9;
+                portRenderer.sortingOrder = 10;
                 visual.PortMarkers.Add(portRenderer);
             }
 
@@ -527,11 +535,11 @@ namespace ArcaneAtelier.Workshop
                 visual.Body.transform.localScale = new Vector3(fallbackScale * spriteDirection, fallbackScale, 1f);
             }
             visual.Frame.color = controller.SelectedCell == cell
-                ? new Color(0.99f, 0.89f, 0.58f)
-                : new Color(0.24f, 0.21f, 0.18f);
+                ? new Color(0.98f, 0.84f, 0.48f)
+                : Color.Lerp(new Color(0.18f, 0.21f, 0.28f), ResolveActivityColor(state.Definition), 0.28f);
             visual.Shadow.color = controller.SelectedCell == cell
-                ? new Color(0.92f, 0.74f, 0.33f, 0.22f)
-                : new Color(0f, 0f, 0f, 0.35f);
+                ? new Color(0.92f, 0.66f, 0.2f, 0.32f)
+                : new Color(0f, 0f, 0f, 0.44f);
 
             for (var index = 0; index < WorkshopDirectionUtility.CardinalDirections.Count; index++)
             {
@@ -792,9 +800,106 @@ namespace ArcaneAtelier.Workshop
             return renderer;
         }
 
+        private void ApplyWorkshopTheme()
+        {
+            gridTintA = new Color(0.075f, 0.095f, 0.135f, 0.92f);
+            gridTintB = new Color(0.095f, 0.125f, 0.17f, 0.92f);
+            selectedTint = new Color(0.93f, 0.73f, 0.28f, 0.98f);
+            hoverTint = new Color(0.32f, 0.58f, 0.76f, 0.92f);
+            boardTint = new Color(0.025f, 0.035f, 0.06f, 1f);
+        }
+
+        private void CreateBoardLayer(string objectName, float extraSize, Color color, int sortingOrder, Vector3 offset)
+        {
+            if (controller == null || controller.Simulation == null)
+            {
+                return;
+            }
+
+            var layer = new GameObject(objectName);
+            layer.transform.SetParent(gridRoot, false);
+            layer.transform.position = new Vector3(
+                (controller.Simulation.GridSize.x - 1) * cellSize * 0.5f,
+                (controller.Simulation.GridSize.y - 1) * cellSize * 0.5f,
+                1f) + offset;
+            layer.transform.localScale = new Vector3(
+                controller.Simulation.GridSize.x * cellSize + extraSize,
+                controller.Simulation.GridSize.y * cellSize + extraSize,
+                1f);
+
+            var renderer = layer.AddComponent<SpriteRenderer>();
+            renderer.sprite = sharedSprite;
+            renderer.color = color;
+            renderer.sortingOrder = sortingOrder;
+        }
+
+        private void BuildMajorGridLines()
+        {
+            if (controller == null || controller.Simulation == null)
+            {
+                return;
+            }
+
+            Vector2Int gridSize = controller.Simulation.GridSize;
+            float width = gridSize.x * cellSize;
+            float height = gridSize.y * cellSize;
+            float centerX = (gridSize.x - 1) * cellSize * 0.5f;
+            float centerY = (gridSize.y - 1) * cellSize * 0.5f;
+
+            for (var x = 0; x < gridSize.x; x += MajorGridStep)
+            {
+                CreateGridLine(
+                    $"Leyline_V_{x}",
+                    new Vector3(x * cellSize, centerY, 0f),
+                    new Vector3(0.035f, height, 1f),
+                    new Color(0.64f, 0.8f, 0.9f, 0.16f));
+            }
+
+            for (var y = 0; y < gridSize.y; y += MajorGridStep)
+            {
+                CreateGridLine(
+                    $"Leyline_H_{y}",
+                    new Vector3(centerX, y * cellSize, 0f),
+                    new Vector3(width, 0.035f, 1f),
+                    new Color(0.88f, 0.67f, 0.28f, 0.13f));
+            }
+        }
+
+        private void CreateGridLine(string objectName, Vector3 position, Vector3 scale, Color color)
+        {
+            var line = new GameObject(objectName);
+            line.transform.SetParent(gridRoot, false);
+            line.transform.localPosition = position;
+            line.transform.localScale = scale;
+
+            var renderer = line.AddComponent<SpriteRenderer>();
+            renderer.sprite = sharedSprite;
+            renderer.color = color;
+            renderer.sortingOrder = 1;
+        }
+
         private Color GetBaseCellTint(Vector2Int cell)
         {
-            return ((cell.x + cell.y) & 1) == 0 ? gridTintA : gridTintB;
+            Color baseColor = ((cell.x + cell.y) & 1) == 0 ? gridTintA : gridTintB;
+            if (controller == null || controller.Simulation == null)
+            {
+                return baseColor;
+            }
+
+            Vector2 gridCenter = new Vector2(
+                (controller.Simulation.GridSize.x - 1) * 0.5f,
+                (controller.Simulation.GridSize.y - 1) * 0.5f);
+            float distance = Vector2.Distance(cell, gridCenter);
+            float edgeLift = Mathf.InverseLerp(2f, Mathf.Max(controller.Simulation.GridSize.x, controller.Simulation.GridSize.y) * 0.48f, distance);
+            Color edgeColor = new Color(0.04f, 0.055f, 0.085f, baseColor.a);
+            Color tinted = Color.Lerp(baseColor, edgeColor, edgeLift * 0.42f);
+
+            if (cell.x % MajorGridStep == 0 || cell.y % MajorGridStep == 0)
+            {
+                tinted = Color.Lerp(tinted, new Color(0.18f, 0.22f, 0.27f, tinted.a), 0.28f);
+            }
+
+            return tinted;
         }
 
         private Vector2 CellToWorld(Vector2Int cell)

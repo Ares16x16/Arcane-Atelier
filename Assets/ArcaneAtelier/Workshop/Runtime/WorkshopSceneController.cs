@@ -487,7 +487,7 @@ namespace ArcaneAtelier.Workshop
             activeCamera.orthographic = true;
             activeCamera.orthographicSize = 4.8f;
             activeCamera.clearFlags = CameraClearFlags.SolidColor;
-            activeCamera.backgroundColor = new Color(0.06f, 0.07f, 0.09f);
+            activeCamera.backgroundColor = new Color(0.018f, 0.026f, 0.045f);
             FocusCameraOnStarterArea(activeCamera);
         }
 

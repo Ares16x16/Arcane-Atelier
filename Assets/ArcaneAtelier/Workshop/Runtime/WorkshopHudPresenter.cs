@@ -11,6 +11,16 @@ namespace ArcaneAtelier.Workshop
         private const float BottomDockHeight = 292f;
         private const float TopHudHeight = 94f;
 
+        private static readonly Color HudBackground = new Color(0.035f, 0.052f, 0.085f, 0.94f);
+        private static readonly Color HudPanel = new Color(0.075f, 0.105f, 0.15f, 0.93f);
+        private static readonly Color HudPanelSoft = new Color(0.095f, 0.13f, 0.19f, 0.82f);
+        private static readonly Color HudStroke = new Color(0.24f, 0.3f, 0.38f, 0.86f);
+        private static readonly Color HudText = new Color(0.97f, 0.95f, 0.9f, 1f);
+        private static readonly Color HudMuted = new Color(0.65f, 0.71f, 0.78f, 1f);
+        private static readonly Color AtelierGold = new Color(0.88f, 0.72f, 0.3f, 1f);
+        private static readonly Color ArcaneBlue = new Color(0.42f, 0.72f, 0.94f, 1f);
+        private static readonly Color SpellViolet = new Color(0.72f, 0.5f, 0.96f, 1f);
+
         private Vector2 rewardScroll;
         private bool showGuide;
         private bool showRewards;
@@ -118,9 +128,13 @@ namespace ArcaneAtelier.Workshop
 
         private void DrawBackdrop()
         {
-            DrawRect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0f, 0f, 0f, 0.08f));
-            DrawRect(new Rect(0f, 0f, Screen.width, TopHudHeight + Margin), new Color(0.02f, 0.03f, 0.05f, 0.42f));
-            DrawRect(new Rect(0f, Screen.height - BottomDockHeight - Margin * 2f, Screen.width, BottomDockHeight + Margin * 2f), new Color(0.01f, 0.02f, 0.03f, 0.74f));
+            DrawRect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0.01f, 0.015f, 0.026f, 0.14f));
+            DrawRect(new Rect(0f, 0f, Screen.width, TopHudHeight + Margin), new Color(0.025f, 0.04f, 0.07f, 0.58f));
+            DrawRect(new Rect(0f, 0f, Screen.width, 3f), new Color(AtelierGold.r, AtelierGold.g, AtelierGold.b, 0.64f));
+            DrawRect(new Rect(0f, TopHudHeight + Margin - 2f, Screen.width, 2f), new Color(ArcaneBlue.r, ArcaneBlue.g, ArcaneBlue.b, 0.22f));
+            DrawRect(new Rect(0f, Screen.height - BottomDockHeight - Margin * 2f, Screen.width, BottomDockHeight + Margin * 2f), new Color(0.015f, 0.025f, 0.045f, 0.82f));
+            DrawRect(new Rect(0f, Screen.height - BottomDockHeight - Margin * 2f, Screen.width, 3f), new Color(AtelierGold.r, AtelierGold.g, AtelierGold.b, 0.3f));
+            DrawRect(new Rect(Screen.width - RightRailWidth - Margin * 2f, TopHudHeight, RightRailWidth + Margin * 2f, Screen.height - TopHudHeight), new Color(0f, 0f, 0f, 0.12f));
         }
 
         private void DrawThroughputPanel(Rect rect)
@@ -165,28 +179,28 @@ namespace ArcaneAtelier.Workshop
             GUI.Label(new Rect(buttonStartX, 16f, rotationChipWidth, 14f), $"{controller.PlacementRotationQuarterTurns * 90}°", chipStyle);
             buttonStartX += rotationChipWidth + 12f;
 
-            if (GUI.Button(new Rect(buttonStartX, 10f, buttonSize, buttonSize), "?", smallButtonStyle))
+            if (DrawThemedButton(new Rect(buttonStartX, 10f, buttonSize, buttonSize), "?", ArcaneBlue, smallButtonStyle))
             {
                 showGuide = !showGuide;
             }
 
-            if (GUI.Button(new Rect(buttonStartX + buttonSize + buttonGap, 10f, buttonSize, buttonSize), "✦", smallButtonStyle))
+            if (DrawThemedButton(new Rect(buttonStartX + buttonSize + buttonGap, 10f, buttonSize, buttonSize), "✦", SpellViolet, smallButtonStyle))
             {
                 showRewards = !showRewards;
             }
 
             var pauseLabel = controller.IsPaused ? "▶" : "⏸";
-            if (GUI.Button(new Rect(buttonStartX + (buttonSize + buttonGap) * 2f, 10f, buttonSize, buttonSize), pauseLabel, smallButtonStyle))
+            if (DrawThemedButton(new Rect(buttonStartX + (buttonSize + buttonGap) * 2f, 10f, buttonSize, buttonSize), pauseLabel, AtelierGold, smallButtonStyle))
             {
                 controller.TogglePause();
             }
 
-            if (GUI.Button(new Rect(buttonStartX + (buttonSize + buttonGap) * 3f, 10f, buttonSize, buttonSize), "↺", smallButtonStyle))
+            if (DrawThemedButton(new Rect(buttonStartX + (buttonSize + buttonGap) * 3f, 10f, buttonSize, buttonSize), "↺", new Color(0.9f, 0.5f, 0.34f, 1f), smallButtonStyle))
             {
                 controller.ResetWorkshop();
             }
 
-            if (GUI.Button(new Rect(buttonStartX + (buttonSize + buttonGap) * 4f, 10f, buttonSize, buttonSize), "H", smallButtonStyle))
+            if (DrawThemedButton(new Rect(buttonStartX + (buttonSize + buttonGap) * 4f, 10f, buttonSize, buttonSize), "H", new Color(0.54f, 0.78f, 0.54f, 1f), smallButtonStyle))
             {
                 controller.LoadHackFactoryLayout();
             }
@@ -207,8 +221,7 @@ namespace ArcaneAtelier.Workshop
             const float detailBottom = 166f;
             if (node == null)
             {
-                DrawRect(new Rect(18f, 76f, contentWidth, 70f), new Color(0.08f, 0.1f, 0.14f, 0.78f));
-                DrawOutline(new Rect(18f, 76f, contentWidth, 70f), new Color(0.18f, 0.25f, 0.32f));
+                DrawSubPanel(new Rect(18f, 76f, contentWidth, 70f), ArcaneBlue);
                 GUI.Label(new Rect(32f, 92f, contentWidth - 28f, 34f), "Choose a tile to inspect a machine. Place with LMB on empty cells.", bodyStyle);
             }
             else
@@ -254,27 +267,25 @@ namespace ArcaneAtelier.Workshop
                 .Select(pair => (ShortItemName(pair.Key.DisplayName), pair.Value, pair.Key.Tint, GetItemIcon(pair.Key)))
                 .ToArray();
 
-            DrawRect(new Rect(18f, detailBottom, contentWidth, 1f), new Color(0.22f, 0.24f, 0.28f));
+            DrawRect(new Rect(18f, detailBottom, contentWidth, 1f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.66f));
 
-            DrawRect(new Rect(18f, payloadTop, columnWidth, payloadHeight), new Color(0.07f, 0.09f, 0.13f, 0.92f));
-            DrawOutline(new Rect(18f, payloadTop, columnWidth, payloadHeight), new Color(0.18f, 0.24f, 0.3f));
+            DrawSubPanel(new Rect(18f, payloadTop, columnWidth, payloadHeight), ArcaneBlue);
             GUI.Label(new Rect(30f, payloadTop + 12f, columnWidth - 24f, 20f), "Inventory", sectionStyle);
             GUI.Label(new Rect(30f, payloadTop + 32f, columnWidth - 24f, 18f), "Network + reserve", tinyLabelStyle);
             DrawCompactList(new Rect(30f, payloadTop + 58f, columnWidth - 24f, payloadHeight - 70f), inventoryItems);
 
             var deckX = 18f + columnWidth + columnGap;
-            DrawRect(new Rect(deckX, payloadTop, columnWidth, payloadHeight), new Color(0.07f, 0.09f, 0.13f, 0.92f));
-            DrawOutline(new Rect(deckX, payloadTop, columnWidth, payloadHeight), new Color(0.27f, 0.33f, 0.42f));
+            DrawSubPanel(new Rect(deckX, payloadTop, columnWidth, payloadHeight), AtelierGold);
             GUI.Label(new Rect(deckX + 12f, payloadTop + 12f, columnWidth - 24f, 20f), "Battle Deck", sectionStyle);
             GUI.Label(new Rect(deckX + 12f, payloadTop + 32f, columnWidth - 24f, 18f), "Cards that reached collectors", tinyLabelStyle);
             DrawCompactList(new Rect(deckX + 12f, payloadTop + 58f, columnWidth - 24f, payloadHeight - 70f), deckItems);
 
-            if (GUI.Button(new Rect(18f, stepButtonY, contentWidth, 28f), "Advance 1 Prep Tick", buttonStyle))
+            if (DrawThemedButton(new Rect(18f, stepButtonY, contentWidth, 28f), "Advance 1 Prep Tick", ArcaneBlue, buttonStyle))
             {
                 controller.StepPreparationOnce();
             }
 
-            if (GUI.Button(new Rect(18f, deployButtonY, contentWidth, 28f), "Forge And Deploy", buttonStyle))
+            if (DrawThemedButton(new Rect(18f, deployButtonY, contentWidth, 28f), "Forge And Deploy", AtelierGold, buttonStyle))
             {
                 controller.DeployToBattle();
             }
@@ -298,12 +309,11 @@ namespace ArcaneAtelier.Workshop
             foreach (var reward in rewards)
             {
                 var itemRect = new Rect(0f, y, contentRect.width - 24f, 76f);
-                DrawRect(itemRect, new Color(0.09f, 0.11f, 0.15f, 0.95f));
-                DrawOutline(itemRect, new Color(0.4f, 0.34f, 0.62f));
+                DrawSubPanel(itemRect, SpellViolet);
                 DrawRewardIcon(new Rect(12f, y + 12f, 42f, 42f), reward);
                 GUI.Label(new Rect(62f, y + 10f, itemRect.width - 136f, 18f), reward.DisplayName, sectionStyle);
                 GUI.Label(new Rect(62f, y + 30f, itemRect.width - 136f, 30f), reward.Description, bodyStyle);
-                if (GUI.Button(new Rect(itemRect.width - 68f, y + 24f, 56f, 26f), "Use", buttonStyle))
+                if (DrawThemedButton(new Rect(itemRect.width - 68f, y + 24f, 56f, 26f), "Use", SpellViolet, buttonStyle))
                 {
                     controller.ApplyReward(reward);
                 }
@@ -322,7 +332,7 @@ namespace ArcaneAtelier.Workshop
             GUI.BeginGroup(rect);
             GUI.Label(new Rect(24f, 18f, rect.width - 132f, 24f), "Workshop Guide", titleStyle);
             GUI.Label(new Rect(24f, 48f, rect.width - 132f, 20f), "Place machines, route outputs into matching inputs, then deploy the crafted deck.", mutedStyle);
-            if (GUI.Button(new Rect(rect.width - 64f, 18f, 38f, 28f), "X", buttonStyle))
+            if (DrawThemedButton(new Rect(rect.width - 64f, 18f, 38f, 28f), "X", new Color(0.9f, 0.5f, 0.34f, 1f), buttonStyle))
             {
                 showGuide = false;
             }
@@ -331,15 +341,13 @@ namespace ArcaneAtelier.Workshop
             const float columnWidth = 354f;
             const float rightX = 426f;
 
-            DrawRect(new Rect(leftX, 86f, columnWidth, 154f), new Color(0.07f, 0.09f, 0.13f, 0.9f));
-            DrawOutline(new Rect(leftX, 86f, columnWidth, 154f), new Color(0.28f, 0.24f, 0.18f));
+            DrawSubPanel(new Rect(leftX, 86f, columnWidth, 154f), AtelierGold);
             GUI.Label(new Rect(leftX + 14f, 100f, columnWidth - 28f, 20f), "Starter Layout", sectionStyle);
             GUI.Label(new Rect(leftX + 14f, 126f, columnWidth - 28f, 34f), "Spell line: two Fire Shapers feed Spell Fusion I -> Inferno Brand.", bodyStyle);
             GUI.Label(new Rect(leftX + 14f, 164f, columnWidth - 28f, 48f), "Element line: Water enters Element Fusion from the left, Wind enters from below, then the shaped output becomes Frost Pin.", bodyStyle);
             GUI.Label(new Rect(leftX + 14f, 214f, columnWidth - 28f, 18f), "Broken facing stalls the whole recipe.", tinyLabelStyle);
 
-            DrawRect(new Rect(leftX, 258f, columnWidth, 216f), new Color(0.07f, 0.09f, 0.13f, 0.9f));
-            DrawOutline(new Rect(leftX, 258f, columnWidth, 216f), new Color(0.18f, 0.25f, 0.32f));
+            DrawSubPanel(new Rect(leftX, 258f, columnWidth, 216f), ArcaneBlue);
             GUI.Label(new Rect(leftX + 14f, 272f, columnWidth - 28f, 20f), "Controls", sectionStyle);
             DrawGuideRow(new Rect(leftX + 14f, 304f, columnWidth - 28f, 22f), "LMB", "Click place/select, hold-drag pan map");
             DrawGuideRow(new Rect(leftX + 14f, 332f, columnWidth - 28f, 22f), "RMB Tile", "Remove selected tile");
@@ -349,16 +357,14 @@ namespace ArcaneAtelier.Workshop
             DrawGuideRow(new Rect(leftX + 14f, 444f, columnWidth - 28f, 22f), "Fusion Edge", "Click edge cycles input, output, off");
             DrawGuideRow(new Rect(leftX + 14f, 472f, columnWidth - 28f, 22f), "Wheel", "Zoom workshop map");
 
-            DrawRect(new Rect(rightX, 86f, columnWidth, 178f), new Color(0.07f, 0.09f, 0.13f, 0.9f));
-            DrawOutline(new Rect(rightX, 86f, columnWidth, 178f), new Color(0.27f, 0.33f, 0.42f));
+            DrawSubPanel(new Rect(rightX, 86f, columnWidth, 178f), ArcaneBlue);
             GUI.Label(new Rect(rightX + 14f, 100f, columnWidth - 28f, 20f), "Element Fusion", sectionStyle);
             DrawElementRecipeRow(new Rect(rightX + 14f, 130f, columnWidth - 28f, 24f), WorkshopElementAttribute.Wind, WorkshopElementAttribute.Water, WorkshopElementAttribute.Ice);
             DrawElementRecipeRow(new Rect(rightX + 14f, 160f, columnWidth - 28f, 24f), WorkshopElementAttribute.Wind, WorkshopElementAttribute.Fire, WorkshopElementAttribute.Thunder);
             DrawElementRecipeRow(new Rect(rightX + 14f, 190f, columnWidth - 28f, 24f), WorkshopElementAttribute.Earth, WorkshopElementAttribute.Fire, WorkshopElementAttribute.Light);
             DrawElementRecipeRow(new Rect(rightX + 14f, 220f, columnWidth - 28f, 24f), WorkshopElementAttribute.Earth, WorkshopElementAttribute.Water, WorkshopElementAttribute.Dark);
 
-            DrawRect(new Rect(rightX, 282f, columnWidth, 164f), new Color(0.07f, 0.09f, 0.13f, 0.9f));
-            DrawOutline(new Rect(rightX, 282f, columnWidth, 164f), new Color(0.26f, 0.2f, 0.34f));
+            DrawSubPanel(new Rect(rightX, 282f, columnWidth, 164f), SpellViolet);
             GUI.Label(new Rect(rightX + 14f, 296f, columnWidth - 28f, 20f), "Spell Ladder", sectionStyle);
             GUI.Label(new Rect(rightX + 14f, 324f, columnWidth - 28f, 28f), "Element Shaper: one element becomes one basic spell.", bodyStyle);
             GUI.Label(new Rect(rightX + 14f, 356f, columnWidth - 28f, 28f), "Spell Fusion I: two same-element basic spells become an intermediate spell.", bodyStyle);
@@ -387,8 +393,7 @@ namespace ArcaneAtelier.Workshop
             int rows = Mathf.Max(1, Mathf.CeilToInt(nodes.Length / (float)columns));
             int visibleRows = Mathf.Min(rows, 2);
             float gridHeight = visibleRows * cardHeight + (visibleRows + 1) * spacing;
-            DrawRect(new Rect(contentRect.x, contentRect.y, contentRect.width, gridHeight), new Color(0.04f, 0.05f, 0.08f, 0.86f));
-            DrawOutline(new Rect(contentRect.x, contentRect.y, contentRect.width, gridHeight), new Color(0.22f, 0.2f, 0.17f));
+            DrawSubPanel(new Rect(contentRect.x, contentRect.y, contentRect.width, gridHeight), AtelierGold);
 
             for (int index = 0; index < nodes.Length; index++)
             {
@@ -579,9 +584,13 @@ namespace ArcaneAtelier.Workshop
             {
                 Rect tabRect = new Rect(rect.x + index * (tabWidth + gap), rect.y, tabWidth, rect.height);
                 bool selected = paletteTabIndex == index;
-                DrawRect(tabRect, selected ? new Color(0.86f, 0.7f, 0.28f, 0.28f) : new Color(0.08f, 0.1f, 0.13f, 0.92f));
-                DrawOutline(tabRect, selected ? new Color(0.98f, 0.83f, 0.44f) : new Color(0.26f, 0.24f, 0.2f));
-                if (GUI.Button(tabRect, labels[index], tabButtonStyle))
+                Color accent = selected ? AtelierGold : HudStroke;
+                DrawRect(new Rect(tabRect.x + 2f, tabRect.y + 3f, tabRect.width, tabRect.height), new Color(0f, 0f, 0f, 0.16f));
+                DrawRect(tabRect, selected ? new Color(0.18f, 0.16f, 0.09f, 0.96f) : HudPanel);
+                DrawOutline(tabRect, new Color(accent.r, accent.g, accent.b, selected ? 0.82f : 0.46f));
+                DrawRect(new Rect(tabRect.x, tabRect.y, tabRect.width, 3f), new Color(accent.r, accent.g, accent.b, selected ? 0.9f : 0.34f));
+                GUI.Label(tabRect, labels[index], tabButtonStyle);
+                if (GUI.Button(tabRect, GUIContent.none, GUIStyle.none))
                 {
                     paletteTabIndex = index;
                 }
@@ -632,9 +641,12 @@ namespace ArcaneAtelier.Workshop
             var mirrorSelected = mirrorNode != null && selectedNode == mirrorNode;
             var accent = GetCategoryColor(node.Category, node.Tint);
 
-            DrawRect(rect, selected ? new Color(accent.r * 0.38f, accent.g * 0.38f, accent.b * 0.38f, 0.95f) : new Color(0.08f, 0.1f, 0.14f, 0.96f));
-            DrawOutline(rect, selected ? new Color(0.99f, 0.89f, 0.62f) : accent);
-            DrawRect(new Rect(rect.x, rect.y, rect.width, 4f), accent);
+            DrawRect(new Rect(rect.x + 3f, rect.y + 4f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.2f));
+            DrawRect(rect, selected ? new Color(accent.r * 0.28f, accent.g * 0.28f, accent.b * 0.28f, 0.98f) : HudPanel);
+            DrawOutline(rect, selected ? new Color(0.99f, 0.86f, 0.5f, 0.95f) : new Color(accent.r, accent.g, accent.b, 0.58f));
+            DrawRect(new Rect(rect.x, rect.y, rect.width, 5f), accent);
+            DrawRect(new Rect(rect.x + 8f, rect.y + 10f, 30f, 34f), new Color(accent.r, accent.g, accent.b, selected ? 0.24f : 0.14f));
+            DrawRect(new Rect(rect.x + 8f, rect.y + rect.height - 8f, rect.width - 16f, 1f), new Color(1f, 1f, 1f, 0.045f));
 
             Event current = Event.current;
             if (unlocked &&
@@ -681,8 +693,8 @@ namespace ArcaneAtelier.Workshop
 
         private void DrawCornerVariantStrip(Rect rect, WorkshopNodeDefinition primaryNode, WorkshopNodeDefinition mirrorNode, bool mirrorSelected, bool unlocked)
         {
-            DrawRect(rect, new Color(0.11f, 0.13f, 0.17f, 0.94f));
-            DrawOutline(rect, new Color(0.28f, 0.31f, 0.36f));
+            DrawRect(rect, new Color(0.045f, 0.065f, 0.095f, 0.94f));
+            DrawOutline(rect, new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.56f));
 
             var leftPreview = new Rect(rect.x + 6f, rect.y + 2f, 14f, 14f);
             var rightPreview = new Rect(rect.x + 26f, rect.y + 2f, 14f, 14f);
@@ -690,13 +702,13 @@ namespace ArcaneAtelier.Workshop
             var mirrorHighlight = new Rect(rect.x + 24f, rect.y + 1f, 18f, 16f);
             if (mirrorSelected)
             {
-                DrawRect(mirrorHighlight, new Color(0.86f, 0.28f, 0.28f, 0.28f));
-                DrawOutline(mirrorHighlight, new Color(0.98f, 0.71f, 0.42f));
+                DrawRect(mirrorHighlight, new Color(AtelierGold.r, AtelierGold.g, AtelierGold.b, 0.25f));
+                DrawOutline(mirrorHighlight, new Color(0.98f, 0.82f, 0.48f, 0.9f));
             }
             else
             {
-                DrawRect(defaultHighlight, new Color(0.32f, 0.58f, 0.95f, 0.22f));
-                DrawOutline(defaultHighlight, new Color(0.9f, 0.86f, 0.74f));
+                DrawRect(defaultHighlight, new Color(ArcaneBlue.r, ArcaneBlue.g, ArcaneBlue.b, 0.22f));
+                DrawOutline(defaultHighlight, new Color(0.76f, 0.92f, 1f, 0.82f));
             }
 
             DrawSprite(leftPreview, ResolveNodeSprite(primaryNode), ResolveNodeSpriteTint(primaryNode));
@@ -707,8 +719,10 @@ namespace ArcaneAtelier.Workshop
 
         private void DrawMiniStat(Rect rect, string value, string label)
         {
-            DrawRect(rect, new Color(0.09f, 0.11f, 0.14f, 0.92f));
-            DrawOutline(rect, new Color(0.24f, 0.22f, 0.18f));
+            DrawRect(new Rect(rect.x + 2f, rect.y + 3f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.18f));
+            DrawRect(rect, new Color(0.07f, 0.095f, 0.135f, 0.94f));
+            DrawOutline(rect, new Color(AtelierGold.r, AtelierGold.g, AtelierGold.b, 0.42f));
+            DrawRect(new Rect(rect.x + 4f, rect.y + 3f, rect.width - 8f, 1f), new Color(1f, 1f, 1f, 0.08f));
             GUI.Label(new Rect(rect.x, rect.y + 3f, rect.width, 14f), value, statValueStyle);
             GUI.Label(new Rect(rect.x, rect.y + 16f, rect.width, 12f), label, statLabelStyle);
         }
@@ -758,8 +772,9 @@ namespace ArcaneAtelier.Workshop
 
         private void DrawChip(Rect rect, string text, Color tint)
         {
-            DrawRect(rect, new Color(tint.r * 0.28f, tint.g * 0.28f, tint.b * 0.28f, 0.94f));
-            DrawOutline(rect, new Color(tint.r * 0.92f, tint.g * 0.92f, tint.b * 0.92f, 1f));
+            DrawRect(new Rect(rect.x + 1f, rect.y + 2f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.16f));
+            DrawRect(rect, new Color(tint.r * 0.22f, tint.g * 0.22f, tint.b * 0.22f, 0.94f));
+            DrawOutline(rect, new Color(tint.r * 0.95f, tint.g * 0.95f, tint.b * 0.95f, 0.82f));
             GUI.Label(new Rect(rect.x + 10f, rect.y + 2f, rect.width - 20f, rect.height - 4f), text, chipStyle);
         }
 
@@ -778,6 +793,11 @@ namespace ArcaneAtelier.Workshop
             {
                 var item = items[index];
                 var y = rect.y + index * 18f;
+                if ((index & 1) == 0)
+                {
+                    DrawRect(new Rect(rect.x - 4f, y, rect.width + 4f, 17f), new Color(1f, 1f, 1f, 0.018f));
+                }
+
                 if (!DrawSprite(new Rect(rect.x, y + 1f, 14f, 14f), item.Icon, Color.white))
                 {
                     DrawRect(new Rect(rect.x + 2f, y + 4f, 10f, 10f), item.Tint);
@@ -829,10 +849,31 @@ namespace ArcaneAtelier.Workshop
 
         private void DrawPanelFrame(Rect rect, Color accent)
         {
-            DrawRect(new Rect(rect.x + 6f, rect.y + 8f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.24f));
-            DrawRect(rect, new Color(0.05f, 0.06f, 0.08f, 0.94f));
-            DrawOutline(rect, new Color(0.2f, 0.19f, 0.18f, 1f));
+            DrawRect(new Rect(rect.x + 5f, rect.y + 7f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.24f));
+            DrawRect(rect, HudBackground);
+            DrawOutline(rect, new Color(accent.r, accent.g, accent.b, 0.68f));
             DrawRect(new Rect(rect.x, rect.y, rect.width, 4f), accent);
+            DrawRect(new Rect(rect.x + 7f, rect.y + 8f, rect.width - 14f, rect.height - 16f), new Color(1f, 1f, 1f, 0.012f));
+            DrawRect(new Rect(rect.x + 1f, rect.y + 5f, rect.width - 2f, 1f), new Color(1f, 1f, 1f, 0.05f));
+        }
+
+        private void DrawSubPanel(Rect rect, Color accent)
+        {
+            DrawRect(new Rect(rect.x + 3f, rect.y + 4f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.18f));
+            DrawRect(rect, HudPanelSoft);
+            DrawOutline(rect, new Color(accent.r, accent.g, accent.b, 0.42f));
+            DrawRect(new Rect(rect.x, rect.y, rect.width, 3f), new Color(accent.r, accent.g, accent.b, 0.72f));
+            DrawRect(new Rect(rect.x + 8f, rect.y + 8f, rect.width - 16f, 1f), new Color(1f, 1f, 1f, 0.045f));
+        }
+
+        private bool DrawThemedButton(Rect rect, string label, Color accent, GUIStyle labelStyle)
+        {
+            DrawRect(new Rect(rect.x + 2f, rect.y + 3f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.2f));
+            DrawRect(rect, new Color(accent.r * 0.22f, accent.g * 0.22f, accent.b * 0.22f, 0.96f));
+            DrawOutline(rect, new Color(accent.r, accent.g, accent.b, 0.72f));
+            DrawRect(new Rect(rect.x, rect.y, rect.width, 3f), new Color(accent.r, accent.g, accent.b, 0.92f));
+            GUI.Label(rect, label, labelStyle);
+            return GUI.Button(rect, GUIContent.none, GUIStyle.none);
         }
 
         private void DrawRect(Rect rect, Color color)
@@ -908,28 +949,28 @@ namespace ArcaneAtelier.Workshop
             {
                 fontSize = 20,
                 fontStyle = FontStyle.Bold,
-                normal = { textColor = new Color(0.97f, 0.95f, 0.9f) }
+                normal = { textColor = HudText }
             };
 
             sectionStyle = new GUIStyle(GUI.skin.label)
             {
                 fontSize = 14,
                 fontStyle = FontStyle.Bold,
-                normal = { textColor = new Color(0.96f, 0.87f, 0.66f) }
+                normal = { textColor = new Color(0.96f, 0.86f, 0.62f) }
             };
 
             bodyStyle = new GUIStyle(GUI.skin.label)
             {
                 fontSize = 12,
                 wordWrap = true,
-                normal = { textColor = new Color(0.83f, 0.84f, 0.88f) }
+                normal = { textColor = new Color(0.84f, 0.87f, 0.91f) }
             };
 
             mutedStyle = new GUIStyle(GUI.skin.label)
             {
                 fontSize = 12,
                 wordWrap = true,
-                normal = { textColor = new Color(0.57f, 0.64f, 0.73f) }
+                normal = { textColor = HudMuted }
             };
 
             statValueStyle = new GUIStyle(GUI.skin.label)
@@ -937,14 +978,14 @@ namespace ArcaneAtelier.Workshop
                 fontSize = 11,
                 fontStyle = FontStyle.Bold,
                 alignment = TextAnchor.UpperCenter,
-                normal = { textColor = new Color(0.96f, 0.95f, 0.92f) }
+                normal = { textColor = HudText }
             };
 
             statLabelStyle = new GUIStyle(GUI.skin.label)
             {
                 fontSize = 9,
                 alignment = TextAnchor.UpperCenter,
-                normal = { textColor = new Color(0.62f, 0.68f, 0.74f) }
+                normal = { textColor = HudMuted }
             };
 
             iconStyle = new GUIStyle(GUI.skin.label)
@@ -959,28 +1000,31 @@ namespace ArcaneAtelier.Workshop
             {
                 fontSize = 11,
                 alignment = TextAnchor.MiddleCenter,
-                normal = { textColor = new Color(0.96f, 0.95f, 0.92f) }
+                normal = { textColor = HudText }
             };
 
-            buttonStyle = new GUIStyle(GUI.skin.button)
+            buttonStyle = new GUIStyle(GUI.skin.label)
             {
                 fontSize = 12,
                 fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.MiddleCenter
+                alignment = TextAnchor.MiddleCenter,
+                normal = { textColor = HudText }
             };
 
-            smallButtonStyle = new GUIStyle(GUI.skin.button)
+            smallButtonStyle = new GUIStyle(GUI.skin.label)
             {
                 fontSize = 16,
                 fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.MiddleCenter
+                alignment = TextAnchor.MiddleCenter,
+                normal = { textColor = HudText }
             };
 
-            tabButtonStyle = new GUIStyle(GUI.skin.button)
+            tabButtonStyle = new GUIStyle(GUI.skin.label)
             {
                 fontSize = 13,
                 fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.MiddleCenter
+                alignment = TextAnchor.MiddleCenter,
+                normal = { textColor = HudText }
             };
 
             cardTitleStyle = new GUIStyle(GUI.skin.label)
@@ -989,14 +1033,14 @@ namespace ArcaneAtelier.Workshop
                 fontStyle = FontStyle.Bold,
                 wordWrap = false,
                 clipping = TextClipping.Clip,
-                normal = { textColor = new Color(0.97f, 0.95f, 0.9f) }
+                normal = { textColor = HudText }
             };
 
             cardBodyStyle = new GUIStyle(GUI.skin.label)
             {
                 fontSize = 11,
                 wordWrap = true,
-                normal = { textColor = new Color(0.76f, 0.8f, 0.86f) }
+                normal = { textColor = new Color(0.76f, 0.81f, 0.88f) }
             };
 
             tinyLabelStyle = new GUIStyle(GUI.skin.label)
@@ -1004,7 +1048,7 @@ namespace ArcaneAtelier.Workshop
                 fontSize = 10,
                 wordWrap = true,
                 alignment = TextAnchor.UpperLeft,
-                normal = { textColor = new Color(0.67f, 0.72f, 0.79f) }
+                normal = { textColor = HudMuted }
             };
 
             tooltipPrimaryStyle = new GUIStyle(GUI.skin.label)
