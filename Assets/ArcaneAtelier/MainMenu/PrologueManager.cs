@@ -5,6 +5,7 @@ public sealed class PrologueManager : MonoBehaviour
 {
     private const string WorkshopSceneName = "WorkshopScene";
     private const string MainMenuSceneName = "MainMenuScene";
+    private const float AccentLineHeight = 3f;
 
     private readonly string[] storyPages =
     {
@@ -21,15 +22,23 @@ public sealed class PrologueManager : MonoBehaviour
     private GUIStyle hintStyle;
     private GUIStyle primaryButtonStyle;
     private GUIStyle secondaryButtonStyle;
+    [SerializeField] private Texture2D playerCharacterTexture;
+    [SerializeField] private Texture2D battleBackdropTexture;
+
     private Texture2D backgroundTexture;
     private Texture2D panelTexture;
     private Texture2D accentTexture;
     private Texture2D buttonTexture;
     private Texture2D buttonHoverTexture;
+    private Texture2D backdropTintTexture;
+    private Texture2D topTintTexture;
+    private Texture2D bottomTintTexture;
+    private Texture2D shadowTexture;
 
     private void Awake()
     {
         pageStartTime = Time.unscaledTime;
+        DisableLegacyCanvases();
     }
 
     private void Update()
@@ -80,6 +89,10 @@ public sealed class PrologueManager : MonoBehaviour
         accentTexture = CreateSolidTexture(new Color32(198, 157, 71, 255));
         buttonTexture = CreateSolidTexture(new Color32(105, 77, 38, 255));
         buttonHoverTexture = CreateSolidTexture(new Color32(146, 107, 46, 255));
+        backdropTintTexture = CreateSolidTexture(new Color32(2, 5, 10, 126));
+        topTintTexture = CreateSolidTexture(new Color32(8, 13, 22, 178));
+        bottomTintTexture = CreateSolidTexture(new Color32(4, 7, 12, 190));
+        shadowTexture = CreateSolidTexture(new Color32(0, 0, 0, 96));
 
         panelStyle = new GUIStyle(GUI.skin.box);
         panelStyle.normal.background = panelTexture;
@@ -125,23 +138,31 @@ public sealed class PrologueManager : MonoBehaviour
 
         float screenWidth = Screen.width;
         float screenHeight = Screen.height;
-        GUI.DrawTexture(new Rect(0f, 0f, screenWidth, screenHeight), backgroundTexture, ScaleMode.StretchToFill);
+        DrawSceneBackdrop(screenWidth, screenHeight);
 
-        float panelWidth = Mathf.Min(980f, screenWidth - 120f);
-        float panelHeight = Mathf.Min(560f, screenHeight - 120f);
-        Rect panelRect = new Rect((screenWidth - panelWidth) * 0.5f, (screenHeight - panelHeight) * 0.5f, panelWidth, panelHeight);
+        float leftMargin = Mathf.Clamp(screenWidth * 0.06f, 36f, 86f);
+        float panelWidth = Mathf.Min(760f, screenWidth - leftMargin * 2f);
+        if (screenWidth >= 1120f)
+        {
+            panelWidth = Mathf.Min(740f, screenWidth * 0.56f);
+        }
+
+        float panelHeight = Mathf.Min(520f, screenHeight - 112f);
+        Rect panelRect = new Rect(leftMargin, (screenHeight - panelHeight) * 0.5f, panelWidth, panelHeight);
 
         GUI.Box(panelRect, GUIContent.none, panelStyle);
-        GUI.DrawTexture(new Rect(panelRect.x, panelRect.y, panelRect.width, 4f), accentTexture, ScaleMode.StretchToFill);
+        GUI.DrawTexture(new Rect(panelRect.x, panelRect.y, panelRect.width, AccentLineHeight), accentTexture, ScaleMode.StretchToFill);
 
         Rect titleRect = new Rect(panelRect.x + 30f, panelRect.y + 26f, panelRect.width - 60f, 44f);
-        GUI.Label(titleRect, "Prologue: The First Breach", titleStyle);
+        GUI.Label(titleRect, "The First Breach", titleStyle);
 
         Rect chapterRect = new Rect(panelRect.x + 30f, panelRect.y + 76f, panelRect.width - 60f, 24f);
-        GUI.Label(chapterRect, $"Page {currentPage + 1}/{storyPages.Length}", hintStyle);
+        GUI.Label(chapterRect, $"Prologue {currentPage + 1}/{storyPages.Length}  /  Spellsmith briefing", hintStyle);
 
         Rect bodyRect = new Rect(panelRect.x + 30f, panelRect.y + 118f, panelRect.width - 60f, panelRect.height - 230f);
         GUI.Label(bodyRect, GetVisibleStoryText(), bodyStyle);
+
+        DrawMovingPlayer(screenWidth, screenHeight, panelRect);
 
         Rect hintRect = new Rect(panelRect.x + 30f, panelRect.yMax - 98f, panelRect.width - 60f, 26f);
         string hintText = currentPage >= storyPages.Length - 1
@@ -164,6 +185,51 @@ public sealed class PrologueManager : MonoBehaviour
         //GUI.Label(legendRect, "", hintStyle);
     }
 
+    private void DrawSceneBackdrop(float screenWidth, float screenHeight)
+    {
+        if (battleBackdropTexture != null)
+        {
+            GUI.DrawTexture(new Rect(0f, 0f, screenWidth, screenHeight), battleBackdropTexture, ScaleMode.ScaleAndCrop);
+        }
+        else
+        {
+            GUI.DrawTexture(new Rect(0f, 0f, screenWidth, screenHeight), backgroundTexture, ScaleMode.StretchToFill);
+        }
+
+        GUI.DrawTexture(new Rect(0f, 0f, screenWidth, screenHeight), backdropTintTexture, ScaleMode.StretchToFill);
+        GUI.DrawTexture(new Rect(0f, 0f, screenWidth, 110f), topTintTexture, ScaleMode.StretchToFill);
+        GUI.DrawTexture(new Rect(0f, screenHeight - 150f, screenWidth, 150f), bottomTintTexture, ScaleMode.StretchToFill);
+    }
+
+    private void DrawMovingPlayer(float screenWidth, float screenHeight, Rect storyPanelRect)
+    {
+        if (playerCharacterTexture == null)
+        {
+            return;
+        }
+
+        float figureWidth = Mathf.Clamp(screenWidth * 0.16f, 110f, 210f);
+        float figureHeight = figureWidth * 1.28f;
+        float walk = Mathf.Sin(Time.unscaledTime * 0.95f) * 24f;
+        float bob = Mathf.Sin(Time.unscaledTime * 3.4f) * 7f;
+        float rightMargin = Mathf.Clamp(screenWidth * 0.09f, 44f, 128f);
+        float groundY = screenHeight - Mathf.Clamp(screenHeight * 0.12f, 54f, 96f);
+        float x = screenWidth - figureWidth - rightMargin + walk;
+
+        if (x < storyPanelRect.xMax + 18f)
+        {
+            figureWidth = Mathf.Clamp(screenWidth * 0.12f, 82f, 130f);
+            figureHeight = figureWidth * 1.28f;
+            x = screenWidth - figureWidth - 24f + walk * 0.35f;
+            groundY = screenHeight - 44f;
+        }
+
+        Rect shadowRect = new Rect(x + figureWidth * 0.18f, groundY - 10f, figureWidth * 0.64f, 14f);
+        GUI.DrawTexture(shadowRect, shadowTexture, ScaleMode.StretchToFill);
+        Rect figureRect = new Rect(x, groundY - figureHeight + bob, figureWidth, figureHeight);
+        DrawTextureContain(figureRect, playerCharacterTexture);
+    }
+
     private string GetVisibleStoryText()
     {
         string fullText = storyPages[Mathf.Clamp(currentPage, 0, storyPages.Length - 1)];
@@ -177,5 +243,41 @@ public sealed class PrologueManager : MonoBehaviour
         texture.SetPixel(0, 0, color);
         texture.Apply();
         return texture;
+    }
+
+    private static void DisableLegacyCanvases()
+    {
+        Canvas[] canvases = Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+        for (int i = 0; i < canvases.Length; i++)
+        {
+            canvases[i].enabled = false;
+        }
+    }
+
+    private static void DrawTextureContain(Rect rect, Texture2D texture)
+    {
+        if (texture == null)
+        {
+            return;
+        }
+
+        float textureAspect = texture.width / (float)texture.height;
+        float rectAspect = rect.width / rect.height;
+        Rect drawRect = rect;
+
+        if (textureAspect > rectAspect)
+        {
+            float height = rect.width / textureAspect;
+            drawRect.y += (rect.height - height) * 0.5f;
+            drawRect.height = height;
+        }
+        else
+        {
+            float width = rect.height * textureAspect;
+            drawRect.x += (rect.width - width) * 0.5f;
+            drawRect.width = width;
+        }
+
+        GUI.DrawTexture(drawRect, texture, ScaleMode.StretchToFill, true);
     }
 }

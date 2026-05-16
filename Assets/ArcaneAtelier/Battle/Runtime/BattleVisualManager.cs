@@ -16,6 +16,9 @@ namespace ArcaneAtelier.Battle
         [SerializeField] private BattleUnitVisual playerVisual;
         [SerializeField] private BattleUnitVisual bossVisual;
         [SerializeField] private SpriteRenderer backgroundRenderer;
+        [SerializeField] private SpriteRenderer playerShadowRenderer;
+        [SerializeField] private SpriteRenderer bossShadowRenderer;
+        [SerializeField] private SpriteRenderer centerRuneRenderer;
         [SerializeField] private BattleEffectAnchor playerAnchor;
         [SerializeField] private BattleEffectAnchor bossAnchor;
 
@@ -39,6 +42,9 @@ namespace ArcaneAtelier.Battle
         private bool isShaking;
         private BattleSimulation subscribedSimulation;
         private BattlePresentationProfile activePresentationProfile;
+        private Sprite playerShadowSprite;
+        private Sprite bossShadowSprite;
+        private Sprite centerRuneSprite;
 
         public Camera BattleCamera => battleCamera;
         public BattleUnitVisual PlayerVisual => playerVisual;
@@ -61,6 +67,7 @@ namespace ArcaneAtelier.Battle
             EnsureBackground();
             EnsurePlayerVisual();
             EnsureBossVisual();
+            EnsureStageMarks();
             EnsureAnchors();
 
             subscribedSimulation = simulation;
@@ -207,6 +214,90 @@ namespace ArcaneAtelier.Battle
             return anchor;
         }
 
+        private void EnsureStageMarks()
+        {
+            if (playerVisual == null || bossVisual == null)
+            {
+                return;
+            }
+
+            playerShadowRenderer = EnsureStageSprite(
+                "Player Grounding Shadow",
+                playerShadowRenderer,
+                ResolvePlayerShadowSprite(),
+                playerVisual.transform.position + new Vector3(0f, -0.72f, 0.02f),
+                new Vector3(1.65f, 0.5f, 1f),
+                -12);
+
+            bossShadowRenderer = EnsureStageSprite(
+                "Enemy Grounding Shadow",
+                bossShadowRenderer,
+                ResolveBossShadowSprite(),
+                bossVisual.transform.position + new Vector3(0f, -0.84f, 0.02f),
+                new Vector3(2.15f, 0.54f, 1f),
+                -12);
+
+            centerRuneRenderer = EnsureStageSprite(
+                "Battle Center Rune",
+                centerRuneRenderer,
+                ResolveCenterRuneSprite(),
+                new Vector3(0f, -1.34f, 0.04f),
+                new Vector3(1.55f, 0.36f, 1f),
+                -13);
+        }
+
+        private Sprite ResolvePlayerShadowSprite()
+        {
+            if (playerShadowSprite == null)
+            {
+                playerShadowSprite = CreateEllipseSprite(new Color(0f, 0f, 0f, 0.42f), 96, 32, "PlayerShadow");
+            }
+
+            return playerShadowSprite;
+        }
+
+        private Sprite ResolveBossShadowSprite()
+        {
+            if (bossShadowSprite == null)
+            {
+                bossShadowSprite = CreateEllipseSprite(new Color(0f, 0f, 0f, 0.48f), 128, 36, "EnemyShadow");
+            }
+
+            return bossShadowSprite;
+        }
+
+        private Sprite ResolveCenterRuneSprite()
+        {
+            if (centerRuneSprite == null)
+            {
+                centerRuneSprite = CreateEllipseSprite(new Color(0.95f, 0.72f, 0.28f, 0.18f), 160, 42, "BattleCenterRune");
+            }
+
+            return centerRuneSprite;
+        }
+
+        private static SpriteRenderer EnsureStageSprite(
+            string objectName,
+            SpriteRenderer existingRenderer,
+            Sprite sprite,
+            Vector3 position,
+            Vector3 scale,
+            int sortingOrder)
+        {
+            SpriteRenderer renderer = existingRenderer;
+            if (renderer == null)
+            {
+                GameObject stageObject = new GameObject(objectName);
+                renderer = stageObject.AddComponent<SpriteRenderer>();
+            }
+
+            renderer.sprite = sprite;
+            renderer.transform.position = position;
+            renderer.transform.localScale = scale;
+            renderer.sortingOrder = sortingOrder;
+            return renderer;
+        }
+
         private Sprite ResolveBossSprite()
         {
             if (activePresentationProfile != null && activePresentationProfile.BossSprite != null)
@@ -275,6 +366,34 @@ namespace ArcaneAtelier.Battle
             {
                 pixels[i] = color;
             }
+            texture.SetPixels(pixels);
+            texture.Apply();
+
+            Sprite sprite = Sprite.Create(texture, new Rect(0, 0, width, height), new Vector2(0.5f, 0.5f), 100f);
+            sprite.name = name;
+            return sprite;
+        }
+
+        private static Sprite CreateEllipseSprite(Color color, int width, int height, string name)
+        {
+            Texture2D texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            Color[] pixels = new Color[width * height];
+            float radiusX = width * 0.5f;
+            float radiusY = height * 0.5f;
+            Vector2 center = new Vector2(radiusX, radiusY);
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    float normalizedX = (x - center.x) / radiusX;
+                    float normalizedY = (y - center.y) / radiusY;
+                    float distance = normalizedX * normalizedX + normalizedY * normalizedY;
+                    float alpha = Mathf.Clamp01(1f - Mathf.InverseLerp(0.55f, 1f, distance)) * color.a;
+                    pixels[y * width + x] = new Color(color.r, color.g, color.b, alpha);
+                }
+            }
+
             texture.SetPixels(pixels);
             texture.Apply();
 

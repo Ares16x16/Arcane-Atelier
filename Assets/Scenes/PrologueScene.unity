@@ -203,7 +203,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 410986843}
-        m_TargetAssemblyTypeName: Prologuemanager, Assembly-CSharp
+        m_TargetAssemblyTypeName: PrologueManager, Assembly-CSharp
         m_MethodName: EnterWorkshop
         m_Mode: 1
         m_Arguments:
@@ -280,7 +280,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a35d3797f517bc149b092ec46290b5b3, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Prologuemanager
+  m_EditorClassIdentifier: Assembly-CSharp::PrologueManager
+  playerCharacterTexture: {fileID: 2800000, guid: 79b9be081114e4159acf5867465f4072, type: 3}
+  battleBackdropTexture: {fileID: 2800000, guid: 5d55a050a53a8408a899145e2542bbd0, type: 3}
 --- !u!4 &410986844
 Transform:
   m_ObjectHideFlags: 0
