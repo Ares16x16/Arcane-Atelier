@@ -19,6 +19,9 @@ namespace ArcaneAtelier.Workshop
         [SerializeField, Min(0f)] private float cameraBoundsPadding = 4f;
         [SerializeField, Min(0f)] private float dragPixelThreshold = 5f;
 
+        private const float BodySpriteTargetScale = 0.76f;
+        private const float ActivityZoomBoostStart = 6f;
+
         private readonly Dictionary<Vector2Int, SpriteRenderer> cellRenderers = new Dictionary<Vector2Int, SpriteRenderer>();
         private readonly Dictionary<Vector2Int, NodeVisual> nodeVisuals = new Dictionary<Vector2Int, NodeVisual>();
 
@@ -41,8 +44,14 @@ namespace ArcaneAtelier.Workshop
             public GameObject Root;
             public Transform VisualRoot;  // parent for Body/Frame/Shadow — gets rotation
             public SpriteRenderer Shadow;
+            public SpriteRenderer Aura;
+            public SpriteRenderer BreathRing;
             public SpriteRenderer Frame;
             public SpriteRenderer Body;
+            public SpriteRenderer CoreGlow;
+            public SpriteRenderer FlowComet;
+            public List<SpriteRenderer> EdgeGlows = new List<SpriteRenderer>();
+            public List<SpriteRenderer> OutputBeams = new List<SpriteRenderer>();
             public List<SpriteRenderer> PortMarkers = new List<SpriteRenderer>();
         }
 
@@ -96,6 +105,8 @@ namespace ArcaneAtelier.Workshop
             {
                 controller.RotatePlacedNode(controller.SelectedCell);
             }
+
+            UpdateAnimatedNodeEffects(simulation);
         }
 
         private void LateUpdate()
@@ -452,12 +463,31 @@ namespace ArcaneAtelier.Workshop
                 Root = root,
                 VisualRoot = visualGroup.transform,
                 Shadow = CreateVisualLayer(visualGroup.transform, "Shadow", new Vector3(0.05f, -0.06f, 0f), Vector3.one * 0.92f, new Color(0f, 0f, 0f, 0.35f), 1),
-                Frame = CreateVisualLayer(visualGroup.transform, "Frame", Vector3.zero, Vector3.one * 0.88f, new Color(0.24f, 0.21f, 0.18f), 2),
-                Body = CreateVisualLayer(visualGroup.transform, "Body", Vector3.zero, Vector3.one * 0.76f, Color.white, 3)
+                Aura = CreateVisualLayer(root.transform, "Activity Aura", Vector3.zero, Vector3.one * 1.08f, new Color(0.35f, 0.85f, 1f, 0f), 2),
+                BreathRing = CreateVisualLayer(root.transform, "Neon Breath Ring", Vector3.zero, Vector3.one * 1.18f, new Color(0.35f, 0.85f, 1f, 0f), 2),
+                Frame = CreateVisualLayer(visualGroup.transform, "Frame", Vector3.zero, Vector3.one * 0.88f, new Color(0.24f, 0.21f, 0.18f), 3),
+                Body = CreateVisualLayer(visualGroup.transform, "Body", Vector3.zero, Vector3.one * BodySpriteTargetScale, Color.white, 4),
+                CoreGlow = CreateVisualLayer(root.transform, "Activity Core Glow", Vector3.zero, Vector3.one * 0.78f, new Color(0.35f, 0.85f, 1f, 0f), 5),
+                FlowComet = CreateVisualLayer(root.transform, "Activity Flow Comet", Vector3.zero, Vector3.one * 0.14f, Color.white, 8)
             };
+
+            CreateActivityEdge(visual, "North Edge Glow", new Vector3(0f, 0.47f, 0f), new Vector3(0.9f, 0.055f, 1f));
+            CreateActivityEdge(visual, "East Edge Glow", new Vector3(0.47f, 0f, 0f), new Vector3(0.055f, 0.9f, 1f));
+            CreateActivityEdge(visual, "South Edge Glow", new Vector3(0f, -0.47f, 0f), new Vector3(0.9f, 0.055f, 1f));
+            CreateActivityEdge(visual, "West Edge Glow", new Vector3(-0.47f, 0f, 0f), new Vector3(0.055f, 0.9f, 1f));
 
             foreach (var direction in WorkshopDirectionUtility.CardinalDirections)
             {
+                var beamGo = new GameObject($"{direction} Flow Beam");
+                beamGo.transform.SetParent(root.transform, false);
+                beamGo.transform.localPosition = Vector3.zero;
+                beamGo.transform.localScale = Vector3.one * 0.2f;
+
+                var beamRenderer = beamGo.AddComponent<SpriteRenderer>();
+                beamRenderer.sprite = sharedSprite;
+                beamRenderer.sortingOrder = 7;
+                visual.OutputBeams.Add(beamRenderer);
+
                 var portGo = new GameObject(direction.ToString());
                 portGo.transform.SetParent(root.transform, false);
                 var offset = WorkshopDirectionUtility.ToOffset(direction);
@@ -466,10 +496,11 @@ namespace ArcaneAtelier.Workshop
 
                 var portRenderer = portGo.AddComponent<SpriteRenderer>();
                 portRenderer.sprite = sharedSprite;
-                portRenderer.sortingOrder = 5;
+                portRenderer.sortingOrder = 9;
                 visual.PortMarkers.Add(portRenderer);
             }
 
+            SetActivityRenderersEnabled(visual, false);
             return visual;
         }
 
@@ -477,12 +508,11 @@ namespace ArcaneAtelier.Workshop
         {
             visual.Root.transform.position = CellToWorld(state.Position);
             visual.VisualRoot.localRotation = Quaternion.Euler(0, 0, -90f * state.RotationQuarterTurns);
-            var pulseScale = state.IsRecentlyActive ? 0.94f + Mathf.PingPong(Time.time * 1.8f, 0.05f) : 0.94f;
             var nodeSprite = ResolveNodeSprite(state.Definition);
             var nodeTint = ResolveNodeSpriteTint(state.Definition);
             if (nodeSprite != null)
             {
-                var spriteScale = CalculateSpriteFitScale(nodeSprite, 0.76f * pulseScale);
+                var spriteScale = CalculateSpriteFitScale(nodeSprite, BodySpriteTargetScale);
                 var spriteDirection = WorkshopNodeVariantUtility.ShouldMirrorSprite(state.Definition.Id) ? -1f : 1f;
                 visual.Body.sprite = nodeSprite;
                 visual.Body.color = nodeTint;
@@ -490,7 +520,7 @@ namespace ArcaneAtelier.Workshop
             }
             else
             {
-                var fallbackScale = 0.76f * pulseScale;
+                var fallbackScale = BodySpriteTargetScale;
                 var spriteDirection = WorkshopNodeVariantUtility.ShouldMirrorSprite(state.Definition.Id) ? -1f : 1f;
                 visual.Body.sprite = sharedSprite;
                 visual.Body.color = state.Definition.Tint;
@@ -518,6 +548,198 @@ namespace ArcaneAtelier.Workshop
                         ? new Color(0.36f, 0.78f, 0.95f, 1f)
                         : new Color(0.82f, 0.9f, 1f, 0.28f);
             }
+
+            UpdateNodeEnergyVisual(cell, visual, state);
+        }
+
+        private void UpdateAnimatedNodeEffects(WorkshopSimulation simulation)
+        {
+            if (simulation == null)
+            {
+                return;
+            }
+
+            foreach (var pair in nodeVisuals)
+            {
+                if (!simulation.Nodes.TryGetValue(pair.Key, out WorkshopNodeState state))
+                {
+                    continue;
+                }
+
+                UpdateNodeEnergyVisual(pair.Key, pair.Value, state);
+            }
+        }
+
+        private void CreateActivityEdge(NodeVisual visual, string objectName, Vector3 localPosition, Vector3 localScale)
+        {
+            var edge = CreateVisualLayer(visual.Root.transform, objectName, localPosition, localScale, new Color(0.35f, 0.85f, 1f, 0f), 6);
+            visual.EdgeGlows.Add(edge);
+        }
+
+        private void UpdateNodeEnergyVisual(Vector2Int cell, NodeVisual visual, WorkshopNodeState state)
+        {
+            if (visual == null || state == null)
+            {
+                return;
+            }
+
+            var isActive = state.IsRecentlyActive;
+            SetActivityRenderersEnabled(visual, isActive);
+            if (!isActive)
+            {
+                return;
+            }
+
+            var accent = ResolveActivityColor(state.Definition);
+            var whiteHot = Color.Lerp(accent, Color.white, 0.35f);
+            var zoomT = cachedCamera == null
+                ? 0f
+                : Mathf.InverseLerp(ActivityZoomBoostStart, maxZoom, targetOrthographicSize);
+            var activitySeed = cell.x * 0.73f + cell.y * 0.41f;
+            var breathPhase = Mathf.Repeat(Time.time * 0.68f + activitySeed * 0.07f, 1f);
+            var inhale = breathPhase < 0.72f
+                ? Mathf.SmoothStep(0f, 1f, breathPhase / 0.72f)
+                : 1f - Mathf.SmoothStep(0f, 1f, (breathPhase - 0.72f) / 0.28f);
+            var exhale = breathPhase < 0.72f
+                ? 0f
+                : Mathf.SmoothStep(0f, 1f, (breathPhase - 0.72f) / 0.28f);
+            var breathEnergy = Mathf.Clamp01(0.42f + inhale * 0.38f + exhale * 0.42f);
+            var shimmer = 0.7f + Mathf.Sin(Time.time * 5.4f + activitySeed) * 0.16f;
+            var inhaleScale = Mathf.Lerp(1.24f, 1.04f, inhale);
+            var exhaleScale = Mathf.Lerp(inhaleScale, 1.34f, exhale);
+            var auraScale = Mathf.Lerp(exhaleScale, exhaleScale + 0.16f, zoomT);
+            var ringScale = Mathf.Lerp(0.9f, Mathf.Lerp(1.34f, 1.54f, zoomT), exhale);
+
+            visual.BreathRing.transform.localScale = Vector3.one * ringScale;
+            visual.BreathRing.color = WithAlpha(whiteHot, Mathf.Lerp(0.02f, 0.28f, exhale) * (1f - inhale * 0.35f));
+            visual.Aura.transform.localScale = Vector3.one * auraScale;
+            visual.Aura.color = WithAlpha(accent, Mathf.Lerp(0.12f, 0.25f, zoomT) * shimmer * breathEnergy);
+            visual.CoreGlow.transform.localScale = Vector3.one * Mathf.Lerp(Mathf.Lerp(0.66f, 0.84f, inhale), 0.96f, exhale * 0.5f + zoomT * 0.25f);
+            visual.CoreGlow.color = WithAlpha(whiteHot, Mathf.Lerp(0.08f, 0.2f, zoomT) * shimmer * breathEnergy);
+
+            var edgeLength = Mathf.Lerp(0.9f, 1.05f, zoomT);
+            var edgeThickness = Mathf.Lerp(0.052f, 0.09f, zoomT) * Mathf.Lerp(0.86f, 1.28f, breathEnergy);
+            UpdateEdgeGlow(visual.EdgeGlows[0], new Vector3(0f, 0.47f, 0f), new Vector3(edgeLength, edgeThickness, 1f), accent, 0, activitySeed, zoomT, breathEnergy);
+            UpdateEdgeGlow(visual.EdgeGlows[1], new Vector3(0.47f, 0f, 0f), new Vector3(edgeThickness, edgeLength, 1f), accent, 1, activitySeed, zoomT, breathEnergy);
+            UpdateEdgeGlow(visual.EdgeGlows[2], new Vector3(0f, -0.47f, 0f), new Vector3(edgeLength, edgeThickness, 1f), accent, 2, activitySeed, zoomT, breathEnergy);
+            UpdateEdgeGlow(visual.EdgeGlows[3], new Vector3(-0.47f, 0f, 0f), new Vector3(edgeThickness, edgeLength, 1f), accent, 3, activitySeed, zoomT, breathEnergy);
+
+            var pathProgress = Mathf.Repeat(Time.time * 1.15f + activitySeed * 0.08f, 1f);
+            visual.FlowComet.transform.localPosition = EvaluatePerimeterPosition(pathProgress, Mathf.Lerp(0.48f, 0.54f, zoomT));
+            visual.FlowComet.transform.localScale = Vector3.one * Mathf.Lerp(0.14f, 0.22f, zoomT);
+            visual.FlowComet.transform.localRotation = Quaternion.Euler(0f, 0f, 45f + Time.time * 210f);
+            visual.FlowComet.color = WithAlpha(whiteHot, Mathf.Lerp(0.8f, 1f, zoomT));
+
+            for (var index = 0; index < WorkshopDirectionUtility.CardinalDirections.Count; index++)
+            {
+                var direction = WorkshopDirectionUtility.CardinalDirections[index];
+                var beam = visual.OutputBeams[index];
+                var outputActive = (state.RotatedOutputPorts & direction) != 0;
+                beam.enabled = outputActive;
+                if (!outputActive)
+                {
+                    continue;
+                }
+
+                UpdateOutputBeam(beam, direction, accent, index, activitySeed, zoomT, breathEnergy);
+            }
+        }
+
+        private static void UpdateEdgeGlow(SpriteRenderer renderer, Vector3 position, Vector3 scale, Color accent, int index, float seed, float zoomT, float breathEnergy)
+        {
+            var edgePulse = 0.68f + Mathf.Sin(Time.time * 3.6f + seed + index * 0.9f) * 0.24f;
+            renderer.transform.localPosition = position;
+            renderer.transform.localScale = scale;
+            renderer.color = WithAlpha(accent, Mathf.Lerp(0.42f, 0.86f, zoomT) * edgePulse * Mathf.Lerp(0.78f, 1.18f, breathEnergy));
+        }
+
+        private static void UpdateOutputBeam(SpriteRenderer renderer, NodePortMask direction, Color accent, int index, float seed, float zoomT, float breathEnergy)
+        {
+            var travel = Mathf.Repeat(Time.time * 1.85f + index * 0.2f + seed * 0.05f, 1f);
+            var pulse = Mathf.Sin(travel * Mathf.PI);
+            var offset = WorkshopDirectionUtility.ToOffset(direction);
+            var centerDistance = Mathf.Lerp(0.17f, 0.42f, travel);
+            renderer.transform.localPosition = new Vector3(offset.x, offset.y, 0f) * centerDistance;
+
+            var length = Mathf.Lerp(0.22f, 0.36f, zoomT);
+            var thickness = Mathf.Lerp(0.052f, 0.085f, zoomT);
+            renderer.transform.localScale = direction == NodePortMask.East || direction == NodePortMask.West
+                ? new Vector3(length, thickness, 1f)
+                : new Vector3(thickness, length, 1f);
+            renderer.color = WithAlpha(Color.Lerp(accent, Color.white, 0.22f), Mathf.Lerp(0.3f, 0.74f, zoomT) * pulse * Mathf.Lerp(0.82f, 1.2f, breathEnergy));
+        }
+
+        private static Vector3 EvaluatePerimeterPosition(float normalizedPath, float radius)
+        {
+            var segment = Mathf.Repeat(normalizedPath, 1f) * 4f;
+            if (segment < 1f)
+            {
+                return new Vector3(Mathf.Lerp(-radius, radius, segment), radius, 0f);
+            }
+
+            if (segment < 2f)
+            {
+                return new Vector3(radius, Mathf.Lerp(radius, -radius, segment - 1f), 0f);
+            }
+
+            if (segment < 3f)
+            {
+                return new Vector3(Mathf.Lerp(radius, -radius, segment - 2f), -radius, 0f);
+            }
+
+            return new Vector3(-radius, Mathf.Lerp(-radius, radius, segment - 3f), 0f);
+        }
+
+        private static void SetActivityRenderersEnabled(NodeVisual visual, bool enabled)
+        {
+            visual.Aura.enabled = enabled;
+            visual.BreathRing.enabled = enabled;
+            visual.CoreGlow.enabled = enabled;
+            visual.FlowComet.enabled = enabled;
+
+            foreach (SpriteRenderer renderer in visual.EdgeGlows)
+            {
+                renderer.enabled = enabled;
+            }
+
+            foreach (SpriteRenderer renderer in visual.OutputBeams)
+            {
+                renderer.enabled = false;
+            }
+        }
+
+        private static Color ResolveActivityColor(WorkshopNodeDefinition definition)
+        {
+            if (definition == null)
+            {
+                return new Color(0.43f, 0.87f, 1f);
+            }
+
+            Color categoryColor = definition.Category switch
+            {
+                WorkshopNodeCategory.Source => new Color(1f, 0.48f, 0.28f),
+                WorkshopNodeCategory.Processor => new Color(0.78f, 0.52f, 1f),
+                WorkshopNodeCategory.Crafter => new Color(0.29f, 0.86f, 1f),
+                WorkshopNodeCategory.Storage => new Color(0.9f, 0.76f, 0.42f),
+                _ => new Color(0.43f, 0.87f, 1f)
+            };
+
+            Color tint = definition.Tint;
+            Color color = Color.Lerp(categoryColor, tint, 0.45f);
+            var strongestChannel = Mathf.Max(color.r, Mathf.Max(color.g, color.b));
+            if (strongestChannel > 0.001f)
+            {
+                color = new Color(color.r / strongestChannel, color.g / strongestChannel, color.b / strongestChannel, color.a);
+            }
+
+            color.a = 1f;
+            return color;
+        }
+
+        private static Color WithAlpha(Color color, float alpha)
+        {
+            color.a = Mathf.Clamp01(alpha);
+            return color;
         }
 
         private static Sprite ResolveNodeSprite(WorkshopNodeDefinition definition)
