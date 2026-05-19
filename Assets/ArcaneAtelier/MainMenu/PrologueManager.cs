@@ -59,11 +59,13 @@ public sealed class PrologueManager : MonoBehaviour
 
     public void EnterWorkshop()
     {
+        AudioManager.PlaySFX(SFXType.ButtonClick);
         SceneManager.LoadScene(WorkshopSceneName);
     }
 
     public void ReturnToMenu()
     {
+        AudioManager.PlaySFX(SFXType.ButtonClick);
         SceneManager.LoadScene(MainMenuSceneName);
     }
 
@@ -77,6 +79,7 @@ public sealed class PrologueManager : MonoBehaviour
 
         currentPage += 1;
         pageStartTime = Time.unscaledTime;
+        AudioManager.PlaySFX(SFXType.ButtonClick);
     }
 
     private void EnsureStyles()
@@ -173,12 +176,17 @@ public sealed class PrologueManager : MonoBehaviour
         GUI.Label(hintRect, hintText, hintStyle);
 
         float buttonY = panelRect.yMax - 58f;
-        if (GUI.Button(new Rect(panelRect.x + 30f, buttonY, 220f, 38f), currentPage >= storyPages.Length - 1 ? "Enter Workshop" : "Continue", primaryButtonStyle))
+        Rect primaryButtonRect = new Rect(panelRect.x + 30f, buttonY, 220f, 38f);
+        Rect secondaryButtonRect = new Rect(panelRect.x + 266f, buttonY, 170f, 38f);
+
+        ReportHover(primaryButtonRect, "advance");
+        if (GUI.Button(primaryButtonRect, currentPage >= storyPages.Length - 1 ? "Enter Workshop" : "Continue", primaryButtonStyle))
         {
             AdvanceOrEnterWorkshop();
         }
 
-        if (GUI.Button(new Rect(panelRect.x + 266f, buttonY, 170f, 38f), "Back To Menu", secondaryButtonStyle))
+        ReportHover(secondaryButtonRect, "back_to_menu");
+        if (GUI.Button(secondaryButtonRect, "Back To Menu", secondaryButtonStyle))
         {
             ReturnToMenu();
         }
@@ -281,5 +289,16 @@ public sealed class PrologueManager : MonoBehaviour
         }
 
         GUI.DrawTexture(drawRect, texture, ScaleMode.StretchToFill, true);
+    }
+
+    private static void ReportHover(Rect rect, string controlId)
+    {
+        Event current = Event.current;
+        if (current == null || !rect.Contains(current.mousePosition))
+        {
+            return;
+        }
+
+        AudioManager.ReportUIHover($"prologue:{controlId}");
     }
 }

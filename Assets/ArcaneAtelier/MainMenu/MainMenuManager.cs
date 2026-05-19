@@ -69,6 +69,7 @@ public sealed class MainMenuManager : MonoBehaviour
 
     public void QuitGame()
     {
+        AudioManager.PlaySFX(SFXType.ButtonClick);
         Debug.Log("Exiting Game...");
         Application.Quit();
     }
@@ -166,13 +167,17 @@ public sealed class MainMenuManager : MonoBehaviour
         float buttonWidth = panelRect.width - 52f;
         float buttonX = panelRect.x + 26f;
         float firstButtonY = panelRect.y + 56f;
+        Rect startButtonRect = new Rect(buttonX, firstButtonY, buttonWidth, 48f);
+        Rect quitButtonRect = new Rect(buttonX, firstButtonY + 62f, buttonWidth, 42f);
 
-        if (GUI.Button(new Rect(buttonX, firstButtonY, buttonWidth, 48f), "Start Run", buttonStyle))
+        ReportHover(startButtonRect, "start_run");
+        if (GUI.Button(startButtonRect, "Start Run", buttonStyle))
         {
             StartGame();
         }
 
-        if (GUI.Button(new Rect(buttonX, firstButtonY + 62f, buttonWidth, 42f), "Quit", secondaryButtonStyle))
+        ReportHover(quitButtonRect, "quit");
+        if (GUI.Button(quitButtonRect, "Quit", secondaryButtonStyle))
         {
             QuitGame();
         }
@@ -291,5 +296,16 @@ public sealed class MainMenuManager : MonoBehaviour
         GUI.color = new Color(1f, 1f, 1f, alpha);
         GUI.DrawTexture(drawRect, texture, ScaleMode.StretchToFill, true);
         GUI.color = previous;
+    }
+
+    private static void ReportHover(Rect rect, string controlId)
+    {
+        Event current = Event.current;
+        if (current == null || !rect.Contains(current.mousePosition))
+        {
+            return;
+        }
+
+        AudioManager.ReportUIHover($"main_menu:{controlId}");
     }
 }

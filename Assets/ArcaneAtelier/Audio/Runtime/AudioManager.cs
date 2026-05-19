@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -63,6 +64,7 @@ namespace ArcaneAtelier.Audio
         // Runtime cache — clips loaded on first use, never reloaded
         private readonly Dictionary<MusicTrack, AudioClip> musicCache = new();
         private readonly Dictionary<SFXType, AudioClip> sfxCache = new();
+        private readonly HashSet<string> missingClipWarnings = new();
 
         [Header("Settings")]
         [SerializeField] private float musicVolume = DefaultMusicVolume;
@@ -73,6 +75,8 @@ namespace ArcaneAtelier.Audio
         private AudioSource sfxSource;
         private Coroutine fadeCoroutine;
         private MusicTrack currentTrack = MusicTrack.None;
+        private string lastHoveredUiControlId;
+        private int lastHoveredUiFrame = -1;
 
         private static AudioManager instance;
 
@@ -109,11 +113,18 @@ namespace ArcaneAtelier.Audio
             musicSource.loop = true;
             musicSource.playOnAwake = false;
             musicSource.volume = 0f;
+            musicSource.spatialBlend = 0f;
+            musicSource.dopplerLevel = 0f;
+            musicSource.bypassReverbZones = true;
+            musicSource.priority = 0;
 
             sfxSource = gameObject.AddComponent<AudioSource>();
             sfxSource.loop = false;
             sfxSource.playOnAwake = false;
             sfxSource.volume = sfxVolume;
+            sfxSource.spatialBlend = 0f;
+            sfxSource.dopplerLevel = 0f;
+            sfxSource.bypassReverbZones = true;
         }
 
         // ----------------------------------------------------------------
@@ -151,6 +162,28 @@ namespace ArcaneAtelier.Audio
             var clip = Instance.GetSFXClip(type);
             if (clip == null) return;
             Instance.sfxSource.PlayOneShot(clip, Instance.sfxVolume);
+        }
+
+        public static void ReportUIHover(string controlId)
+        {
+            if (string.IsNullOrWhiteSpace(controlId))
+            {
+                return;
+            }
+
+            int frame = Time.frameCount;
+            if (frame > Instance.lastHoveredUiFrame + 1)
+            {
+                Instance.lastHoveredUiControlId = null;
+            }
+
+            if (!string.Equals(Instance.lastHoveredUiControlId, controlId, StringComparison.Ordinal))
+            {
+                PlaySFX(SFXType.ButtonHover);
+                Instance.lastHoveredUiControlId = controlId;
+            }
+
+            Instance.lastHoveredUiFrame = frame;
         }
 
         public static void SetSFXVolume(float volume)
@@ -197,9 +230,55 @@ namespace ArcaneAtelier.Audio
             if (!SFXFiles.TryGetValue(type, out var filename)) return null;
             var clip = Resources.Load<AudioClip>(filename);
             if (clip == null)
-                Debug.LogWarning($"[AudioManager] SFX clip not found in Resources: '{filename}'");
+            {
+                WarnMissingClipOnce($"sfx:{filename}", $"[AudioManager] SFX clip not found in Resources: '{filename}'. Using synthesized fallback.");
+                clip = CreateFallbackSFXClip(type);
+            }
 
             sfxCache[type] = clip;
+            return clip;
+        }
+
+        private void WarnMissingClipOnce(string key, string message)
+        {
+            if (!missingClipWarnings.Add(key))
+            {
+                return;
+            }
+
+            Debug.LogWarning(message);
+        }
+
+        private AudioClip CreateFallbackSFXClip(SFXType type)
+        {
+            return type switch
+            {
+                SFXType.ButtonHover => CreateToneClip("fallback_sfx_button_hover", 880f, 0.03f, 0.05f, 0.16f),
+                SFXType.ButtonClick => CreateToneClip("fallback_sfx_button_click", 620f, 0.05f, 0.12f, 0.24f),
+                SFXType.ErrorBuzz => CreateToneClip("fallback_sfx_error", 180f, 0.09f, 0.18f, 0.22f),
+                SFXType.HealRestore => CreateToneClip("fallback_sfx_heal", 760f, 0.12f, 0.07f, 0.22f),
+                SFXType.EndTurnConfirm => CreateToneClip("fallback_sfx_end_turn", 540f, 0.08f, 0.11f, 0.2f),
+                _ => CreateToneClip($"fallback_{type}", 420f, 0.06f, 0.14f, 0.18f)
+            };
+        }
+
+        private static AudioClip CreateToneClip(string clipName, float frequency, float durationSeconds, float decay, float amplitude)
+        {
+            const int sampleRate = 44100;
+            int sampleCount = Mathf.Max(1, Mathf.CeilToInt(sampleRate * durationSeconds));
+            float[] samples = new float[sampleCount];
+
+            for (int i = 0; i < sampleCount; i++)
+            {
+                float t = i / (float)sampleRate;
+                float envelope = Mathf.Exp(-t / Mathf.Max(0.001f, decay));
+                float harmonic = Mathf.Sin(2f * Mathf.PI * frequency * t);
+                float overtone = Mathf.Sin(2f * Mathf.PI * frequency * 2.05f * t) * 0.35f;
+                samples[i] = (harmonic + overtone) * envelope * amplitude;
+            }
+
+            AudioClip clip = AudioClip.Create(clipName, sampleCount, 1, sampleRate, false);
+            clip.SetData(samples, 0);
             return clip;
         }
 

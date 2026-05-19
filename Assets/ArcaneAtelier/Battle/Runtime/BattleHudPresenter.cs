@@ -1,3 +1,4 @@
+using ArcaneAtelier.Audio;
 using ArcaneAtelier.Workshop;
 using UnityEngine;
 
@@ -285,13 +286,10 @@ namespace ArcaneAtelier.Battle
             DrawActionPoints(new Rect(rect.x + 28f, rect.y + 108f, rect.width - 56f, 20f));
 
             bool canEnd = controller.CanEndTurn;
-            bool previousEnabled = GUI.enabled;
-            GUI.enabled = canEnd;
-            if (GUI.Button(new Rect(rect.x + rect.width * 0.5f - 82f, rect.y + 136f, 164f, 24f), "End Turn", GUI.skin.button))
+            if (DrawThemedButton(new Rect(rect.x + rect.width * 0.5f - 82f, rect.y + 136f, 164f, 24f), "End Turn", ApAccent, "end_turn", canEnd))
             {
                 controller.EndTurnFromHud();
             }
-            GUI.enabled = previousEnabled;
 
             if (bossTurnPending)
             {
@@ -348,13 +346,19 @@ namespace ArcaneAtelier.Battle
             bool isPressed = pressedCardIndex == index;
             bool isHover = rect.Contains(currentEvent.mousePosition);
             bool canAfford = controller.CanPlayCard(index);
+            bool canInteract = controller.IsPlayerInputAllowed && canAfford;
+
+            if (isHover && canInteract)
+            {
+                AudioManager.ReportUIHover($"battle:card:{card.CardId}:{index}");
+            }
 
             if (currentEvent.type == EventType.MouseDown &&
                 currentEvent.button == 0 &&
                 rect.Contains(currentEvent.mousePosition) &&
-                controller.IsPlayerInputAllowed &&
-                canAfford)
+                canInteract)
             {
+                AudioManager.PlaySFX(SFXType.ButtonClick);
                 pressedCardIndex = index;
                 pressMousePosition = currentEvent.mousePosition;
                 dragMousePosition = currentEvent.mousePosition;
@@ -509,7 +513,7 @@ namespace ArcaneAtelier.Battle
 
             if (isDefeat || isFinalVictory)
             {
-                if (GUI.Button(new Rect(animatedRect.width - 176f, animatedRect.height - 54f, 148f, 30f), "Main Menu", GUI.skin.button))
+                if (DrawThemedButton(new Rect(animatedRect.width - 176f, animatedRect.height - 54f, 148f, 30f), "Main Menu", accent, "result_main_menu", true))
                 {
                     controller.ReturnToMainMenu();
                 }
@@ -517,7 +521,7 @@ namespace ArcaneAtelier.Battle
 
             else
             {
-                if (GUI.Button(new Rect(animatedRect.width - 176f, animatedRect.height - 54f, 148f, 30f), "To Workshop", GUI.skin.button))
+                if (DrawThemedButton(new Rect(animatedRect.width - 176f, animatedRect.height - 54f, 148f, 30f), "To Workshop", accent, "result_to_workshop", true))
                 {
                     controller.ReturnToWorkshop(); // We will add this method to the controller
                 }
@@ -992,6 +996,46 @@ namespace ArcaneAtelier.Battle
             DrawOutline(rect, new Color(accent.r, accent.g, accent.b, 0.7f));
             DrawRect(new Rect(rect.x, rect.y, rect.width, 3f), accent);
             DrawRect(new Rect(rect.x + 6f, rect.y + 6f, rect.width - 12f, rect.height - 12f), new Color(1f, 1f, 1f, 0.012f));
+        }
+
+        private bool DrawThemedButton(Rect rect, string label, Color accent, string interactionId, bool enabled)
+        {
+            bool isHover = enabled && Event.current != null && rect.Contains(Event.current.mousePosition);
+            if (isHover)
+            {
+                AudioManager.ReportUIHover($"battle:{interactionId}");
+            }
+
+            Color fillColor = enabled
+                ? new Color(HudPanel.r, HudPanel.g, HudPanel.b, isHover ? 0.98f : 0.92f)
+                : new Color(0.12f, 0.13f, 0.16f, 0.72f);
+            Color outlineColor = enabled
+                ? new Color(accent.r, accent.g, accent.b, isHover ? 0.96f : 0.72f)
+                : new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.42f);
+            Color textColor = enabled
+                ? HudText
+                : new Color(HudMuted.r, HudMuted.g, HudMuted.b, 0.72f);
+            GUIStyle labelStyle = new GUIStyle(chipStyle)
+            {
+                normal = { textColor = textColor }
+            };
+
+            DrawPanelWithShadow(rect, fillColor, outlineColor, new Color(0f, 0f, 0f, 0.18f));
+            DrawRect(new Rect(rect.x, rect.y, rect.width, 3f), new Color(accent.r, accent.g, accent.b, enabled ? (isHover ? 1f : 0.88f) : 0.26f));
+            GUI.Label(rect, label, labelStyle);
+
+            if (!enabled)
+            {
+                return false;
+            }
+
+            if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
+            {
+                AudioManager.PlaySFX(SFXType.ButtonClick);
+                return true;
+            }
+
+            return false;
         }
 
         private void DrawRect(Rect rect, Color color)

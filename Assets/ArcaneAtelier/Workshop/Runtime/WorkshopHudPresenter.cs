@@ -1,5 +1,6 @@
 using System.Linq;
 using ArcaneAtelier;
+using ArcaneAtelier.Audio;
 using UnityEngine;
 
 namespace ArcaneAtelier.Workshop
@@ -179,28 +180,28 @@ namespace ArcaneAtelier.Workshop
             GUI.Label(new Rect(buttonStartX, 16f, rotationChipWidth, 14f), $"{controller.PlacementRotationQuarterTurns * 90}°", chipStyle);
             buttonStartX += rotationChipWidth + 12f;
 
-            if (DrawThemedButton(new Rect(buttonStartX, 10f, buttonSize, buttonSize), "?", ArcaneBlue, smallButtonStyle))
+            if (DrawThemedButton(new Rect(buttonStartX, 10f, buttonSize, buttonSize), "?", ArcaneBlue, smallButtonStyle, "toggle_guide"))
             {
                 showGuide = !showGuide;
             }
 
-            if (DrawThemedButton(new Rect(buttonStartX + buttonSize + buttonGap, 10f, buttonSize, buttonSize), "✦", SpellViolet, smallButtonStyle))
+            if (DrawThemedButton(new Rect(buttonStartX + buttonSize + buttonGap, 10f, buttonSize, buttonSize), "✦", SpellViolet, smallButtonStyle, "toggle_rewards"))
             {
                 showRewards = !showRewards;
             }
 
             var pauseLabel = controller.IsPaused ? "▶" : "⏸";
-            if (DrawThemedButton(new Rect(buttonStartX + (buttonSize + buttonGap) * 2f, 10f, buttonSize, buttonSize), pauseLabel, AtelierGold, smallButtonStyle))
+            if (DrawThemedButton(new Rect(buttonStartX + (buttonSize + buttonGap) * 2f, 10f, buttonSize, buttonSize), pauseLabel, AtelierGold, smallButtonStyle, "toggle_pause"))
             {
                 controller.TogglePause();
             }
 
-            if (DrawThemedButton(new Rect(buttonStartX + (buttonSize + buttonGap) * 3f, 10f, buttonSize, buttonSize), "↺", new Color(0.9f, 0.5f, 0.34f, 1f), smallButtonStyle))
+            if (DrawThemedButton(new Rect(buttonStartX + (buttonSize + buttonGap) * 3f, 10f, buttonSize, buttonSize), "↺", new Color(0.9f, 0.5f, 0.34f, 1f), smallButtonStyle, "reset_workshop"))
             {
                 controller.ResetWorkshop();
             }
 
-            if (DrawThemedButton(new Rect(buttonStartX + (buttonSize + buttonGap) * 4f, 10f, buttonSize, buttonSize), "H", new Color(0.54f, 0.78f, 0.54f, 1f), smallButtonStyle))
+            if (DrawThemedButton(new Rect(buttonStartX + (buttonSize + buttonGap) * 4f, 10f, buttonSize, buttonSize), "H", new Color(0.54f, 0.78f, 0.54f, 1f), smallButtonStyle, "load_hack_layout"))
             {
                 controller.LoadHackFactoryLayout();
             }
@@ -280,12 +281,12 @@ namespace ArcaneAtelier.Workshop
             GUI.Label(new Rect(deckX + 12f, payloadTop + 32f, columnWidth - 24f, 18f), "Cards that reached collectors", tinyLabelStyle);
             DrawCompactList(new Rect(deckX + 12f, payloadTop + 58f, columnWidth - 24f, payloadHeight - 70f), deckItems);
 
-            if (DrawThemedButton(new Rect(18f, stepButtonY, contentWidth, 28f), "Advance 1 Prep Tick", ArcaneBlue, buttonStyle))
+            if (DrawThemedButton(new Rect(18f, stepButtonY, contentWidth, 28f), "Advance 1 Prep Tick", ArcaneBlue, buttonStyle, "advance_tick"))
             {
                 controller.StepPreparationOnce();
             }
 
-            if (DrawThemedButton(new Rect(18f, deployButtonY, contentWidth, 28f), "Forge And Deploy", AtelierGold, buttonStyle))
+            if (DrawThemedButton(new Rect(18f, deployButtonY, contentWidth, 28f), "Forge And Deploy", AtelierGold, buttonStyle, "forge_and_deploy"))
             {
                 controller.DeployToBattle();
             }
@@ -313,7 +314,7 @@ namespace ArcaneAtelier.Workshop
                 DrawRewardIcon(new Rect(12f, y + 12f, 42f, 42f), reward);
                 GUI.Label(new Rect(62f, y + 10f, itemRect.width - 136f, 18f), reward.DisplayName, sectionStyle);
                 GUI.Label(new Rect(62f, y + 30f, itemRect.width - 136f, 30f), reward.Description, bodyStyle);
-                if (DrawThemedButton(new Rect(itemRect.width - 68f, y + 24f, 56f, 26f), "Use", SpellViolet, buttonStyle))
+                if (DrawThemedButton(new Rect(itemRect.width - 68f, y + 24f, 56f, 26f), "Use", SpellViolet, buttonStyle, $"reward_use_{reward.Id}"))
                 {
                     controller.ApplyReward(reward);
                 }
@@ -332,7 +333,7 @@ namespace ArcaneAtelier.Workshop
             GUI.BeginGroup(rect);
             GUI.Label(new Rect(24f, 18f, rect.width - 132f, 24f), "Workshop Guide", titleStyle);
             GUI.Label(new Rect(24f, 48f, rect.width - 132f, 20f), "Place machines, route outputs into matching inputs, then deploy the crafted deck.", mutedStyle);
-            if (DrawThemedButton(new Rect(rect.width - 64f, 18f, 38f, 28f), "X", new Color(0.9f, 0.5f, 0.34f, 1f), buttonStyle))
+            if (DrawThemedButton(new Rect(rect.width - 64f, 18f, 38f, 28f), "X", new Color(0.9f, 0.5f, 0.34f, 1f), buttonStyle, "close_guide"))
             {
                 showGuide = false;
             }
@@ -584,13 +585,21 @@ namespace ArcaneAtelier.Workshop
             {
                 Rect tabRect = new Rect(rect.x + index * (tabWidth + gap), rect.y, tabWidth, rect.height);
                 bool selected = paletteTabIndex == index;
+                bool isHover = IsInteractiveHover(tabRect, true, $"palette_tab_{index}");
                 Color accent = selected ? AtelierGold : HudStroke;
+                Color background = selected
+                    ? new Color(0.18f, 0.16f, 0.09f, isHover ? 1f : 0.96f)
+                    : isHover ? new Color(0.12f, 0.16f, 0.23f, 0.98f) : HudPanel;
+                Color outline = selected
+                    ? new Color(accent.r, accent.g, accent.b, isHover ? 0.94f : 0.82f)
+                    : new Color(accent.r, accent.g, accent.b, isHover ? 0.68f : 0.46f);
+                float accentAlpha = selected ? (isHover ? 1f : 0.9f) : (isHover ? 0.56f : 0.34f);
                 DrawRect(new Rect(tabRect.x + 2f, tabRect.y + 3f, tabRect.width, tabRect.height), new Color(0f, 0f, 0f, 0.16f));
-                DrawRect(tabRect, selected ? new Color(0.18f, 0.16f, 0.09f, 0.96f) : HudPanel);
-                DrawOutline(tabRect, new Color(accent.r, accent.g, accent.b, selected ? 0.82f : 0.46f));
-                DrawRect(new Rect(tabRect.x, tabRect.y, tabRect.width, 3f), new Color(accent.r, accent.g, accent.b, selected ? 0.9f : 0.34f));
+                DrawRect(tabRect, background);
+                DrawOutline(tabRect, outline);
+                DrawRect(new Rect(tabRect.x, tabRect.y, tabRect.width, 3f), new Color(accent.r, accent.g, accent.b, accentAlpha));
                 GUI.Label(tabRect, labels[index], tabButtonStyle);
-                if (GUI.Button(tabRect, GUIContent.none, GUIStyle.none))
+                if (HandleInteractiveRect(tabRect, $"palette_tab_{index}"))
                 {
                     paletteTabIndex = index;
                 }
@@ -640,13 +649,23 @@ namespace ArcaneAtelier.Workshop
             var selected = controller != null && (selectedNode == node || selectedNode == mirrorNode);
             var mirrorSelected = mirrorNode != null && selectedNode == mirrorNode;
             var accent = GetCategoryColor(node.Category, node.Tint);
+            bool isHover = IsInteractiveHover(rect, unlocked, $"palette_node_{node.Id}");
+            float lift = isHover ? 3f : 0f;
+            Rect drawRect = new Rect(rect.x, rect.y - lift, rect.width, rect.height);
+            Color cardFill = selected
+                ? new Color(accent.r * 0.28f, accent.g * 0.28f, accent.b * 0.28f, 0.98f)
+                : isHover ? new Color(0.11f, 0.15f, 0.22f, 0.98f) : HudPanel;
+            Color cardOutline = selected
+                ? new Color(0.99f, 0.86f, 0.5f, 0.95f)
+                : new Color(accent.r, accent.g, accent.b, isHover ? 0.8f : 0.58f);
+            Color badgeFill = new Color(accent.r, accent.g, accent.b, selected || isHover ? 0.24f : 0.14f);
 
-            DrawRect(new Rect(rect.x + 3f, rect.y + 4f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.2f));
-            DrawRect(rect, selected ? new Color(accent.r * 0.28f, accent.g * 0.28f, accent.b * 0.28f, 0.98f) : HudPanel);
-            DrawOutline(rect, selected ? new Color(0.99f, 0.86f, 0.5f, 0.95f) : new Color(accent.r, accent.g, accent.b, 0.58f));
-            DrawRect(new Rect(rect.x, rect.y, rect.width, 5f), accent);
-            DrawRect(new Rect(rect.x + 8f, rect.y + 10f, 30f, 34f), new Color(accent.r, accent.g, accent.b, selected ? 0.24f : 0.14f));
-            DrawRect(new Rect(rect.x + 8f, rect.y + rect.height - 8f, rect.width - 16f, 1f), new Color(1f, 1f, 1f, 0.045f));
+            DrawRect(new Rect(drawRect.x + 3f, drawRect.y + 4f, drawRect.width, drawRect.height), new Color(0f, 0f, 0f, 0.2f));
+            DrawRect(drawRect, cardFill);
+            DrawOutline(drawRect, cardOutline);
+            DrawRect(new Rect(drawRect.x, drawRect.y, drawRect.width, 5f), accent);
+            DrawRect(new Rect(drawRect.x + 8f, drawRect.y + 10f, 30f, 34f), badgeFill);
+            DrawRect(new Rect(drawRect.x + 8f, drawRect.y + drawRect.height - 8f, drawRect.width - 16f, 1f), new Color(1f, 1f, 1f, 0.045f));
 
             Event current = Event.current;
             if (unlocked &&
@@ -656,38 +675,36 @@ namespace ArcaneAtelier.Workshop
                 current.button == 1 &&
                 rect.Contains(current.mousePosition))
             {
+                AudioManager.PlaySFX(SFXType.ButtonClick);
                 controller.SetPaletteNode(mirrorNode);
                 current.Use();
             }
 
-            if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
+            if (HandleInteractiveRect(rect, $"palette_node_{node.Id}", unlocked))
             {
-                if (unlocked)
-                {
-                    controller.SetPaletteNode(node);
-                }
+                controller.SetPaletteNode(node);
             }
 
             var iconSprite = ResolveNodeSprite(node);
             var iconTint = ResolveNodeSpriteTint(node);
-            if (!DrawSprite(new Rect(rect.x + 10f, rect.y + 12f, 32f, 32f), iconSprite, iconTint))
+            if (!DrawSprite(new Rect(drawRect.x + 10f, drawRect.y + 12f, 32f, 32f), iconSprite, iconTint))
             {
-                GUI.Label(new Rect(rect.x + 12f, rect.y + 14f, 28f, 28f), GetCategorySymbol(node.Category), iconStyle);
+                GUI.Label(new Rect(drawRect.x + 12f, drawRect.y + 14f, 28f, 28f), GetCategorySymbol(node.Category), iconStyle);
             }
-            DrawNodeElementBadge(new Rect(rect.x + rect.width - 34f, rect.y + 12f, 22f, 22f), node);
-            GUI.Label(new Rect(rect.x + 48f, rect.y + 14f, rect.width - 88f, 20f), node.DisplayName, cardTitleStyle);
-            GUI.Label(new Rect(rect.x + 48f, rect.y + 36f, rect.width - 58f, 16f), node.Category.ToString(), tinyLabelStyle);
-            GUI.Label(new Rect(rect.x + 48f, rect.y + 54f, rect.width - 58f, 16f), unlocked ? "Ready" : "Locked reward", tinyLabelStyle);
+            DrawNodeElementBadge(new Rect(drawRect.x + drawRect.width - 34f, drawRect.y + 12f, 22f, 22f), node);
+            GUI.Label(new Rect(drawRect.x + 48f, drawRect.y + 14f, drawRect.width - 88f, 20f), node.DisplayName, cardTitleStyle);
+            GUI.Label(new Rect(drawRect.x + 48f, drawRect.y + 36f, drawRect.width - 58f, 16f), node.Category.ToString(), tinyLabelStyle);
+            GUI.Label(new Rect(drawRect.x + 48f, drawRect.y + 54f, drawRect.width - 58f, 16f), unlocked ? "Ready" : "Locked reward", tinyLabelStyle);
 
             if (mirrorNode != null)
             {
-                DrawCornerVariantStrip(new Rect(rect.x + 10f, rect.y + 72f, rect.width - 20f, 18f), node, mirrorNode, mirrorSelected, unlocked);
+                DrawCornerVariantStrip(new Rect(drawRect.x + 10f, drawRect.y + 72f, drawRect.width - 20f, 18f), node, mirrorNode, mirrorSelected, unlocked);
             }
 
             if (!unlocked)
             {
-                DrawRect(rect, new Color(0f, 0f, 0f, 0.46f));
-                GUI.Label(new Rect(rect.x, rect.y + rect.height * 0.5f - 10f, rect.width, 20f), "LOCKED", chipStyle);
+                DrawRect(drawRect, new Color(0f, 0f, 0f, 0.46f));
+                GUI.Label(new Rect(drawRect.x, drawRect.y + drawRect.height * 0.5f - 10f, drawRect.width, 20f), "LOCKED", chipStyle);
             }
         }
 
@@ -866,14 +883,55 @@ namespace ArcaneAtelier.Workshop
             DrawRect(new Rect(rect.x + 8f, rect.y + 8f, rect.width - 16f, 1f), new Color(1f, 1f, 1f, 0.045f));
         }
 
-        private bool DrawThemedButton(Rect rect, string label, Color accent, GUIStyle labelStyle)
+        private bool DrawThemedButton(Rect rect, string label, Color accent, GUIStyle labelStyle, string interactionId)
         {
+            bool isHover = IsInteractiveHover(rect, true, interactionId);
+            Color fillColor = isHover
+                ? new Color(accent.r * 0.3f, accent.g * 0.3f, accent.b * 0.3f, 0.99f)
+                : new Color(accent.r * 0.22f, accent.g * 0.22f, accent.b * 0.22f, 0.96f);
+            Color outlineColor = isHover
+                ? new Color(accent.r, accent.g, accent.b, 0.94f)
+                : new Color(accent.r, accent.g, accent.b, 0.72f);
+            Color topStripColor = new Color(accent.r, accent.g, accent.b, isHover ? 1f : 0.92f);
             DrawRect(new Rect(rect.x + 2f, rect.y + 3f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.2f));
-            DrawRect(rect, new Color(accent.r * 0.22f, accent.g * 0.22f, accent.b * 0.22f, 0.96f));
-            DrawOutline(rect, new Color(accent.r, accent.g, accent.b, 0.72f));
-            DrawRect(new Rect(rect.x, rect.y, rect.width, 3f), new Color(accent.r, accent.g, accent.b, 0.92f));
+            DrawRect(rect, fillColor);
+            DrawOutline(rect, outlineColor);
+            DrawRect(new Rect(rect.x, rect.y, rect.width, 3f), topStripColor);
             GUI.Label(rect, label, labelStyle);
-            return GUI.Button(rect, GUIContent.none, GUIStyle.none);
+            return HandleInteractiveRect(rect, interactionId);
+        }
+
+        private bool HandleInteractiveRect(Rect rect, string interactionId, bool enabled = true)
+        {
+            if (!enabled)
+            {
+                return false;
+            }
+
+            if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
+            {
+                AudioManager.PlaySFX(SFXType.ButtonClick);
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsInteractiveHover(Rect rect, bool enabled, string interactionId)
+        {
+            if (!enabled)
+            {
+                return false;
+            }
+
+            Event current = Event.current;
+            if (current == null || !rect.Contains(current.mousePosition))
+            {
+                return false;
+            }
+
+            AudioManager.ReportUIHover($"workshop:{interactionId}");
+            return true;
         }
 
         private void DrawRect(Rect rect, Color color)
