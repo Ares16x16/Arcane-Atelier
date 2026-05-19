@@ -1,3 +1,4 @@
+using ArcaneAtelier.Audio;
 using ArcaneAtelier.Battle;
 using ArcaneAtelier.Workshop;
 using UnityEngine;
@@ -37,6 +38,11 @@ public sealed class MainMenuManager : MonoBehaviour
         DisableLegacyCanvases();
     }
 
+    private void OnEnable()
+    {
+        AudioManager.PlayMusic(MusicTrack.MainMenu);
+    }
+
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space))
@@ -53,6 +59,7 @@ public sealed class MainMenuManager : MonoBehaviour
 
     public void StartGame()
     {
+        AudioManager.PlaySFX(SFXType.ButtonClick);
         WorkshopBattlePayloadBridge.Clear();
         BattleResultBridge.Clear();
         WorkshopRunStateBridge.Clear();
