@@ -3,7 +3,8 @@
   "rootNamespace": "ArcaneAtelier.Battle",
   "references": [
     "ArcaneAtelier.Workshop.Runtime",
-    "UnityEngine.IMGUIModule"
+    "UnityEngine.IMGUIModule",
+    "ArcaneAtelier.Audio.Runtime"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
