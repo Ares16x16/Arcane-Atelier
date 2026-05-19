@@ -2,8 +2,7 @@
   "name": "ArcaneAtelier.Workshop.Runtime",
   "rootNamespace": "ArcaneAtelier.Workshop",
   "references": [
-    "UnityEngine.IMGUIModule",
-    "ArcaneAtelier.Audio.Runtime"
+    "UnityEngine.IMGUIModule"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

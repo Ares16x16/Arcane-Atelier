@@ -1,4 +1,3 @@
-using ArcaneAtelier.Audio;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -115,8 +114,6 @@ namespace ArcaneAtelier.Workshop
             SetPaletteNode(PlaceableNodes.FirstOrDefault(node => node != null && Simulation.IsUnlocked(node)));
             SetPreparationBudget(defaultPreparationTickBudget, "Skirmish");
             HandleSimulationStateChanged();
-
-            AudioManager.PlayMusic(MusicTrack.Workshop);
         }
 
         private void OnDestroy()
@@ -217,8 +214,6 @@ namespace ArcaneAtelier.Workshop
             }
 
             var result = Simulation.PlaceNode(cell, SelectedPaletteNode, PlacementRotationQuarterTurns);
-            if (result.Success)
-                AudioManager.PlaySFX(SFXType.NodePlacement);
             statusMessage = result.Message;
         }
 
@@ -226,8 +221,6 @@ namespace ArcaneAtelier.Workshop
         {
             SetSelectedCell(cell);
             var result = Simulation.RemoveNode(cell);
-            if (result.Success)
-                AudioManager.PlaySFX(SFXType.NodeRemoval);
             statusMessage = result.Message;
         }
 
@@ -235,7 +228,6 @@ namespace ArcaneAtelier.Workshop
         {
             SetSelectedCell(cell);
             Simulation.RotateNodeClockwise(cell);
-            AudioManager.PlaySFX(SFXType.NodeRotation);
             statusMessage = SelectedNode == null ? "No node selected." : $"Rotated {SelectedNode.Definition.DisplayName}.";
         }
 
@@ -369,7 +361,6 @@ namespace ArcaneAtelier.Workshop
             }
 
             isDeploying = true;
-            AudioManager.PlaySFX(SFXType.PayloadCommit);
             Time.timeScale = 1f;
             WorkshopRunStateBridge.Commit(Simulation != null ? Simulation.CaptureRunState() : null);
             CommitBattlePayload();

@@ -1,4 +1,3 @@
-using ArcaneAtelier.Audio;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -40,7 +39,6 @@ public sealed class PrologueManager : MonoBehaviour
     {
         pageStartTime = Time.unscaledTime;
         DisableLegacyCanvases();
-        AudioManager.PlayMusic(MusicTrack.Prologue);
     }
 
     private void Update()

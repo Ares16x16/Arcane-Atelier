@@ -1,4 +1,3 @@
-using ArcaneAtelier.Audio;
 using System.Collections.Generic;
 using ArcaneAtelier.Workshop;
 using UnityEngine;
@@ -285,8 +284,6 @@ namespace ArcaneAtelier.Battle
             AddRecentEvent($"Encounter {encounterIndex + 1}/{encounterDefinitions.Count}: {Boss.DisplayName}");
             LogHandState();
             Debug.Log($"=== Encounter {encounterIndex + 1}/{encounterDefinitions.Count} started vs {Boss.DisplayName} ({Boss.MaxHealth} HP) ===");
-
-            AudioManager.PlayMusic(MusicTrack.Battle);
         }
 
         private void HandlePlayerInput()
@@ -329,14 +326,10 @@ namespace ArcaneAtelier.Battle
             int apCost = BattleDeckController.GetActionPointCost(card.Role);
             if (Simulation.ActionPoints < apCost)
             {
-                AudioManager.PlaySFX(SFXType.ErrorBuzz);
                 return false;
             }
 
-            bool success = Simulation.TryPlayCard(handIndex);
-            if (success)
-                AudioManager.PlaySFX(SFXType.CardPlayWhoosh);
-            return success;
+            return Simulation.TryPlayCard(handIndex);
         }
 
         public bool CanPlayCard(int handIndex)
@@ -363,7 +356,6 @@ namespace ArcaneAtelier.Battle
                 return false;
             }
 
-            AudioManager.PlaySFX(SFXType.EndTurnConfirm);
             Simulation.EndTurn();
             return true;
         }
@@ -401,7 +393,6 @@ namespace ArcaneAtelier.Battle
             Debug.Log(resolution.LogDescription);
             LogUnitStatus();
             LogHandState();
-            PlayResolutionSFX(resolution);
         }
 
         private void OnBossActionResolved(BattleActionResolution resolution)
@@ -410,17 +401,6 @@ namespace ArcaneAtelier.Battle
             AddRecentEvent(resolution.LogDescription);
             Debug.Log(resolution.LogDescription);
             LogUnitStatus();
-            PlayResolutionSFX(resolution);
-        }
-
-        private void PlayResolutionSFX(BattleActionResolution resolution)
-        {
-            if (resolution.DamageDealt > 0)
-                AudioManager.PlaySFX(SFXType.AttackHitGeneric);
-            else if (resolution.HealingDone > 0)
-                AudioManager.PlaySFX(SFXType.HealRestore);
-            else if (resolution.ShieldGained > 0)
-                AudioManager.PlaySFX(SFXType.ShieldBlock);
         }
 
         private void OnPlayerTurnSkipped()
@@ -446,8 +426,6 @@ namespace ArcaneAtelier.Battle
 
             if (result.ResultType == BattleResultType.Victory)
             {
-                AudioManager.StopMusic();
-                AudioManager.PlaySting(MusicTrack.VictorySting);
                 string clearedName = result.BossDisplayName;
                 
                 int healAmount = 15;
@@ -456,11 +434,6 @@ namespace ArcaneAtelier.Battle
                 AddRecentEvent($"{clearedName} defeated. Recovered {healAmount} HP.");
                 Debug.Log($"=== ENCOUNTER CLEARED: {clearedName} === Recovered {healAmount} HP ===");
                 
-            }
-            else
-            {
-                AudioManager.StopMusic();
-                AudioManager.PlaySting(MusicTrack.DefeatSting);
             }
 
 
