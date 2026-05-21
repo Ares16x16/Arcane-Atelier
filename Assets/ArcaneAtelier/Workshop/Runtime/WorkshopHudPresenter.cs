@@ -286,7 +286,7 @@ namespace ArcaneAtelier.Workshop
                 controller.StepPreparationOnce();
             }
 
-            if (DrawThemedButton(new Rect(18f, deployButtonY, contentWidth, 28f), "Forge And Deploy", AtelierGold, buttonStyle, "forge_and_deploy"))
+            if (DrawThemedButton(new Rect(18f, deployButtonY, contentWidth, 28f), "Forge And Deploy", AtelierGold, buttonStyle, "forge_and_deploy", playClickSound: false))
             {
                 controller.DeployToBattle();
             }
@@ -883,7 +883,7 @@ namespace ArcaneAtelier.Workshop
             DrawRect(new Rect(rect.x + 8f, rect.y + 8f, rect.width - 16f, 1f), new Color(1f, 1f, 1f, 0.045f));
         }
 
-        private bool DrawThemedButton(Rect rect, string label, Color accent, GUIStyle labelStyle, string interactionId)
+        private bool DrawThemedButton(Rect rect, string label, Color accent, GUIStyle labelStyle, string interactionId, bool playClickSound = true)
         {
             bool isHover = IsInteractiveHover(rect, true, interactionId);
             Color fillColor = isHover
@@ -898,10 +898,10 @@ namespace ArcaneAtelier.Workshop
             DrawOutline(rect, outlineColor);
             DrawRect(new Rect(rect.x, rect.y, rect.width, 3f), topStripColor);
             GUI.Label(rect, label, labelStyle);
-            return HandleInteractiveRect(rect, interactionId);
+            return HandleInteractiveRect(rect, interactionId, true, playClickSound);
         }
 
-        private bool HandleInteractiveRect(Rect rect, string interactionId, bool enabled = true)
+        private bool HandleInteractiveRect(Rect rect, string interactionId, bool enabled = true, bool playClickSound = true)
         {
             if (!enabled)
             {
@@ -910,7 +910,8 @@ namespace ArcaneAtelier.Workshop
 
             if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
             {
-                AudioManager.PlaySFX(SFXType.ButtonClick);
+                if (playClickSound)
+                    AudioManager.PlaySFX(SFXType.ButtonClick);
                 return true;
             }
 

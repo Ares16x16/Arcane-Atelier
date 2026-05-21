@@ -20,21 +20,21 @@ namespace ArcaneAtelier.Integration
                 "Breach 1: Ember Wisp",
                 "A fast outer-ward scout that opens mixed spell fusion after the starter workshop proves basic fusion.",
                 "enemy.ember.wisp",
-                120,
+                600,
                 "reward.unlock.spell_fusion_intermediate"),
             new EncounterPlan(
                 "encounter.hollow.cleric",
                 "Breach 2: Hollow Cleric",
                 "A sustain-heavy foe that opens advanced fusion for boss preparation.",
                 "enemy.hollow.cleric",
-                110,
+                550,
                 "reward.unlock.spell_fusion_advanced"),
             new EncounterPlan(
                 "encounter.glass.knight",
                 "Breach 3: Glass Knight",
                 "A shielded duelist that rewards faster shaping before the final siege.",
                 "enemy.glass.knight",
-                100,
+                500,
                 "reward.boost.shaping")
         };
 
@@ -43,7 +43,7 @@ namespace ArcaneAtelier.Integration
             "Final Boss: Corrupted Earth Golem",
             "The atelier core is under direct assault. Bring your strongest forged loadout into the final breach.",
             "boss.earth.golem",
-            140,
+            700,
             string.Empty);
 
         private static int clearedNormalEncounters;

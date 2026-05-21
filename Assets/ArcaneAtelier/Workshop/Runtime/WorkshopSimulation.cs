@@ -1,3 +1,4 @@
+using ArcaneAtelier.Audio;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -881,6 +882,16 @@ namespace ArcaneAtelier.Workshop
 
                     if (output.Item.Kind == WorkshopItemKind.Card)
                     {
+                        var tier = output.Item.SpellTier;
+                        var sfx = tier switch
+                        {
+                            WorkshopSpellTier.Basic        => SFXType.SpellCardOutputBasic,
+                            WorkshopSpellTier.Intermediate => SFXType.SpellCardOutputIntermediate,
+                            WorkshopSpellTier.Advanced     => SFXType.SpellCardOutputAdvanced,
+                            _                             => SFXType.SpellCardOutputBasic,
+                        };
+                        AudioManager.PlaySFX(sfx);
+
                         if (ShouldBufferCardOutput(nodeState))
                         {
                             nodeState.TryAddToBuffer(output.Item, output.Amount);
