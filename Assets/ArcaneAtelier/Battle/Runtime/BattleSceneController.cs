@@ -460,6 +460,7 @@ namespace ArcaneAtelier.Battle
         {
             AccumulateEncounterStats(result);
             BattleResult finalResult = BuildFinalResult(result);
+            finalResult.TokensEarned = BattleRewardCalculator.Compute(finalResult, CurrentBossDefinition);
             CurrentResult = finalResult;
 
             if (result.ResultType == BattleResultType.Victory)
@@ -765,7 +766,9 @@ namespace ArcaneAtelier.Battle
                 TotalShieldGained = totalShieldGained,
                 CardsPlayed = totalCardsPlayed,
                 TurnsElapsed = totalTurnsElapsed,
-                DefeatRewardId = result.ResultType == BattleResultType.Victory ? result.DefeatRewardId : string.Empty
+                DefeatRewardId = result.ResultType == BattleResultType.Victory ? result.DefeatRewardId : string.Empty,
+                PlayerFinalHealth = Player != null ? Player.CurrentHealth : 0,
+                PlayerMaxHealth = Player != null ? Player.MaxHealth : 0
             };
         }
 

@@ -345,8 +345,34 @@ namespace ArcaneAtelier.Workshop
         private int totalElementProduced;
         private int totalElementConsumed;
         private int totalSpellsProduced;
+        private int tokens;
         private int notificationSuppressionDepth;
         private bool notificationQueued;
+
+        public int Tokens => tokens;
+
+        public void AddTokens(int amount)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            tokens += amount;
+            RaiseStateChanged();
+        }
+
+        public bool TrySpendTokens(int amount)
+        {
+            if (amount <= 0 || tokens < amount)
+            {
+                return false;
+            }
+
+            tokens -= amount;
+            RaiseStateChanged();
+            return true;
+        }
 
         public WorkshopSimulation(WorkshopContentDatabase contentDatabase)
         {
@@ -526,6 +552,7 @@ namespace ArcaneAtelier.Workshop
             totalElementProduced = 0;
             totalElementConsumed = 0;
             totalSpellsProduced = 0;
+            tokens = 0;
 
             foreach (var node in (ContentDatabase.PlaceableNodes ?? Array.Empty<WorkshopNodeDefinition>()).Where(node => node != null && node.UnlockedByDefault))
             {
@@ -685,7 +712,8 @@ namespace ArcaneAtelier.Workshop
                 SimulatedSeconds = simulatedSeconds,
                 TotalElementProduced = totalElementProduced,
                 TotalElementConsumed = totalElementConsumed,
-                TotalSpellsProduced = totalSpellsProduced
+                TotalSpellsProduced = totalSpellsProduced,
+                Tokens = tokens
             };
 
             foreach (string unlockedNodeId in unlockedNodeIds.OrderBy(id => id, StringComparer.Ordinal))
@@ -773,6 +801,7 @@ namespace ArcaneAtelier.Workshop
                 totalElementProduced = Mathf.Max(0, snapshot.TotalElementProduced);
                 totalElementConsumed = Mathf.Max(0, snapshot.TotalElementConsumed);
                 totalSpellsProduced = Mathf.Max(0, snapshot.TotalSpellsProduced);
+                tokens = Mathf.Max(0, snapshot.Tokens);
             }
             finally
             {

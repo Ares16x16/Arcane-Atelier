@@ -182,7 +182,8 @@ namespace ArcaneAtelier.Battle.Editor
                 pattern,
                 "reward.spirit.earth",
                 phase2Pattern,
-                0.5f);
+                0.5f,
+                200);
 
             AssetDatabase.CreateAsset(asset, path);
             return asset;
@@ -230,7 +231,8 @@ namespace ArcaneAtelier.Battle.Editor
                 0,
                 3,
                 pattern,
-                "reward.enemy.fire.minor");
+                "reward.enemy.fire.minor",
+                tokenReward: 50);
 
             AssetDatabase.CreateAsset(asset, path);
             return asset;
@@ -278,7 +280,8 @@ namespace ArcaneAtelier.Battle.Editor
                 6,
                 3,
                 pattern,
-                "reward.enemy.earth.minor");
+                "reward.enemy.earth.minor",
+                tokenReward: 80);
 
             AssetDatabase.CreateAsset(asset, path);
             return asset;
@@ -326,7 +329,8 @@ namespace ArcaneAtelier.Battle.Editor
                 0,
                 3,
                 pattern,
-                "reward.enemy.water.minor");
+                "reward.enemy.water.minor",
+                tokenReward: 65);
 
             AssetDatabase.CreateAsset(asset, path);
             return asset;

@@ -13,6 +13,7 @@ namespace ArcaneAtelier.Workshop
         [SerializeField] private WorkshopNodeDefinition targetNode;
         [SerializeField] private float efficiencyBonus = 0.25f;
         [SerializeField] private WorkshopItemStack[] grantedItems;
+        [SerializeField, Min(0)] private int tokenCost = 0;
 
         public string Id => id;
         public string DisplayName => displayName;
@@ -21,6 +22,7 @@ namespace ArcaneAtelier.Workshop
         public WorkshopNodeDefinition TargetNode => targetNode;
         public float EfficiencyBonus => efficiencyBonus;
         public WorkshopItemStack[] GrantedItems => grantedItems;
+        public int TokenCost => tokenCost;
 
         public void Configure(
             string rewardId,
@@ -29,7 +31,8 @@ namespace ArcaneAtelier.Workshop
             WorkshopRewardKind kind,
             WorkshopNodeDefinition nodeTarget,
             float bonus,
-            WorkshopItemStack[] items)
+            WorkshopItemStack[] items,
+            int cost = 0)
         {
             id = rewardId;
             displayName = rewardDisplayName;
@@ -38,6 +41,7 @@ namespace ArcaneAtelier.Workshop
             targetNode = nodeTarget;
             efficiencyBonus = bonus;
             grantedItems = items ?? Array.Empty<WorkshopItemStack>();
+            tokenCost = Mathf.Max(0, cost);
         }
     }
 }
