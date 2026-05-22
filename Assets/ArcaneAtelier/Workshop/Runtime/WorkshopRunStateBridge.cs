@@ -34,6 +34,7 @@ namespace ArcaneAtelier.Workshop
         public int TotalElementProduced;
         public int TotalElementConsumed;
         public int TotalSpellsProduced;
+        public int Tokens;
     }
 
     public static class WorkshopRunStateBridge

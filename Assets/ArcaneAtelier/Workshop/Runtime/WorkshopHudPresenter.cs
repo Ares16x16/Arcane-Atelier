@@ -155,6 +155,7 @@ namespace ArcaneAtelier.Workshop
             DrawMiniStat(new Rect(78f, 62f, 64f, 30f), $"{stats.ElementProductionPerSecond:0.0}", "Flow");
             DrawMiniStat(new Rect(148f, 62f, 54f, 30f), $"{stats.SpellProductionPerSecond:0.0}", "Spell");
             DrawMiniStat(new Rect(208f, 62f, 54f, 30f), $"{stats.ElementConsumptionPerSecond:0.0}", "Use");
+            DrawMiniStat(new Rect(268f, 62f, 64f, 30f), $"{controller.Tokens}", "Tokens");
             GUI.EndGroup();
         }
 
@@ -300,11 +301,22 @@ namespace ArcaneAtelier.Workshop
         {
             DrawPanelFrame(rect, new Color(0.57f, 0.45f, 0.89f));
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(18f, 14f, rect.width - 36f, 20f), "Arcane Boons", sectionStyle);
-            GUI.Label(new Rect(18f, 34f, rect.width - 36f, 18f), "TAB or ✦ to close", tinyLabelStyle);
+            GUI.Label(new Rect(18f, 14f, rect.width - 36f, 20f), "Atelier Exchange", sectionStyle);
+            int wallet = controller.Tokens;
+            GUI.Label(new Rect(18f, 34f, rect.width - 36f, 18f), $"Tokens: {wallet}   ·   TAB or ✦ to close", tinyLabelStyle);
 
             var contentRect = new Rect(14f, 60f, rect.width - 28f, rect.height - 74f);
-            var rewards = controller.DebugRewards.Where(reward => reward != null).ToArray();
+            var rewards = controller.DebugRewards
+                .Where(reward => reward != null && reward.TokenCost > 0)
+                .ToArray();
+
+            if (rewards.Length == 0)
+            {
+                GUI.Label(new Rect(14f, 70f, contentRect.width, 40f), "No purchasable boons yet. Win breaches to earn tokens.", mutedStyle);
+                GUI.EndGroup();
+                return;
+            }
+
             var viewHeight = rewards.Length * 86f + 8f;
             rewardScroll = GUI.BeginScrollView(contentRect, rewardScroll, new Rect(0f, 0f, contentRect.width - 18f, viewHeight), false, true);
 
@@ -316,10 +328,20 @@ namespace ArcaneAtelier.Workshop
                 DrawRewardIcon(new Rect(12f, y + 12f, 42f, 42f), reward);
                 GUI.Label(new Rect(62f, y + 10f, itemRect.width - 136f, 18f), reward.DisplayName, sectionStyle);
                 GUI.Label(new Rect(62f, y + 30f, itemRect.width - 136f, 30f), reward.Description, bodyStyle);
-                if (DrawThemedButton(new Rect(itemRect.width - 68f, y + 24f, 56f, 26f), "Use", SpellViolet, buttonStyle, $"reward_use_{reward.Id}"))
+
+                int cost = reward.TokenCost;
+                bool canAfford = wallet >= cost;
+                string buyLabel = canAfford ? $"Buy ({cost})" : $"{cost} Tokens";
+                Color buyColor = canAfford ? AtelierGold : HudMuted;
+
+                bool previouslyEnabled = GUI.enabled;
+                GUI.enabled = canAfford;
+                if (DrawThemedButton(new Rect(itemRect.width - 88f, y + 24f, 76f, 26f), buyLabel, buyColor, buttonStyle, $"reward_buy_{reward.Id}"))
                 {
-                    controller.ApplyReward(reward);
+                    controller.TryPurchaseReward(reward.Id, out _, out _);
+                    wallet = controller.Tokens;
                 }
+                GUI.enabled = previouslyEnabled;
 
                 y += 84f;
             }

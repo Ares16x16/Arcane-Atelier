@@ -270,6 +270,58 @@ namespace ArcaneAtelier.Workshop
             return true;
         }
 
+        public int Tokens => Simulation != null ? Simulation.Tokens : 0;
+
+        public void AddTokens(int amount)
+        {
+            if (Simulation == null || amount <= 0)
+            {
+                return;
+            }
+
+            Simulation.AddTokens(amount);
+        }
+
+        public bool TryPurchaseReward(string rewardId, out WorkshopRewardDefinition reward, out string message)
+        {
+            reward = contentDatabase != null ? contentDatabase.FindReward(rewardId) : null;
+            if (reward == null)
+            {
+                message = "Reward not found.";
+                return false;
+            }
+
+            if (Simulation == null)
+            {
+                message = "Workshop is not ready.";
+                return false;
+            }
+
+            int cost = Mathf.Max(0, reward.TokenCost);
+            if (cost <= 0)
+            {
+                message = $"{reward.DisplayName} is not for sale.";
+                return false;
+            }
+
+            if (Simulation.Tokens < cost)
+            {
+                message = $"Need {cost} tokens (have {Simulation.Tokens}).";
+                return false;
+            }
+
+            if (!Simulation.TrySpendTokens(cost))
+            {
+                message = "Purchase failed.";
+                return false;
+            }
+
+            ApplyReward(reward);
+            message = $"Purchased {reward.DisplayName} for {cost} tokens.";
+            statusMessage = message;
+            return true;
+        }
+
         public void SetStatusMessage(string message)
         {
             if (string.IsNullOrWhiteSpace(message))

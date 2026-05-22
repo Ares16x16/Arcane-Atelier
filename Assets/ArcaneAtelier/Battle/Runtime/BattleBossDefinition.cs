@@ -22,6 +22,7 @@ namespace ArcaneAtelier.Battle
         [SerializeField] private BattleBossAction[] phase2ActionPattern;
         [SerializeField, Range(0f, 1f)] private float phaseTransitionHealthPercent = 0.5f;
         [SerializeField] private string defeatRewardId = "";
+        [SerializeField, Min(0)] private int basicTokenReward = 50;
 
         public string BossId => bossId;
         public string DisplayName => displayName;
@@ -63,6 +64,7 @@ namespace ArcaneAtelier.Battle
         }
 
         public string DefeatRewardId => defeatRewardId;
+        public int BasicTokenReward => basicTokenReward;
 
         public void Configure(
             string id,
@@ -78,7 +80,8 @@ namespace ArcaneAtelier.Battle
             BattleBossAction[] pattern,
             string rewardId,
             BattleBossAction[] phase2Pattern = null,
-            float phaseTransitionPercent = 0.5f)
+            float phaseTransitionPercent = 0.5f,
+            int tokenReward = 50)
         {
             bossId = id;
             displayName = name;
@@ -94,6 +97,7 @@ namespace ArcaneAtelier.Battle
             defeatRewardId = rewardId ?? string.Empty;
             phase2ActionPattern = phase2Pattern ?? Array.Empty<BattleBossAction>();
             phaseTransitionHealthPercent = Mathf.Clamp01(phaseTransitionPercent);
+            basicTokenReward = Mathf.Max(0, tokenReward);
         }
     }
 }

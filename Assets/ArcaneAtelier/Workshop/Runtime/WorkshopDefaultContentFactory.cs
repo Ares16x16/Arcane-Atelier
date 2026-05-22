@@ -310,15 +310,15 @@ namespace ArcaneAtelier.Workshop
             var turnSpellConduit = CreateNodeWithSprite("node.factory.turn_spell_conduit", "Turning Spell Conduit", "L-shaped relay node that turns crafted spell cards around a corner.", WorkshopNodeCategory.Storage, true, new Color(0.78f, 0.34f, 0.3f), NodePortMask.East, NodePortMask.North, 12, 2, false, Array.Empty<WorkshopProductionRecipe>());
             var turnSpellConduitMirror = CreateNodeWithSprite("node.factory.turn_spell_conduit.mirror", "Turning Spell Conduit Mirror", "Mirrored L-shaped relay node that turns crafted spell cards around a corner.", WorkshopNodeCategory.Storage, true, new Color(0.78f, 0.34f, 0.3f), NodePortMask.West, NodePortMask.North, 12, 2, false, Array.Empty<WorkshopProductionRecipe>());
             var deckCollector = CreateNodeWithSprite("node.factory.deck_collector", "Battle Deck Collector", "Collection point. Only spell cards routed into this block are added to the battle deck.", WorkshopNodeCategory.Storage, true, new Color(0.94f, 0.72f, 0.28f), NodePortMask.All, NodePortMask.None, 60, 0, false, Array.Empty<WorkshopProductionRecipe>());
-            var unlockSpellFusionBasic = CreateReward("reward.unlock.spell_fusion_basic", "Unlock Spell Fusion Basic", "Unlocks same-element spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionBasicFactory, 0f, Array.Empty<WorkshopItemStack>());
-            var unlockSpellFusionIntermediate = CreateReward("reward.unlock.spell_fusion_intermediate", "Unlock Spell Fusion Intermediate", "Unlocks intermediate-to-advanced spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionIntermediateFactory, 0f, Array.Empty<WorkshopItemStack>());
-            var unlockSpellFusionAdvanced = CreateReward("reward.unlock.spell_fusion_advanced", "Unlock Spell Fusion Advanced", "Unlocks advanced-to-final spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionAdvancedFactory, 0f, Array.Empty<WorkshopItemStack>());
-            var unlockIceSpirit = CreateReward("reward.unlock.spirit.ice", "Unlock Ice Spirit Node", "Adds the Ice spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, iceSpirit, 0f, Array.Empty<WorkshopItemStack>());
-            var unlockThunderSpirit = CreateReward("reward.unlock.spirit.thunder", "Unlock Thunder Spirit Node", "Adds the Thunder spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, thunderSpirit, 0f, Array.Empty<WorkshopItemStack>());
-            var unlockLightSpirit = CreateReward("reward.unlock.spirit.light", "Unlock Light Spirit Node", "Adds the Light spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, lightSpirit, 0f, Array.Empty<WorkshopItemStack>());
-            var unlockDarkSpirit = CreateReward("reward.unlock.spirit.dark", "Unlock Dark Spirit Node", "Adds the Dark spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, darkSpirit, 0f, Array.Empty<WorkshopItemStack>());
-            var boostShaping = CreateReward("reward.boost.shaping", "Shaping Factory Overclock", "Applies +20% speed to Element Shaping Factories.", WorkshopRewardKind.EfficiencyBoost, elementShapingFactory, 0.2f, Array.Empty<WorkshopItemStack>());
-            var reserveReward = CreateReward("reward.resources.recovery", "Emergency Element Cache", "Adds a small reserve of all basic elements.", WorkshopRewardKind.GrantItems, null, 0f, new[] { WorkshopItemStack.Create(fire, 3), WorkshopItemStack.Create(water, 3), WorkshopItemStack.Create(wind, 3), WorkshopItemStack.Create(earth, 3) });
+            var unlockSpellFusionBasic = CreateReward("reward.unlock.spell_fusion_basic", "Unlock Spell Fusion Basic", "Unlocks same-element spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionBasicFactory, 0f, Array.Empty<WorkshopItemStack>(), 0);
+            var unlockSpellFusionIntermediate = CreateReward("reward.unlock.spell_fusion_intermediate", "Unlock Spell Fusion Intermediate", "Unlocks intermediate-to-advanced spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionIntermediateFactory, 0f, Array.Empty<WorkshopItemStack>(), 0);
+            var unlockSpellFusionAdvanced = CreateReward("reward.unlock.spell_fusion_advanced", "Unlock Spell Fusion Advanced", "Unlocks advanced-to-final spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionAdvancedFactory, 0f, Array.Empty<WorkshopItemStack>(), 0);
+            var unlockIceSpirit = CreateReward("reward.unlock.spirit.ice", "Unlock Ice Spirit Node", "Adds the Ice spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, iceSpirit, 0f, Array.Empty<WorkshopItemStack>(), 80);
+            var unlockThunderSpirit = CreateReward("reward.unlock.spirit.thunder", "Unlock Thunder Spirit Node", "Adds the Thunder spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, thunderSpirit, 0f, Array.Empty<WorkshopItemStack>(), 80);
+            var unlockLightSpirit = CreateReward("reward.unlock.spirit.light", "Unlock Light Spirit Node", "Adds the Light spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, lightSpirit, 0f, Array.Empty<WorkshopItemStack>(), 150);
+            var unlockDarkSpirit = CreateReward("reward.unlock.spirit.dark", "Unlock Dark Spirit Node", "Adds the Dark spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, darkSpirit, 0f, Array.Empty<WorkshopItemStack>(), 150);
+            var boostShaping = CreateReward("reward.boost.shaping", "Shaping Factory Overclock", "Applies +20% speed to Element Shaping Factories.", WorkshopRewardKind.EfficiencyBoost, elementShapingFactory, 0.2f, Array.Empty<WorkshopItemStack>(), 30);
+            var reserveReward = CreateReward("reward.resources.recovery", "Emergency Element Cache", "Adds a small reserve of all basic elements.", WorkshopRewardKind.GrantItems, null, 0f, new[] { WorkshopItemStack.Create(fire, 3), WorkshopItemStack.Create(water, 3), WorkshopItemStack.Create(wind, 3), WorkshopItemStack.Create(earth, 3) }, 20);
 
             Vector2Int starterCollectorCell = new Vector2Int(24, 24);
 
@@ -461,11 +461,12 @@ namespace ArcaneAtelier.Workshop
             WorkshopRewardKind rewardKind,
             WorkshopNodeDefinition targetNode,
             float efficiencyBonus,
-            WorkshopItemStack[] grantedItems)
+            WorkshopItemStack[] grantedItems,
+            int tokenCost = 0)
         {
             var reward = ScriptableObject.CreateInstance<WorkshopRewardDefinition>();
             reward.hideFlags = HideFlags.HideAndDontSave;
-            reward.Configure(id, displayName, description, rewardKind, targetNode, efficiencyBonus, grantedItems);
+            reward.Configure(id, displayName, description, rewardKind, targetNode, efficiencyBonus, grantedItems, tokenCost);
             return reward;
         }
     }

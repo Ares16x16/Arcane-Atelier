@@ -16,6 +16,9 @@ namespace ArcaneAtelier.Battle
         public int CardsPlayed;
         public int TurnsElapsed;
         public string DefeatRewardId;
+        public int TokensEarned;
+        public int PlayerFinalHealth;
+        public int PlayerMaxHealth;
     }
 
     public static class BattleResultBridge

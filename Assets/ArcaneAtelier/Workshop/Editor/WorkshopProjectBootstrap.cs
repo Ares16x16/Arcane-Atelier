@@ -426,21 +426,21 @@ namespace ArcaneAtelier.Workshop.Editor
                 false,
                 Array.Empty<WorkshopProductionRecipe>());
 
-            var unlockSpellFusionBasic = UpsertReward("reward.unlock.spell_fusion_basic", "Unlock Spell Fusion Basic", "Unlocks same-element spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionBasicFactory, 0f, Array.Empty<WorkshopItemStack>());
-            var unlockSpellFusionIntermediate = UpsertReward("reward.unlock.spell_fusion_intermediate", "Unlock Spell Fusion Intermediate", "Unlocks intermediate-to-advanced spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionIntermediateFactory, 0f, Array.Empty<WorkshopItemStack>());
-            var unlockSpellFusionAdvanced = UpsertReward("reward.unlock.spell_fusion_advanced", "Unlock Spell Fusion Advanced", "Unlocks advanced-to-final spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionAdvancedFactory, 0f, Array.Empty<WorkshopItemStack>());
-            var unlockIceSpirit = UpsertReward("reward.unlock.spirit.ice", "Unlock Ice Spirit Node", "Adds the Ice spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, iceSpirit, 0f, Array.Empty<WorkshopItemStack>());
-            var unlockThunderSpirit = UpsertReward("reward.unlock.spirit.thunder", "Unlock Thunder Spirit Node", "Adds the Thunder spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, thunderSpirit, 0f, Array.Empty<WorkshopItemStack>());
-            var unlockLightSpirit = UpsertReward("reward.unlock.spirit.light", "Unlock Light Spirit Node", "Adds the Light spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, lightSpirit, 0f, Array.Empty<WorkshopItemStack>());
-            var unlockDarkSpirit = UpsertReward("reward.unlock.spirit.dark", "Unlock Dark Spirit Node", "Adds the Dark spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, darkSpirit, 0f, Array.Empty<WorkshopItemStack>());
-            var boostShaping = UpsertReward("reward.boost.shaping", "Shaping Factory Overclock", "Applies +20% speed to Element Shaping Factories.", WorkshopRewardKind.EfficiencyBoost, elementShapingFactory, 0.2f, Array.Empty<WorkshopItemStack>());
+            var unlockSpellFusionBasic = UpsertReward("reward.unlock.spell_fusion_basic", "Unlock Spell Fusion Basic", "Unlocks same-element spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionBasicFactory, 0f, Array.Empty<WorkshopItemStack>(), 0);
+            var unlockSpellFusionIntermediate = UpsertReward("reward.unlock.spell_fusion_intermediate", "Unlock Spell Fusion Intermediate", "Unlocks intermediate-to-advanced spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionIntermediateFactory, 0f, Array.Empty<WorkshopItemStack>(), 0);
+            var unlockSpellFusionAdvanced = UpsertReward("reward.unlock.spell_fusion_advanced", "Unlock Spell Fusion Advanced", "Unlocks advanced-to-final spell fusion.", WorkshopRewardKind.UnlockNode, spellFusionAdvancedFactory, 0f, Array.Empty<WorkshopItemStack>(), 0);
+            var unlockIceSpirit = UpsertReward("reward.unlock.spirit.ice", "Unlock Ice Spirit Node", "Adds the Ice spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, iceSpirit, 0f, Array.Empty<WorkshopItemStack>(), 80);
+            var unlockThunderSpirit = UpsertReward("reward.unlock.spirit.thunder", "Unlock Thunder Spirit Node", "Adds the Thunder spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, thunderSpirit, 0f, Array.Empty<WorkshopItemStack>(), 80);
+            var unlockLightSpirit = UpsertReward("reward.unlock.spirit.light", "Unlock Light Spirit Node", "Adds the Light spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, lightSpirit, 0f, Array.Empty<WorkshopItemStack>(), 150);
+            var unlockDarkSpirit = UpsertReward("reward.unlock.spirit.dark", "Unlock Dark Spirit Node", "Adds the Dark spirit node to the workshop palette.", WorkshopRewardKind.UnlockNode, darkSpirit, 0f, Array.Empty<WorkshopItemStack>(), 150);
+            var boostShaping = UpsertReward("reward.boost.shaping", "Shaping Factory Overclock", "Applies +20% speed to Element Shaping Factories.", WorkshopRewardKind.EfficiencyBoost, elementShapingFactory, 0.2f, Array.Empty<WorkshopItemStack>(), 30);
             var reserveReward = UpsertReward("reward.resources.recovery", "Emergency Element Cache", "Adds a small reserve of all basic elements.", WorkshopRewardKind.GrantItems, null, 0f, new[]
             {
                 WorkshopItemStack.Create(fire, 3),
                 WorkshopItemStack.Create(water, 3),
                 WorkshopItemStack.Create(wind, 3),
                 WorkshopItemStack.Create(earth, 3)
-            });
+            }, 20);
 
             var database = CreateOrLoadAsset<WorkshopContentDatabase>($"{DataRoot}/WorkshopContentDatabase.asset");
             Vector2Int starterCollectorCell = new Vector2Int(24, 24);
@@ -538,10 +538,11 @@ namespace ArcaneAtelier.Workshop.Editor
             WorkshopRewardKind rewardKind,
             WorkshopNodeDefinition targetNode,
             float efficiencyBonus,
-            WorkshopItemStack[] grantedItems)
+            WorkshopItemStack[] grantedItems,
+            int tokenCost = 0)
         {
             var asset = CreateOrLoadAsset<WorkshopRewardDefinition>($"{DataRoot}/Rewards/{SanitizeAssetName(id)}.asset");
-            asset.Configure(id, displayName, description, rewardKind, targetNode, efficiencyBonus, grantedItems);
+            asset.Configure(id, displayName, description, rewardKind, targetNode, efficiencyBonus, grantedItems, tokenCost);
             EditorUtility.SetDirty(asset);
             return asset;
         }

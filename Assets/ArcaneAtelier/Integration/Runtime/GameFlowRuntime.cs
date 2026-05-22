@@ -117,7 +117,22 @@ namespace ArcaneAtelier.Integration
 
             clearedNormalEncounters = Mathf.Min(NormalEncountersBeforeBoss, clearedNormalEncounters + 1);
             string rewardMessage = ApplyConfiguredReward(controller, GetCompletedEncounterPlan(), result);
-            ConfigureNextEncounter(controller, rewardMessage);
+            string tokenMessage = GrantBattleTokens(controller, result);
+            string combinedMessage = string.IsNullOrWhiteSpace(tokenMessage)
+                ? rewardMessage
+                : $"{rewardMessage} {tokenMessage}";
+            ConfigureNextEncounter(controller, combinedMessage);
+        }
+
+        private static string GrantBattleTokens(WorkshopSceneController controller, BattleResult result)
+        {
+            if (controller == null || result == null || result.TokensEarned <= 0)
+            {
+                return string.Empty;
+            }
+
+            controller.AddTokens(result.TokensEarned);
+            return $"+{result.TokensEarned} tokens (wallet: {controller.Tokens}).";
         }
 
         private static void ResetRunState()
