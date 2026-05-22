@@ -1,3 +1,4 @@
+using ArcaneAtelier.Workshop;
 using UnityEngine;
 
 namespace ArcaneAtelier.Battle
@@ -28,7 +29,8 @@ namespace ArcaneAtelier.Battle
             int speedBonus = Mathf.Max(0, SpeedKillTurnsThreshold - result.TurnsElapsed) * SpeedKillMultiplier;
             int untouchedBonus = (result.PlayerMaxHealth > 0 && result.PlayerFinalHealth >= result.PlayerMaxHealth) ? FullHealthBonus : 0;
 
-            return Mathf.Max(0, basic + healthBonus + speedBonus + untouchedBonus);
+            int metaBonus = MetaProgressionStore.GetVictoryTokenBonus();
+            return Mathf.Max(0, basic + healthBonus + speedBonus + untouchedBonus + metaBonus);
         }
     }
 }

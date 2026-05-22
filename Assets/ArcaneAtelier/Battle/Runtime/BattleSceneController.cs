@@ -155,11 +155,12 @@ namespace ArcaneAtelier.Battle
 
         private void InitializePlayer()
         {
+            int maxHealth = playerMaxHealth + MetaProgressionStore.GetPlayerMaxHealthBonus();
             Player = new BattleUnit
             {
                 DisplayName = "Player",
-                MaxHealth = playerMaxHealth,
-                CurrentHealth = playerMaxHealth,
+                MaxHealth = maxHealth,
+                CurrentHealth = maxHealth,
                 Shield = 0,
                 Element = WorkshopElementAttribute.None
             };
@@ -232,12 +233,14 @@ namespace ArcaneAtelier.Battle
             }
 
             CurrentBossDefinition = encounterDefinitions[encounterIndex];
+            int scaledBossHealth = MetaProgressionStore.ScaleEnemyMaxHealth(CurrentBossDefinition.MaxHealth);
+            int startingShield = MetaProgressionStore.GetEnemyStartingShieldBonus();
             Boss = new BattleUnit
             {
                 DisplayName = CurrentBossDefinition.DisplayName,
-                MaxHealth = CurrentBossDefinition.MaxHealth,
-                CurrentHealth = CurrentBossDefinition.MaxHealth,
-                Shield = 0,
+                MaxHealth = scaledBossHealth,
+                CurrentHealth = scaledBossHealth,
+                Shield = startingShield,
                 Element = CurrentBossDefinition.Element
             };
 
@@ -250,7 +253,7 @@ namespace ArcaneAtelier.Battle
             }
 
             ClearPlayerEncounterState();
-            BattleBossAI bossAI = new BattleBossAI(CurrentBossDefinition);
+            BattleBossAI bossAI = new BattleBossAI(CurrentBossDefinition, MetaProgressionStore.GetEnemyDamageScaleMultiplier());
             bossAI.BindUnits(Boss, Player);
 
             UnsubscribeFromSimulation();
@@ -289,8 +292,13 @@ namespace ArcaneAtelier.Battle
             PublishTurnBanner("Your Turn", 1);
 
             AddRecentEvent($"Encounter {encounterIndex + 1}/{encounterDefinitions.Count}: {Boss.DisplayName}");
+            AddRecentEvent(MetaProgressionStore.BuildBreachPressureSummary());
+            if (startingShield > 0)
+            {
+                AddRecentEvent($"{Boss.DisplayName} enters with +{startingShield} ward from breach pressure.");
+            }
             LogHandState();
-            Debug.Log($"=== Encounter {encounterIndex + 1}/{encounterDefinitions.Count} started vs {Boss.DisplayName} ({Boss.MaxHealth} HP) ===");
+            Debug.Log($"=== Encounter {encounterIndex + 1}/{encounterDefinitions.Count} started vs {Boss.DisplayName} ({Boss.MaxHealth} HP, {Boss.Shield} shield) ===");
 
             AudioManager.PlayMusic(MusicTrack.Battle);
         }
@@ -476,7 +484,7 @@ namespace ArcaneAtelier.Battle
                 AudioManager.PlaySting(MusicTrack.VictorySting);
                 string clearedName = result.BossDisplayName;
                 
-                int healAmount = 15;
+                int healAmount = 15 + MetaProgressionStore.GetVictoryHealBonus();
                 Player.Heal(healAmount);
                 
                 AddRecentEvent($"{clearedName} defeated. Recovered {healAmount} HP.");

@@ -86,6 +86,9 @@ namespace ArcaneAtelier.Battle
         private readonly Dictionary<int, float> handRevealTimes = new Dictionary<int, float>();
         private string pendingDraggedDiscardCardId = string.Empty;
         private Rect pendingDraggedDiscardStartRect = Rect.zero;
+        private string hoveredMetaTitle = string.Empty;
+        private string hoveredMetaBody = string.Empty;
+        private Color hoveredMetaAccent = Color.white;
 
         private enum DragTarget
         {
@@ -131,6 +134,7 @@ namespace ArcaneAtelier.Battle
             }
 
             EnsureTheme();
+            ClearMetaHover();
             SyncTransientState();
             UpdateTargetRects();
             ProcessInput(Event.current);
@@ -141,10 +145,11 @@ namespace ArcaneAtelier.Battle
 
             DrawWorldTargetHighlights();
             DrawTopBar(topBarRect);
-            DrawLegacySigilStrip(new Rect(Margin + 8f, topBarRect.yMax + 6f, Mathf.Min(520f, Screen.width - Margin * 2f - 16f), 26f));
+            DrawLegacySigilStrip(new Rect(Margin + 8f, topBarRect.yMax + 6f, Mathf.Min(620f, Screen.width - Margin * 2f - 16f), 38f));
             DrawHandPanel(handRect);
             DrawTransientCardAnimations();
             DrawDraggedCard();
+            DrawMetaHoverTooltip();
 
             if (controller.CurrentResult != null)
             {
@@ -331,7 +336,139 @@ namespace ArcaneAtelier.Battle
         {
             DrawPanelWithShadow(rect, new Color(HudPanel.r, HudPanel.g, HudPanel.b, 0.9f), new Color(WorkshopGold.r, WorkshopGold.g, WorkshopGold.b, 0.46f));
             DrawRect(new Rect(rect.x, rect.y, rect.width, 2f), new Color(WorkshopGold.r, WorkshopGold.g, WorkshopGold.b, 0.82f));
-            GUI.Label(new Rect(rect.x + 10f, rect.y + 5f, rect.width - 20f, 16f), MetaProgressionStore.BuildActiveBonusSummary(), mutedStyle);
+            DrawRect(new Rect(rect.x + rect.width * 0.5f - 0.5f, rect.y + 6f, 1f, rect.height - 12f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.45f));
+
+            float leftX = rect.x + 10f;
+            float rightX = rect.x + rect.width * 0.5f + 10f;
+            float y = rect.y + 10f;
+            float segmentHeight = 18f;
+            float gap = 5f;
+            float maxLeftWidth = rect.width * 0.5f - 22f;
+            float maxRightWidth = rect.width * 0.5f - 20f;
+            int boonTokenBonus = Mathf.Max(0, MetaProgressionStore.GetVictoryTokenBonus() - (MetaProgressionStore.ActiveOmen != null ? MetaProgressionStore.ActiveOmen.VictoryTokenBonus : 0));
+            LegacyOmenView omen = MetaProgressionStore.ActiveOmen;
+            float segmentWidth = Mathf.Clamp(
+                Mathf.Min(
+                    (maxLeftWidth - gap * 5f) / 6f,
+                    (maxRightWidth - gap * (omen != null ? 3f : 2f)) / (omen != null ? 4.15f : 3f)),
+                22f,
+                32f);
+            float omenWidth = segmentWidth * 1.15f;
+
+            float usedLeft = 0f;
+            usedLeft += DrawMetaSegment(new Rect(leftX + usedLeft, y, segmentWidth, segmentHeight), MetaHudIconKind.Prep, MetaProgressionStore.GetPreparationTickBonus() / 60f, WorkshopGold, "Kindled Start", $"+{MetaProgressionStore.GetPreparationTickBonus()} prep ticks at run start.", "meta_prep") + gap;
+            usedLeft += DrawMetaSegment(new Rect(leftX + usedLeft, y, segmentWidth, segmentHeight), MetaHudIconKind.Shield, MetaProgressionStore.GetOpeningShieldBonus() / 12f, WorkshopBlue, "Warden Reserve", $"+{MetaProgressionStore.GetOpeningShieldBonus()} opening shield each battle.", "meta_ward") + gap;
+            usedLeft += DrawMetaSegment(new Rect(leftX + usedLeft, y, segmentWidth, segmentHeight), MetaHudIconKind.Tokens, MetaProgressionStore.GetStartingRunTokens() / 55f, WorkshopViolet, "Ember Float", $"+{MetaProgressionStore.GetStartingRunTokens()} Tokens before the workshop store opens.", "meta_tokens") + gap;
+            usedLeft += DrawMetaSegment(new Rect(leftX + usedLeft, y, segmentWidth, segmentHeight), MetaHudIconKind.Vitality, MetaProgressionStore.GetPlayerMaxHealthBonus() / 12f, new Color(0.72f, 0.94f, 0.52f, 1f), "Vital Script", $"+{MetaProgressionStore.GetPlayerMaxHealthBonus()} max HP in battle.", "meta_vital") + gap;
+            usedLeft += DrawMetaSegment(new Rect(leftX + usedLeft, y, segmentWidth, segmentHeight), MetaHudIconKind.Healing, MetaProgressionStore.GetVictoryHealBonus() / 9f, new Color(0.46f, 0.9f, 0.7f, 1f), "Afterglow Seal", $"+{MetaProgressionStore.GetVictoryHealBonus()} healing after each win.", "meta_heal") + gap;
+            usedLeft += DrawMetaSegment(new Rect(leftX + usedLeft, y, segmentWidth, segmentHeight), MetaHudIconKind.Bounty, boonTokenBonus / 28f, new Color(0.95f, 0.56f, 0.28f, 1f), "Bounty Seal", $"+{boonTokenBonus} Tokens added to victory payouts.", "meta_bounty");
+            DrawGhostMetaSlots(new Rect(leftX + Mathf.Min(usedLeft + gap, maxLeftWidth - (segmentWidth * 2f + gap)), y, maxLeftWidth - Mathf.Min(usedLeft + gap, maxLeftWidth), segmentHeight), segmentWidth, gap);
+
+            int pressureHealth = Mathf.Max(0, Mathf.RoundToInt((MetaProgressionStore.GetEnemyHealthScaleMultiplier() - 1f) * 100f));
+            int pressureDamage = Mathf.Max(0, Mathf.RoundToInt((MetaProgressionStore.GetEnemyDamageScaleMultiplier() - 1f) * 100f));
+            int pressureWard = MetaProgressionStore.GetEnemyStartingShieldBonus();
+
+            float usedRight = 0f;
+            usedRight += DrawMetaSegment(new Rect(rightX + usedRight, y, segmentWidth, segmentHeight), MetaHudIconKind.BreachPressure, pressureHealth / 120f, WarningAccent, "Breach Vitality", $"+{pressureHealth}% enemy health this cycle.", "pressure_hp") + gap;
+            usedRight += DrawMetaSegment(new Rect(rightX + usedRight, y, segmentWidth, segmentHeight), MetaHudIconKind.BreachPressure, pressureDamage / 90f, new Color(0.94f, 0.5f, 0.22f, 1f), "Breach Force", $"+{pressureDamage}% enemy damage this cycle.", "pressure_dmg") + gap;
+            usedRight += DrawMetaSegment(new Rect(rightX + usedRight, y, segmentWidth, segmentHeight), MetaHudIconKind.BreachPressure, pressureWard / 12f, ShieldAccent, "Breach Ward", $"+{pressureWard} starting shield on enemies.", "pressure_ward") + gap;
+            if (omen != null)
+            {
+                usedRight += DrawMetaSegment(new Rect(rightX + usedRight, y, omenWidth, segmentHeight), MetaHudIconKind.Omen, 1f, WorkshopViolet, omen.DisplayName, omen.Description, "pressure_omen");
+            }
+
+            DrawGhostMetaSlots(new Rect(rightX + Mathf.Min(usedRight + gap, maxRightWidth - (segmentWidth * 2f + gap)), y, maxRightWidth - Mathf.Min(usedRight + gap, maxRightWidth), segmentHeight), segmentWidth, gap);
+        }
+
+        private float DrawMetaSegment(Rect rect, MetaHudIconKind iconKind, float normalizedValue, Color accent, string title, string body, string hoverId)
+        {
+            float clamped = Mathf.Clamp01(normalizedValue);
+            DrawRect(rect, new Color(0.05f, 0.08f, 0.12f, 0.94f));
+            DrawOutline(rect, new Color(accent.r, accent.g, accent.b, 0.42f));
+            DrawRect(new Rect(rect.x + 1f, rect.y + 1f, rect.width - 2f, rect.height - 2f), new Color(accent.r, accent.g, accent.b, Mathf.Lerp(0.06f, 0.16f, clamped)));
+
+            float iconSize = Mathf.Min(rect.width - 8f, rect.height - 8f);
+            Rect iconRect = new Rect(rect.x + (rect.width - iconSize) * 0.5f, rect.y + 2f, iconSize, iconSize);
+            DrawMetaIcon(iconRect, iconKind);
+
+            Rect meterRect = new Rect(rect.x + 4f, rect.yMax - 4f, rect.width - 8f, 2f);
+            DrawRect(meterRect, new Color(0.1f, 0.13f, 0.18f, 0.92f));
+            if (clamped > 0.001f)
+            {
+                DrawRect(new Rect(meterRect.x, meterRect.y, Mathf.Max(2f, meterRect.width * clamped), meterRect.height), new Color(accent.r, accent.g, accent.b, 0.96f));
+            }
+
+            TryRegisterMetaHover(rect, title, body, accent, hoverId);
+            return rect.width;
+        }
+
+        private void DrawMetaIcon(Rect rect, MetaHudIconKind kind)
+        {
+            Texture2D atlas = MetaHudIconAtlas.GetTexture();
+            if (atlas == null)
+            {
+                return;
+            }
+
+            Color previous = GUI.color;
+            GUI.color = Color.white;
+            GUI.DrawTextureWithTexCoords(rect, atlas, MetaHudIconAtlas.GetUv(kind), true);
+            GUI.color = previous;
+        }
+
+        private void DrawGhostMetaSlots(Rect rect, float segmentWidth, float gap)
+        {
+            if (rect.width < segmentWidth)
+            {
+                return;
+            }
+
+            int count = Mathf.FloorToInt((rect.width + gap) / (segmentWidth + gap));
+            for (int i = 0; i < count; i++)
+            {
+                Rect slotRect = new Rect(rect.x + i * (segmentWidth + gap), rect.y, segmentWidth, rect.height);
+                DrawRect(slotRect, new Color(0.06f, 0.08f, 0.11f, 0.48f));
+                DrawOutline(slotRect, new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.22f));
+            }
+        }
+
+        private void TryRegisterMetaHover(Rect rect, string title, string body, Color accent, string hoverId)
+        {
+            Event current = Event.current;
+            if (current == null || !rect.Contains(current.mousePosition))
+            {
+                return;
+            }
+
+            hoveredMetaTitle = title;
+            hoveredMetaBody = body;
+            hoveredMetaAccent = accent;
+            AudioManager.ReportUIHover($"battle:{hoverId}");
+        }
+
+        private void DrawMetaHoverTooltip()
+        {
+            if (string.IsNullOrWhiteSpace(hoveredMetaTitle))
+            {
+                return;
+            }
+
+            Vector2 mouse = Event.current != null ? Event.current.mousePosition : Vector2.zero;
+            float width = 312f;
+            float bodyHeight = Mathf.Max(20f, bodyStyle.CalcHeight(new GUIContent(hoveredMetaBody), width - 28f));
+            Rect rect = PositionUiTooltip(mouse, width, 44f + bodyHeight);
+            DrawPanelFrame(rect, hoveredMetaAccent, 0.98f);
+            GUI.BeginGroup(rect);
+            GUI.Label(new Rect(14f, 12f, rect.width - 28f, 18f), hoveredMetaTitle, sectionStyle);
+            GUI.Label(new Rect(14f, 34f, rect.width - 28f, bodyHeight), hoveredMetaBody, bodyStyle);
+            GUI.EndGroup();
+        }
+
+        private void ClearMetaHover()
+        {
+            hoveredMetaTitle = string.Empty;
+            hoveredMetaBody = string.Empty;
+            hoveredMetaAccent = Color.white;
         }
 
         private void DrawCenterBattleStrip(Rect rect)
@@ -586,6 +723,25 @@ namespace ArcaneAtelier.Battle
             DrawRect(rect, background);
             DrawOutline(rect, new Color(1f, 1f, 1f, 0.08f));
             GUI.Label(rect, text, style);
+        }
+
+        private static Rect PositionUiTooltip(Vector2 mouse, float tooltipWidth, float tooltipHeight)
+        {
+            float x = mouse.x + 16f;
+            float y = mouse.y + 16f;
+            if (x + tooltipWidth > Screen.width - 12f)
+            {
+                x = mouse.x - tooltipWidth - 16f;
+            }
+
+            if (y + tooltipHeight > Screen.height - 12f)
+            {
+                y = mouse.y - tooltipHeight - 16f;
+            }
+
+            x = Mathf.Clamp(x, 12f, Screen.width - tooltipWidth - 12f);
+            y = Mathf.Clamp(y, 12f, Screen.height - tooltipHeight - 12f);
+            return new Rect(x, y, tooltipWidth, tooltipHeight);
         }
 
         private void DrawResultOverlay(Rect rect)

@@ -36,6 +36,7 @@ public sealed class MainMenuManager : MonoBehaviour
     private GUIStyle bodyStyle;
     private GUIStyle statStyle;
     private GUIStyle buttonStyle;
+    private GUIStyle archivePrimaryButtonStyle;
     private GUIStyle secondaryButtonStyle;
     private GUIStyle smallButtonStyle;
     private GUIStyle footerStyle;
@@ -211,7 +212,7 @@ public sealed class MainMenuManager : MonoBehaviour
     private void DrawLegacyArchive(float screenWidth, float screenHeight)
     {
         float panelWidth = Mathf.Min(screenWidth - 64f, 920f);
-        float panelHeight = Mathf.Min(screenHeight - 96f, 620f);
+        float panelHeight = Mathf.Min(screenHeight - 96f, 676f);
         Rect panelRect = new Rect((screenWidth - panelWidth) * 0.5f, (screenHeight - panelHeight) * 0.5f, panelWidth, panelHeight);
 
         GUI.DrawTexture(new Rect(panelRect.x + 8f, panelRect.y + 10f, panelRect.width, panelRect.height), panelShadowTexture, ScaleMode.StretchToFill);
@@ -220,29 +221,40 @@ public sealed class MainMenuManager : MonoBehaviour
 
         GUI.BeginGroup(panelRect);
         GUI.Label(new Rect(28f, 22f, panelRect.width - 56f, 32f), "Legacy Archive", pageTitleStyle);
-        GUI.Label(new Rect(32f, 62f, panelRect.width - 64f, 22f), "Permanent atelier marks carved after final-boss victories.", subtitleStyle);
+        GUI.Label(new Rect(32f, 62f, panelRect.width - 64f, 22f), "Carve permanent sigils, read the cycle omen, then enter the next breach.", subtitleStyle);
 
         float statY = 106f;
         DrawArchiveStat(new Rect(28f, statY, 190f, 74f), MetaProgressionStore.SealedCycles.ToString(), "Sealed Cycles");
         DrawArchiveStat(new Rect(234f, statY, 190f, 74f), MetaProgressionStore.LegacySigils.ToString(), "Legacy Sigils");
         DrawArchiveStat(new Rect(440f, statY, 190f, 74f), MetaProgressionStore.BestTokensEarnedInRun.ToString(), "Best Run Tokens");
 
-        GUI.Label(new Rect(28f, 204f, panelRect.width - 56f, 22f), "Sigil Carvings", sectionStyle);
-        float itemY = 236f;
+        DrawArchiveOmen(new Rect(28f, 200f, panelRect.width - 56f, 72f));
+
+        GUI.Label(new Rect(28f, 288f, panelRect.width - 56f, 22f), "Archive Offerings", sectionStyle);
+        float itemY = 320f;
         LegacyArchiveUpgrade[] upgrades = MetaProgressionStore.AvailableUpgrades.ToArray();
-        for (int i = 0; i < upgrades.Length; i++)
+        if (upgrades.Length == 0)
         {
-            DrawArchiveUpgrade(new Rect(28f, itemY, panelRect.width - 56f, 78f), upgrades[i]);
-            itemY += 88f;
+            GUI.Label(new Rect(28f, itemY + 8f, panelRect.width - 56f, 40f), "Every sigil path has been fully carved. The archive holds steady until a new system is added.", bodyStyle);
+        }
+        else
+        {
+            for (int i = 0; i < upgrades.Length; i++)
+            {
+                DrawArchiveUpgrade(new Rect(28f, itemY, panelRect.width - 56f, 78f), upgrades[i]);
+                itemY += 88f;
+            }
         }
 
+        float archiveActionWidth = 172f;
+        float archiveActionX = panelRect.width - archiveActionWidth - 42f;
         GUI.Label(new Rect(28f, panelRect.height - 100f, panelRect.width - 280f, 38f), archiveMessage, bodyStyle);
-        if (GUI.Button(new Rect(panelRect.width - 238f, panelRect.height - 106f, 196f, 42f), "Start Next Run", buttonStyle))
+        if (GUI.Button(new Rect(archiveActionX, panelRect.height - 98f, archiveActionWidth, 34f), "Enter Next Breach", archivePrimaryButtonStyle))
         {
             StartLoadedRun();
         }
 
-        if (GUI.Button(new Rect(panelRect.width - 238f, panelRect.height - 56f, 196f, 32f), "Back", secondaryButtonStyle))
+        if (GUI.Button(new Rect(archiveActionX, panelRect.height - 56f, archiveActionWidth, 30f), "Back", secondaryButtonStyle))
         {
             AudioManager.PlaySFX(SFXType.ButtonClick);
             currentPage = MenuPage.Landing;
@@ -474,17 +486,19 @@ public sealed class MainMenuManager : MonoBehaviour
 
     private void DrawArchiveUpgrade(Rect rect, LegacyArchiveUpgrade upgrade)
     {
-        bool owned = MetaProgressionStore.HasUpgrade(upgrade.Id);
+        bool maxed = upgrade.IsMaxed;
         bool affordable = MetaProgressionStore.LegacySigils >= upgrade.SigilCost;
         GUI.DrawTexture(rect, panelSoftTexture, ScaleMode.StretchToFill);
-        GUI.DrawTexture(new Rect(rect.x, rect.y, rect.width, HeaderAccentHeight), owned ? secondaryButtonHoverTexture : accentTexture, ScaleMode.StretchToFill);
-        GUI.Label(new Rect(rect.x + 16f, rect.y + 12f, rect.width - 180f, 20f), upgrade.DisplayName, sectionStyle);
-        GUI.Label(new Rect(rect.x + 16f, rect.y + 36f, rect.width - 180f, 32f), upgrade.Description, bodyStyle);
+        GUI.DrawTexture(new Rect(rect.x, rect.y, rect.width, HeaderAccentHeight), maxed ? secondaryButtonHoverTexture : accentTexture, ScaleMode.StretchToFill);
+        GUI.Label(new Rect(rect.x + 16f, rect.y + 10f, rect.width - 220f, 20f), upgrade.DisplayName, sectionStyle);
+        GUI.Label(new Rect(rect.x + 16f, rect.y + 28f, 120f, 16f), upgrade.CategoryLabel, footerStyle);
+        GUI.Label(new Rect(rect.x + 120f, rect.y + 28f, 90f, 16f), $"{upgrade.CurrentRank}/{upgrade.MaxRank} carved", footerStyle);
+        GUI.Label(new Rect(rect.x + 16f, rect.y + 46f, rect.width - 190f, 24f), upgrade.Description, bodyStyle);
         GUI.Label(new Rect(rect.x + rect.width - 154f, rect.y + 14f, 130f, 18f), $"{upgrade.SigilCost} Sigils", footerStyle);
 
         bool previousEnabled = GUI.enabled;
-        GUI.enabled = !owned && affordable;
-        string buttonLabel = owned ? "Carved" : affordable ? "Carve" : "Locked";
+        GUI.enabled = !maxed && affordable;
+        string buttonLabel = maxed ? "Maxed" : affordable ? "Carve" : "Locked";
         if (GUI.Button(new Rect(rect.x + rect.width - 154f, rect.y + 40f, 130f, 26f), buttonLabel, smallButtonStyle))
         {
             if (MetaProgressionStore.TryPurchaseUpgrade(upgrade.Id, out string message))
@@ -498,6 +512,16 @@ public sealed class MainMenuManager : MonoBehaviour
             }
         }
         GUI.enabled = previousEnabled;
+    }
+
+    private void DrawArchiveOmen(Rect rect)
+    {
+        LegacyOmenView omen = MetaProgressionStore.ActiveOmen;
+        GUI.DrawTexture(rect, panelSoftTexture, ScaleMode.StretchToFill);
+        GUI.DrawTexture(new Rect(rect.x, rect.y, rect.width, HeaderAccentHeight), accentTexture, ScaleMode.StretchToFill);
+        GUI.Label(new Rect(rect.x + 16f, rect.y + 10f, rect.width - 32f, 18f), "Cycle Omen", sectionStyle);
+        GUI.Label(new Rect(rect.x + 16f, rect.y + 30f, rect.width - 32f, 18f), omen != null ? omen.DisplayName : "None", bodyStyle);
+        GUI.Label(new Rect(rect.x + 16f, rect.y + 48f, rect.width - 32f, 18f), MetaProgressionStore.BuildRunModifierSummary(), footerStyle);
     }
 
     private void EnsureStyles()
@@ -567,6 +591,9 @@ public sealed class MainMenuManager : MonoBehaviour
         buttonStyle.hover.textColor = new Color32(255, 250, 240, 255);
         buttonStyle.alignment = TextAnchor.MiddleCenter;
         buttonStyle.border = new RectOffset(10, 10, 10, 10);
+
+        archivePrimaryButtonStyle = new GUIStyle(buttonStyle);
+        archivePrimaryButtonStyle.fontSize = 16;
 
         secondaryButtonStyle = new GUIStyle(buttonStyle);
         secondaryButtonStyle.fontSize = 17;

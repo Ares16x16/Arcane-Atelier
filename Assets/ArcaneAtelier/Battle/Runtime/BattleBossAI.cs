@@ -8,6 +8,7 @@ namespace ArcaneAtelier.Battle
     public sealed class BattleBossAI
     {
         private readonly BattleBossDefinition definition;
+        private readonly float externalDamageMultiplier;
         private int currentActionIndex;
         private readonly List<BattleBossAction> attackActions = new List<BattleBossAction>();
         private readonly List<BattleBossAction> defendActions = new List<BattleBossAction>();
@@ -22,9 +23,10 @@ namespace ArcaneAtelier.Battle
         private BattleBossAction plannedEnemyAction;
         private bool hasPlannedEnemyAction;
 
-        public BattleBossAI(BattleBossDefinition bossDefinition)
+        public BattleBossAI(BattleBossDefinition bossDefinition, float externalDamageMultiplier = 1f)
         {
             definition = bossDefinition ?? throw new ArgumentNullException(nameof(bossDefinition));
+            this.externalDamageMultiplier = Mathf.Max(1f, externalDamageMultiplier);
             currentActionIndex = 0;
             CategorizeActions();
         }
@@ -72,7 +74,7 @@ namespace ArcaneAtelier.Battle
 
             if (definition != null && definition.IsEnemy)
             {
-                return ConsumePlannedEnemyAction();
+                return ApplyDamageMultiplier(ConsumePlannedEnemyAction());
             }
 
             CheckPhaseTransition();
@@ -349,7 +351,13 @@ namespace ArcaneAtelier.Battle
 
         private BattleBossAction ApplyDamageMultiplier(BattleBossAction action)
         {
-            if (damageMultiplier == 1.0f || action == null)
+            if (action == null)
+            {
+                return action;
+            }
+
+            float combinedMultiplier = damageMultiplier * externalDamageMultiplier;
+            if (Mathf.Approximately(combinedMultiplier, 1f))
             {
                 return action;
             }
@@ -359,9 +367,9 @@ namespace ArcaneAtelier.Battle
                 return new BattleBossAction
                 {
                     ActionType = action.ActionType,
-                    Value = Mathf.RoundToInt(action.Value * damageMultiplier),
+                    Value = Mathf.RoundToInt(action.Value * combinedMultiplier),
                     SecondaryValue = action.SecondaryValue,
-                    Description = action.Description + " (Enraged!)"
+                    Description = damageMultiplier > 1f ? action.Description + " (Enraged!)" : action.Description
                 };
             }
 
