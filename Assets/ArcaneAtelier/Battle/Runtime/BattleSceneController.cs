@@ -468,7 +468,7 @@ namespace ArcaneAtelier.Battle
             BattleResult finalResult = BuildFinalResult(result);
             finalResult.TokensEarned = BattleRewardCalculator.Compute(finalResult, CurrentBossDefinition);
             CurrentResult = finalResult;
-            RecordRunProgress(result);
+            RecordRunProgress(finalResult);
 
             if (result.ResultType == BattleResultType.Victory)
             {
@@ -799,10 +799,14 @@ namespace ArcaneAtelier.Battle
 
             string finalOutcomeTitle;
             string finalOutcomeDescription;
+            string legacyUnlockName = string.Empty;
             if (finalBossVictory)
             {
+                int runTokensEarned = RunProgressBridge.CurrentSummary.TotalTokensEarned + (result != null ? result.TokensEarned : 0);
+                int legacySigilsEarned = MetaProgressionStore.RecordFinalBossClear(runTokensEarned);
                 finalOutcomeTitle = "Atelier Secured";
-                finalOutcomeDescription = "The core breach is sealed. Final rewards are still pending implementation, so this report captures the full workshop and battle record instead.";
+                finalOutcomeDescription = $"The core breach is sealed. +{legacySigilsEarned} Legacy Sigils were carved into the archive for future cycles.";
+                legacyUnlockName = $"+{legacySigilsEarned} Legacy Sigils";
             }
             else if (victory)
             {
@@ -823,9 +827,10 @@ namespace ArcaneAtelier.Battle
                 result != null ? result.TotalDamageDealt : 0,
                 result != null ? result.TotalHealingDone : 0,
                 result != null ? result.TotalShieldGained : 0,
+                result != null ? result.TokensEarned : 0,
                 finalOutcomeTitle,
                 finalOutcomeDescription,
-                string.Empty);
+                legacyUnlockName);
         }
 
         private void UnsubscribeFromSimulation()

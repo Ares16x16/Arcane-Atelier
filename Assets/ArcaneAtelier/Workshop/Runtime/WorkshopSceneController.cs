@@ -254,6 +254,12 @@ namespace ArcaneAtelier.Workshop
                 return;
             }
 
+            if (Simulation != null && Simulation.IsRewardAlreadyOwned(reward))
+            {
+                statusMessage = $"{reward.DisplayName} is already active.";
+                return;
+            }
+
             Simulation.ApplyReward(reward);
             statusMessage = $"Applied reward: {reward.DisplayName}.";
         }
@@ -304,6 +310,13 @@ namespace ArcaneAtelier.Workshop
                 return false;
             }
 
+            if (Simulation.IsRewardAlreadyOwned(reward))
+            {
+                message = $"{reward.DisplayName} is already active.";
+                statusMessage = message;
+                return false;
+            }
+
             if (Simulation.Tokens < cost)
             {
                 message = $"Need {cost} tokens (have {Simulation.Tokens}).";
@@ -316,10 +329,15 @@ namespace ArcaneAtelier.Workshop
                 return false;
             }
 
-            ApplyReward(reward);
+            Simulation.ApplyReward(reward);
             message = $"Purchased {reward.DisplayName} for {cost} tokens.";
             statusMessage = message;
             return true;
+        }
+
+        public bool IsRewardAlreadyOwned(WorkshopRewardDefinition reward)
+        {
+            return Simulation != null && Simulation.IsRewardAlreadyOwned(reward);
         }
 
         public void SetStatusMessage(string message)
@@ -437,14 +455,16 @@ namespace ArcaneAtelier.Workshop
             }
 
             Simulation.CommitBattlePayload();
-            int openingShieldBonus = remainingPreparationTicks > 0 ? 4 : 0;
+            int earlyDeployShieldBonus = remainingPreparationTicks > 0 ? 4 : 0;
+            int legacyShieldBonus = MetaProgressionStore.GetOpeningShieldBonus();
+            int openingShieldBonus = earlyDeployShieldBonus + legacyShieldBonus;
             RunProgressBridge.RegisterPreparation(
                 UsedPreparationTicks,
                 WorkshopBattlePayloadBridge.CurrentPayload,
                 openingShieldBonus);
             statusMessage = WorkshopBattlePayloadBridge.CurrentPayload.HasCards
                 ? openingShieldBonus > 0
-                    ? $"Battle payload committed. Early deploy grants +{openingShieldBonus} opening shield."
+                    ? $"Battle payload committed. Opening shield +{openingShieldBonus}."
                     : "Battle payload committed."
                 : "No crafted cards to commit.";
         }

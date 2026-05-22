@@ -37,6 +37,7 @@ namespace ArcaneAtelier.Workshop
         public int TotalDamageDealt;
         public int TotalHealingDone;
         public int TotalShieldGained;
+        public int TokensEarned;
         public string RewardDisplayName = string.Empty;
         public string RewardDescription = string.Empty;
     }
@@ -54,6 +55,7 @@ namespace ArcaneAtelier.Workshop
         public int TotalHealingDone;
         public int TotalShieldGained;
         public int TotalTurnsElapsed;
+        public int TotalTokensEarned;
         public int Victories;
         public int Defeats;
         public string FinalBossName = string.Empty;
@@ -136,6 +138,7 @@ namespace ArcaneAtelier.Workshop
             int totalDamageDealt,
             int totalHealingDone,
             int totalShieldGained,
+            int tokensEarned,
             string finalOutcomeTitle,
             string finalOutcomeDescription,
             string legacyUnlockName)
@@ -157,6 +160,7 @@ namespace ArcaneAtelier.Workshop
                 TotalDamageDealt = Math.Max(0, totalDamageDealt),
                 TotalHealingDone = Math.Max(0, totalHealingDone),
                 TotalShieldGained = Math.Max(0, totalShieldGained),
+                TokensEarned = Math.Max(0, tokensEarned),
                 RewardDisplayName = victory ? CurrentEncounter.RewardDisplayName : string.Empty,
                 RewardDescription = victory ? CurrentEncounter.RewardDescription : string.Empty
             };
@@ -170,6 +174,7 @@ namespace ArcaneAtelier.Workshop
             CurrentSummary.TotalHealingDone += record.TotalHealingDone;
             CurrentSummary.TotalShieldGained += record.TotalShieldGained;
             CurrentSummary.TotalTurnsElapsed += record.TurnsElapsed;
+            CurrentSummary.TotalTokensEarned += record.TokensEarned;
 
             if (victory)
             {

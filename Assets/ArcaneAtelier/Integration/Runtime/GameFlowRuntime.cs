@@ -162,7 +162,8 @@ namespace ArcaneAtelier.Integration
                 rewardDisplayName,
                 rewardDescription);
 
-            controller.SetPreparationBudget(plan.PreparationBudget, plan.Label);
+            int preparationBudget = plan.PreparationBudget + MetaProgressionStore.GetPreparationTickBonus();
+            controller.SetPreparationBudget(preparationBudget, plan.Label);
             controller.SetStatusMessage(string.IsNullOrWhiteSpace(postBattleStatus)
                 ? $"{plan.Label}. {plan.Description}"
                 : $"{postBattleStatus} Next: {plan.Label}. {plan.Description}");

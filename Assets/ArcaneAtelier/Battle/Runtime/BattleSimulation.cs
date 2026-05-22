@@ -101,6 +101,14 @@ namespace ArcaneAtelier.Battle
 
             if (ActionPoints <= 0)
             {
+                TickStatusEffects(BattleStatusTrigger.OnTurnEnd, Player);
+                Deck.EndTurn();
+                PlayerTurnSkipped?.Invoke();
+                if (CheckBattleEnd())
+                {
+                    return true;
+                }
+
                 QueueBossTurn();
             }
 

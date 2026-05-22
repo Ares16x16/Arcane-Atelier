@@ -337,6 +337,7 @@ namespace ArcaneAtelier.Workshop
         private readonly Dictionary<WorkshopItemDefinition, int> preparedCards = new Dictionary<WorkshopItemDefinition, int>();
         private readonly Dictionary<WorkshopItemDefinition, int> reserveItems = new Dictionary<WorkshopItemDefinition, int>();
         private readonly HashSet<string> unlockedNodeIds = new HashSet<string>();
+        private readonly HashSet<string> appliedRewardIds = new HashSet<string>();
         private readonly Vector2Int gridSize;
         private readonly List<WorkshopNodeState> stepNodeIterationCache = new List<WorkshopNodeState>();
         private readonly List<WorkshopNodeState> transferNodeIterationCache = new List<WorkshopNodeState>();
@@ -388,6 +389,8 @@ namespace ArcaneAtelier.Workshop
             {
                 PlaceNodeInternal(seed.Position, seed.NodeDefinition, seed.RotationQuarterTurns);
             }
+
+            tokens = MetaProgressionStore.GetStartingRunTokens();
         }
 
         public event Action StateChanged;
@@ -405,6 +408,26 @@ namespace ArcaneAtelier.Workshop
         public bool IsUnlocked(WorkshopNodeDefinition node)
         {
             return node != null && unlockedNodeIds.Contains(node.Id);
+        }
+
+        public bool HasRewardBeenApplied(WorkshopRewardDefinition reward)
+        {
+            return reward != null && !string.IsNullOrWhiteSpace(reward.Id) && appliedRewardIds.Contains(reward.Id);
+        }
+
+        public bool IsRewardAlreadyOwned(WorkshopRewardDefinition reward)
+        {
+            if (reward == null)
+            {
+                return false;
+            }
+
+            if (HasRewardBeenApplied(reward))
+            {
+                return true;
+            }
+
+            return reward.RewardKind == WorkshopRewardKind.UnlockNode && IsUnlocked(reward.TargetNode);
         }
 
         public PlacementResult PlaceNode(Vector2Int cell, WorkshopNodeDefinition definition, int rotationQuarterTurns, bool bypassUnlock = false)
@@ -486,6 +509,11 @@ namespace ArcaneAtelier.Workshop
                 return;
             }
 
+            if (HasRewardBeenApplied(reward))
+            {
+                return;
+            }
+
             switch (reward.RewardKind)
             {
                 case WorkshopRewardKind.UnlockNode:
@@ -516,6 +544,11 @@ namespace ArcaneAtelier.Workshop
 
                     RaiseStateChanged();
                     break;
+            }
+
+            if (!string.IsNullOrWhiteSpace(reward.Id))
+            {
+                appliedRewardIds.Add(reward.Id);
             }
         }
 
@@ -548,11 +581,12 @@ namespace ArcaneAtelier.Workshop
             preparedCards.Clear();
             reserveItems.Clear();
             unlockedNodeIds.Clear();
+            appliedRewardIds.Clear();
             simulatedSeconds = 0f;
             totalElementProduced = 0;
             totalElementConsumed = 0;
             totalSpellsProduced = 0;
-            tokens = 0;
+            tokens = MetaProgressionStore.GetStartingRunTokens();
 
             foreach (var node in (ContentDatabase.PlaceableNodes ?? Array.Empty<WorkshopNodeDefinition>()).Where(node => node != null && node.UnlockedByDefault))
             {
@@ -721,6 +755,11 @@ namespace ArcaneAtelier.Workshop
                 snapshot.UnlockedNodeIds.Add(unlockedNodeId);
             }
 
+            foreach (string appliedRewardId in appliedRewardIds.OrderBy(id => id, StringComparer.Ordinal))
+            {
+                snapshot.AppliedRewardIds.Add(appliedRewardId);
+            }
+
             foreach (KeyValuePair<WorkshopItemDefinition, int> pair in reserveItems.OrderBy(pair => pair.Key != null ? pair.Key.Id : string.Empty, StringComparer.Ordinal))
             {
                 if (pair.Key == null || pair.Value <= 0)
@@ -761,6 +800,12 @@ namespace ArcaneAtelier.Workshop
                 foreach (string unlockedNodeId in snapshot.UnlockedNodeIds.Where(id => !string.IsNullOrWhiteSpace(id)))
                 {
                     unlockedNodeIds.Add(unlockedNodeId);
+                }
+
+                appliedRewardIds.Clear();
+                foreach (string appliedRewardId in (snapshot.AppliedRewardIds ?? new List<string>()).Where(id => !string.IsNullOrWhiteSpace(id)))
+                {
+                    appliedRewardIds.Add(appliedRewardId);
                 }
 
                 foreach (WorkshopRunNodeSnapshot nodeSnapshot in snapshot.Nodes)

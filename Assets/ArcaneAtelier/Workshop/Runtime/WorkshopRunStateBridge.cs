@@ -28,6 +28,7 @@ namespace ArcaneAtelier.Workshop
     public sealed class WorkshopRunStateSnapshot
     {
         public List<string> UnlockedNodeIds = new List<string>();
+        public List<string> AppliedRewardIds = new List<string>();
         public List<WorkshopRunItemStackSnapshot> ReserveItems = new List<WorkshopRunItemStackSnapshot>();
         public List<WorkshopRunNodeSnapshot> Nodes = new List<WorkshopRunNodeSnapshot>();
         public float SimulatedSeconds;

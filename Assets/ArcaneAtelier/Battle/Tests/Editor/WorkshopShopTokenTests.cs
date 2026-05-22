@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using UnityEngine;
 using ArcaneAtelier.Workshop;
+using System.Linq;
 
 namespace ArcaneAtelier.Battle.Tests
 {
@@ -119,6 +120,29 @@ namespace ArcaneAtelier.Battle.Tests
 
             Assert.That(snapshot.Tokens, Is.EqualTo(75));
             Assert.That(restored.Tokens, Is.EqualTo(75));
+        }
+
+        [Test]
+        public void ApplyReward_SameRewardTwice_DoesNotStack()
+        {
+            WorkshopContentDatabase database = WorkshopDefaultContentFactory.CreateRuntimeDatabase();
+            WorkshopSimulation sim = new WorkshopSimulation(database);
+            WorkshopRewardDefinition reward = database.FindReward("reward.boost.shaping");
+
+            sim.ApplyReward(reward);
+            float boostedSpeed = sim.Nodes.Values
+                .Where(node => node.Definition == reward.TargetNode)
+                .Select(node => node.SpeedMultiplier)
+                .First();
+
+            sim.ApplyReward(reward);
+            float repeatedSpeed = sim.Nodes.Values
+                .Where(node => node.Definition == reward.TargetNode)
+                .Select(node => node.SpeedMultiplier)
+                .First();
+
+            Assert.That(sim.HasRewardBeenApplied(reward), Is.True);
+            Assert.That(repeatedSpeed, Is.EqualTo(boostedSpeed));
         }
     }
 }

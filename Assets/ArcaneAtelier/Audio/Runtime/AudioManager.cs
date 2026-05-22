@@ -153,6 +153,11 @@ namespace ArcaneAtelier.Audio
                 Instance.musicSource.volume = Instance.musicVolume;
         }
 
+        public static float GetMusicVolume()
+        {
+            return Instance.musicVolume;
+        }
+
         // ----------------------------------------------------------------
         // Public API — SFX
         // ----------------------------------------------------------------
@@ -191,6 +196,11 @@ namespace ArcaneAtelier.Audio
             Instance.sfxVolume = Mathf.Clamp01(volume);
             if (Instance.sfxSource != null)
                 Instance.sfxSource.volume = Instance.sfxVolume;
+        }
+
+        public static float GetSFXVolume()
+        {
+            return Instance.sfxVolume;
         }
 
         // ----------------------------------------------------------------

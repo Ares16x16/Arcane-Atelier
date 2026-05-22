@@ -8,6 +8,9 @@ namespace ArcaneAtelier.Workshop
     public sealed class WorkshopHudPresenter : MonoBehaviour
     {
         private const float Margin = 20f;
+        private const float ThroughputPanelWidth = 352f;
+        private const float ControlPanelWidth = 236f;
+        private const float TopPanelGap = 20f;
         private const float RightRailWidth = 380f;
         private const float BottomDockHeight = 292f;
         private const float TopHudHeight = 94f;
@@ -43,6 +46,7 @@ namespace ArcaneAtelier.Workshop
         private GUIStyle cardTitleStyle;
         private GUIStyle cardBodyStyle;
         private GUIStyle tinyLabelStyle;
+        private GUIStyle centeredTinyLabelStyle;
         private GUIStyle compactRowLabelStyle;
         private GUIStyle tabButtonStyle;
         private GUIStyle tooltipPrimaryStyle;
@@ -94,15 +98,9 @@ namespace ArcaneAtelier.Workshop
 
             DrawBackdrop();
 
-            const float throughputWidth = 278f;
-            const float controlWidth = 236f;
-            var topLeftRect = new Rect(Margin, Margin, throughputWidth, 110f);
-            var topCenterRect = new Rect(
-                topLeftRect.xMax + 16f,
-                Margin,
-                Mathf.Max(240f, Screen.width - topLeftRect.width - RightRailWidth - controlWidth - Margin * 4f - 16f),
-                60f);
-            var topRightRect = new Rect(Screen.width - controlWidth - Margin, Margin, controlWidth, 60f);
+            Rect topLeftRect = BuildThroughputPanelRect();
+            Rect topRightRect = BuildControlPanelRect();
+            Rect topCenterRect = BuildStatusPanelRect(topLeftRect, topRightRect);
             var rightRailRect = new Rect(
                 Screen.width - RightRailWidth - Margin,
                 TopHudHeight + 10f,
@@ -115,6 +113,7 @@ namespace ArcaneAtelier.Workshop
             DrawControlPanel(topRightRect);
             DrawRightRail(rightRailRect);
             DrawPaletteDock(paletteRect);
+            DrawLegacySigilStrip(BuildLegacySigilStripRect(topLeftRect, topRightRect));
 
             if (showRewards)
             {
@@ -209,6 +208,14 @@ namespace ArcaneAtelier.Workshop
                 controller.LoadHackFactoryLayout();
             }
             GUI.EndGroup();
+        }
+
+        private void DrawLegacySigilStrip(Rect rect)
+        {
+            DrawRect(rect, new Color(0.045f, 0.06f, 0.09f, 0.88f));
+            DrawOutline(rect, new Color(AtelierGold.r, AtelierGold.g, AtelierGold.b, 0.5f));
+            DrawRect(new Rect(rect.x, rect.y, rect.width, 2f), new Color(AtelierGold.r, AtelierGold.g, AtelierGold.b, 0.72f));
+            GUI.Label(new Rect(rect.x + 10f, rect.y + 5f, rect.width - 20f, 16f), MetaProgressionStore.BuildActiveBonusSummary(), tinyLabelStyle);
         }
 
         private void DrawRightRail(Rect rect)
@@ -317,33 +324,44 @@ namespace ArcaneAtelier.Workshop
                 return;
             }
 
-            var viewHeight = rewards.Length * 86f + 8f;
+            const float itemHeight = 142f;
+            var viewHeight = rewards.Length * (itemHeight + 12f) + 8f;
             rewardScroll = GUI.BeginScrollView(contentRect, rewardScroll, new Rect(0f, 0f, contentRect.width - 18f, viewHeight), false, true);
 
             var y = 0f;
             foreach (var reward in rewards)
             {
-                var itemRect = new Rect(0f, y, contentRect.width - 24f, 76f);
+                var itemRect = new Rect(0f, y, contentRect.width - 24f, itemHeight);
                 DrawSubPanel(itemRect, SpellViolet);
                 DrawRewardIcon(new Rect(12f, y + 12f, 42f, 42f), reward);
-                GUI.Label(new Rect(62f, y + 10f, itemRect.width - 136f, 18f), reward.DisplayName, sectionStyle);
-                GUI.Label(new Rect(62f, y + 30f, itemRect.width - 136f, 30f), reward.Description, bodyStyle);
+
+                float textWidth = Mathf.Max(80f, itemRect.width - 78f);
+                GUI.Label(new Rect(62f, y + 10f, textWidth, 18f), reward.DisplayName, sectionStyle);
+                GUI.Label(new Rect(62f, y + 32f, textWidth, 56f), reward.Description, bodyStyle);
 
                 int cost = reward.TokenCost;
+                bool owned = controller.IsRewardAlreadyOwned(reward);
                 bool canAfford = wallet >= cost;
-                string buyLabel = canAfford ? $"Buy ({cost})" : $"{cost} Tokens";
-                Color buyColor = canAfford ? AtelierGold : HudMuted;
+                string stateLabel = owned ? "Owned" : canAfford ? "Available" : "Need Tokens";
+                string buyLabel = owned ? "Owned" : canAfford ? $"Buy {cost}" : $"{cost}";
+                Color buyColor = owned ? ArcaneBlue : canAfford ? AtelierGold : HudMuted;
+
+                Rect actionRect = new Rect(12f, y + 96f, itemRect.width - 24f, 34f);
+                DrawRect(new Rect(actionRect.x, actionRect.y, actionRect.width, actionRect.height), new Color(0.04f, 0.055f, 0.082f, 0.72f));
+                DrawOutline(new Rect(actionRect.x, actionRect.y, actionRect.width, actionRect.height), new Color(buyColor.r, buyColor.g, buyColor.b, 0.45f));
+                GUI.Label(new Rect(actionRect.x + 10f, actionRect.y + 8f, actionRect.width * 0.46f, 16f), stateLabel, tinyLabelStyle);
+                GUI.Label(new Rect(actionRect.x + actionRect.width * 0.42f, actionRect.y + 8f, actionRect.width * 0.22f, 16f), $"{cost} Tokens", centeredTinyLabelStyle);
 
                 bool previouslyEnabled = GUI.enabled;
-                GUI.enabled = canAfford;
-                if (DrawThemedButton(new Rect(itemRect.width - 88f, y + 24f, 76f, 26f), buyLabel, buyColor, buttonStyle, $"reward_buy_{reward.Id}"))
+                GUI.enabled = canAfford && !owned;
+                if (DrawThemedButton(new Rect(actionRect.x + actionRect.width - 86f, actionRect.y + 6f, 74f, 22f), buyLabel, buyColor, buttonStyle, $"reward_buy_{reward.Id}"))
                 {
                     controller.TryPurchaseReward(reward.Id, out _, out _);
                     wallet = controller.Tokens;
                 }
                 GUI.enabled = previouslyEnabled;
 
-                y += 84f;
+                y += itemHeight + 12f;
             }
 
             GUI.EndScrollView();
@@ -574,15 +592,9 @@ namespace ArcaneAtelier.Workshop
 
         private bool IsPointerOverWorkshopUi(Vector2 mousePosition)
         {
-            const float throughputWidth = 278f;
-            const float controlWidth = 236f;
-            var topLeftRect = new Rect(Margin, Margin, throughputWidth, 110f);
-            var topCenterRect = new Rect(
-                topLeftRect.xMax + 16f,
-                Margin,
-                Mathf.Max(240f, Screen.width - topLeftRect.width - RightRailWidth - controlWidth - Margin * 4f - 16f),
-                60f);
-            var topRightRect = new Rect(Screen.width - controlWidth - Margin, Margin, controlWidth, 60f);
+            Rect topLeftRect = BuildThroughputPanelRect();
+            Rect topRightRect = BuildControlPanelRect();
+            Rect topCenterRect = BuildStatusPanelRect(topLeftRect, topRightRect);
             var rightRailRect = new Rect(
                 Screen.width - RightRailWidth - Margin,
                 TopHudHeight + 10f,
@@ -605,6 +617,30 @@ namespace ArcaneAtelier.Workshop
             }
 
             return false;
+        }
+
+        private static Rect BuildThroughputPanelRect()
+        {
+            return new Rect(Margin, Margin, ThroughputPanelWidth, 110f);
+        }
+
+        private static Rect BuildControlPanelRect()
+        {
+            return new Rect(Screen.width - ControlPanelWidth - Margin, Margin, ControlPanelWidth, 60f);
+        }
+
+        private static Rect BuildStatusPanelRect(Rect throughputRect, Rect controlRect)
+        {
+            float x = throughputRect.xMax + TopPanelGap;
+            float width = Mathf.Max(240f, controlRect.xMin - x - Margin);
+            return new Rect(x, Margin, width, 60f);
+        }
+
+        private static Rect BuildLegacySigilStripRect(Rect throughputRect, Rect controlRect)
+        {
+            float x = throughputRect.xMax + TopPanelGap;
+            float width = Mathf.Max(240f, controlRect.xMin - x - Margin);
+            return new Rect(x, throughputRect.y + 74f, width, 20f);
         }
 
         private static Rect GetFactoryViewportRect()
@@ -1159,6 +1195,11 @@ namespace ArcaneAtelier.Workshop
                 wordWrap = true,
                 alignment = TextAnchor.UpperLeft,
                 normal = { textColor = HudMuted }
+            };
+
+            centeredTinyLabelStyle = new GUIStyle(tinyLabelStyle)
+            {
+                alignment = TextAnchor.MiddleCenter
             };
 
             compactRowLabelStyle = new GUIStyle(bodyStyle)
