@@ -7,6 +7,8 @@ namespace ArcaneAtelier.Battle
 {
     public sealed class BattleDeckController
     {
+        private const int TurnDrawCount = 5;
+
         private readonly BattleContentDatabase contentDatabase;
         private readonly List<WorkshopBattleCardEntry> drawPile = new List<WorkshopBattleCardEntry>();
         private readonly List<WorkshopBattleCardEntry> hand = new List<WorkshopBattleCardEntry>();
@@ -23,7 +25,7 @@ namespace ArcaneAtelier.Battle
         {
             contentDatabase = database;
             InitializeDeck(payload);
-            DrawCards(5);
+            DrawCards(TurnDrawCount);
         }
 
         private void InitializeDeck(WorkshopBattlePayload payload)
@@ -154,7 +156,6 @@ namespace ArcaneAtelier.Battle
 
             discardPile.Add(card);
             hand.RemoveAt(handIndex);
-            DrawCards(1);
 
             return true;
         }
@@ -174,10 +175,10 @@ namespace ArcaneAtelier.Battle
 
         public void EndTurn()
         {
-            // Move entire hand to discard and draw fresh hand
+            // End the turn with a clean redraw so playing cards reduces hand size during the turn.
             discardPile.AddRange(hand);
             hand.Clear();
-            DrawCards(5);
+            DrawCards(TurnDrawCount);
         }
 
         public static int GetActionPointCost(WorkshopSpellRole role)

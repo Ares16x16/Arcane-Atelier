@@ -1,5 +1,6 @@
 using ArcaneAtelier.Audio;
 using ArcaneAtelier.Workshop;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ArcaneAtelier.Battle
@@ -57,14 +58,34 @@ namespace ArcaneAtelier.Battle
         private Vector2 dragMousePosition;
         private Rect playerTargetScreenRect;
         private Rect bossTargetScreenRect;
+        private Rect drawPileScreenRect;
+        private Rect discardPileScreenRect;
         private DragTarget activeDropTarget = DragTarget.None;
         private float actionPointFlash;
+        private float drawPilePulse;
+        private float discardPilePulse;
+        private float shufflePulse;
         private int lastObservedActionPoints = -1;
+        private int lastObservedDrawPileCount = -1;
+        private int lastObservedDiscardPileCount = -1;
         private BattleResult lastShownResult;
         private float resultOverlayShownAt = -1f;
         private FinalVictorySequencePhase finalVictorySequencePhase = FinalVictorySequencePhase.None;
         private float finalVictoryPhaseStartedAt = -1f;
         private float finalVictorySummaryShownAt = -1f;
+        private float handAnimationStartedAt = -1f;
+        private float shuffleNoticeUntil = -1f;
+        private string[] lastHandCardIds = System.Array.Empty<string>();
+        private WorkshopBattleCardEntry[] lastHandCards = System.Array.Empty<WorkshopBattleCardEntry>();
+        private int animatedHandStartIndex = int.MaxValue;
+        private int animatedHandEndIndex = -1;
+        private int pendingDiscardSourceHandCount = -1;
+        private readonly List<PendingDiscardRequest> pendingDiscardRequests = new List<PendingDiscardRequest>();
+        private readonly List<int> pendingDrawIndices = new List<int>();
+        private readonly List<TransientCardAnimation> transientCardAnimations = new List<TransientCardAnimation>();
+        private readonly Dictionary<int, float> handRevealTimes = new Dictionary<int, float>();
+        private string pendingDraggedDiscardCardId = string.Empty;
+        private Rect pendingDraggedDiscardStartRect = Rect.zero;
 
         private enum DragTarget
         {
@@ -78,6 +99,23 @@ namespace ArcaneAtelier.Battle
             None,
             Intro,
             Summary
+        }
+
+        private sealed class PendingDiscardRequest
+        {
+            public WorkshopBattleCardEntry Card;
+            public int SourceIndex;
+            public bool HasStartRect;
+            public Rect StartRect;
+        }
+
+        private sealed class TransientCardAnimation
+        {
+            public WorkshopBattleCardEntry Card;
+            public Rect StartRect;
+            public Rect EndRect;
+            public float StartedAt;
+            public float Duration;
         }
 
         public void Initialize(BattleSceneController sceneController)
@@ -104,6 +142,7 @@ namespace ArcaneAtelier.Battle
             DrawWorldTargetHighlights();
             DrawTopBar(topBarRect);
             DrawHandPanel(handRect);
+            DrawTransientCardAnimations();
             DrawDraggedCard();
 
             if (controller.CurrentResult != null)
@@ -150,7 +189,17 @@ namespace ArcaneAtelier.Battle
                 {
                     DragTarget dropTarget = GetDropTargetForCard(draggingCardIndex, mousePosition);
                     int resolvedIndex = draggingCardIndex;
+                    WorkshopBattleCardEntry draggedCard = controller.Simulation.Deck.Hand[resolvedIndex];
                     bool played = dropTarget != DragTarget.None && controller.TryPlayCardFromHud(resolvedIndex);
+                    if (played)
+                    {
+                        pendingDraggedDiscardCardId = draggedCard.CardId ?? string.Empty;
+                        pendingDraggedDiscardStartRect = new Rect(
+                            dragMousePosition.x - CardWidth * 0.5f,
+                            dragMousePosition.y - CardHeight * 0.5f,
+                            CardWidth,
+                            CardHeight);
+                    }
                     selectedCardIndex = played ? -1 : resolvedIndex;
                     pressedCardIndex = -1;
                     draggingCardIndex = -1;
@@ -328,16 +377,22 @@ namespace ArcaneAtelier.Battle
             GUI.BeginGroup(rect);
 
             int handCount = controller.Simulation.Deck.HandCount;
-            Rect headerRect = new Rect(14f, 12f, rect.width - 28f, 30f);
+            Rect headerRect = new Rect(14f, 12f, rect.width - 28f, 34f);
             Rect contentRect = new Rect(14f, 48f, rect.width - 28f, rect.height - 62f);
 
             DrawRect(headerRect, new Color(0.06f, 0.08f, 0.12f, 0.66f));
             DrawOutline(headerRect, new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.42f));
-            GUI.Label(new Rect(headerRect.x + 12f, headerRect.y + 6f, 180f, 18f), "Prepared Cards", sectionStyle);
-            GUI.Label(
-                new Rect(headerRect.x + headerRect.width - 320f, headerRect.y + 7f, 308f, 16f),
-                $"Hand {controller.Simulation.Deck.HandCount}  •  Draw {controller.Simulation.Deck.DrawPileCount}  •  Discard {controller.Simulation.Deck.DiscardPileCount}",
-                new GUIStyle(mutedStyle) { alignment = TextAnchor.MiddleRight });
+            GUI.Label(new Rect(headerRect.x + 12f, headerRect.y + 8f, 140f, 18f), "Hand", sectionStyle);
+
+            float pileWidth = 72f;
+            float pileGap = 10f;
+            float discardX = headerRect.x + headerRect.width - pileWidth;
+            float drawX = discardX - pileGap - pileWidth;
+            DrawCardPileMini(new Rect(drawX, headerRect.y + 4f, pileWidth, 26f), "Deck", controller.Simulation.Deck.DrawPileCount, WorkshopBlue, drawPilePulse, Time.unscaledTime < shuffleNoticeUntil);
+            DrawCardPileMini(new Rect(discardX, headerRect.y + 4f, pileWidth, 26f), "Discard", controller.Simulation.Deck.DiscardPileCount, WorkshopViolet, discardPilePulse, false);
+            drawPileScreenRect = OffsetRect(new Rect(drawX, headerRect.y + 4f, pileWidth, 26f), rect.position);
+            discardPileScreenRect = OffsetRect(new Rect(discardX, headerRect.y + 4f, pileWidth, 26f), rect.position);
+            GUI.Label(new Rect(drawX - 118f, headerRect.y + 8f, 104f, 16f), $"Hand {handCount}", new GUIStyle(mutedStyle) { alignment = TextAnchor.MiddleRight });
 
             DrawRect(contentRect, new Color(0.05f, 0.07f, 0.11f, 0.54f));
             DrawOutline(contentRect, new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.32f));
@@ -345,14 +400,21 @@ namespace ArcaneAtelier.Battle
             DrawRect(new Rect(contentRect.x + 10f, contentRect.yMax - 9f, contentRect.width - 20f, 1f), new Color(0f, 0f, 0f, 0.18f));
 
             float viewWidth = Mathf.Max(contentRect.width - 18f, handCount * (CardWidth + CardSpacing) + CardSpacing);
-            handScroll = GUI.BeginScrollView(contentRect, handScroll, new Rect(0f, 0f, viewWidth, CardHeight + 12f), true, false);
+            handScroll = GUI.BeginScrollView(contentRect, handScroll, new Rect(0f, 0f, viewWidth, CardHeight + 20f), true, false);
             for (int i = 0; i < handCount; i++)
             {
-                Rect cardRect = new Rect(CardSpacing + i * (CardWidth + CardSpacing), 6f, CardWidth, CardHeight);
+                if (IsHandCardHidden(i, Time.unscaledTime))
+                {
+                    continue;
+                }
+
+                Rect cardRect = new Rect(CardSpacing + i * (CardWidth + CardSpacing), 10f, CardWidth, CardHeight);
                 DrawCard(cardRect, controller.Simulation.Deck.Hand[i], i);
             }
 
             GUI.EndScrollView();
+            ResolvePendingDrawAnimations(rect, handCount);
+            ResolvePendingDiscardAnimations(rect, handCount);
             GUI.EndGroup();
         }
 
@@ -394,8 +456,12 @@ namespace ArcaneAtelier.Battle
                 ? accent
                 : new Color(accent.r, accent.g, accent.b, 0.62f);
 
-            float lift = isPressed ? 2f : isHover || isSelected ? 5f : 0f;
-            DrawCardVisual(new Rect(rect.x, rect.y - lift, rect.width, rect.height), card, index, outline, accent, canAfford, false);
+            float lift = isPressed ? 2f : isSelected ? 5f : 0f;
+            Rect animatedRect = GetAnimatedHandCardRect(new Rect(rect.x, rect.y - lift, rect.width, rect.height), index, out float alpha);
+            Color previous = GUI.color;
+            GUI.color = new Color(previous.r, previous.g, previous.b, previous.a * alpha);
+            DrawCardVisual(animatedRect, card, index, outline, accent, canAfford, false);
+            GUI.color = previous;
         }
 
         private void DrawGhostCard(Rect rect)
@@ -443,16 +509,29 @@ namespace ArcaneAtelier.Battle
 
             DrawPanelWithShadow(rect, panelColor, outline, shadowColor);
             DrawRect(new Rect(rect.x, rect.y, rect.width, 6f), accent);
-            DrawRect(new Rect(rect.x + 12f, rect.y + 12f, 30f, 22f), new Color(accent.r, accent.g, accent.b, 0.9f));
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 14f, 30f, 18f), index < 9 ? (index + 1).ToString() : "-", pillStyle);
+            if (index >= 0)
+            {
+                DrawRect(new Rect(rect.x + 6f, rect.y + 8f, 22f, 16f), new Color(0.05f, 0.07f, 0.1f, 0.98f));
+                DrawOutline(new Rect(rect.x + 6f, rect.y + 8f, 22f, 16f), new Color(accent.r, accent.g, accent.b, 0.74f));
+                GUI.Label(new Rect(rect.x + 6f, rect.y + 8f, 22f, 16f), index < 9 ? (index + 1).ToString() : "-", pillStyle);
+            }
+            Rect iconRect = new Rect(rect.x + 12f, rect.y + 24f, 30f, 30f);
+            DrawCardIconSlot(iconRect, card, accent);
 
             DrawTag(new Rect(rect.x + rect.width - 58f, rect.y + 12f, 46f, 20f), $"{apCost} AP", new Color(ApAccent.r, ApAccent.g, ApAccent.b, 0.96f), darkChipStyle);
-            GUI.Label(new Rect(rect.x + 50f, rect.y + 10f, rect.width - 114f, 34f), card.DisplayName, cardTitleStyle);
-            DrawRect(new Rect(rect.x + 12f, rect.y + 48f, rect.width - 24f, 1f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.8f));
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 56f, rect.width - 24f, 40f), BuildCardSummary(card), cardSummaryStyle);
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 100f, rect.width - 24f, 14f), BuildCardMeta(card), cardMetaStyle);
-            DrawTag(new Rect(rect.x + 12f, rect.y + 122f, 100f, 18f), BuildTargetLabel(card), new Color(accent.r, accent.g, accent.b, 0.26f));
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 146f, rect.width - 24f, 18f), canAfford ? BuildDragHint(card) : "Insufficient AP", centeredMutedStyle);
+            float headerLeft = rect.x + 56f;
+            float headerRight = rect.x + rect.width - 64f;
+            float headerWidth = Mathf.Max(40f, headerRight - headerLeft);
+            float targetWidth = 42f;
+            float tierWidth = Mathf.Max(52f, headerWidth - targetWidth - 6f);
+            GUI.Label(new Rect(headerLeft, rect.y + 10f, headerWidth, 20f), card.DisplayName, cardTitleStyle);
+            DrawTag(new Rect(headerLeft, rect.y + 32f, tierWidth, 16f), BuildTierLabel(card.Tier), new Color(accent.r, accent.g, accent.b, 0.2f), centeredMutedStyle);
+            DrawTag(new Rect(headerLeft + tierWidth + 6f, rect.y + 32f, targetWidth, 16f), BuildTargetLabel(card), new Color(0.16f, 0.18f, 0.24f, 0.92f), centeredMutedStyle);
+            DrawRect(new Rect(rect.x + 12f, rect.y + 56f, rect.width - 24f, 1f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.8f));
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 64f, rect.width - 24f, 40f), BuildCardSummary(card), cardSummaryStyle);
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 108f, rect.width - 24f, 14f), BuildCardMeta(card), cardMetaStyle);
+            DrawTag(new Rect(rect.x + 12f, rect.y + 130f, 100f, 18f), BuildRoleLabel(card.Role), new Color(accent.r, accent.g, accent.b, 0.26f));
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 152f, rect.width - 24f, 18f), canAfford ? BuildDragHint(card) : "Insufficient AP", centeredMutedStyle);
 
             if (!canAfford)
             {
@@ -1031,10 +1110,10 @@ namespace ArcaneAtelier.Battle
         {
             if (card.Element == WorkshopElementAttribute.None)
             {
-                return card.Role.ToString();
+                return $"{BuildTierLabel(card.Tier)}  •  {BuildRoleLabel(card.Role)}";
             }
 
-            return $"{card.Element}  •  {card.Role}";
+            return $"{card.Element}  •  {BuildTierLabel(card.Tier)}  •  {BuildRoleLabel(card.Role)}";
         }
 
         private string BuildDragHint(WorkshopBattleCardEntry card)
@@ -1060,6 +1139,59 @@ namespace ArcaneAtelier.Battle
                     return "Self";
                 default:
                     return "None";
+            }
+        }
+
+        private void DrawCardPileMini(Rect rect, string label, int count, Color accent, float pulse, bool showShuffle)
+        {
+            float xJitter = pulse * 2f;
+            float yLift = pulse * 2f;
+            Rect backRect = new Rect(rect.x + 8f + xJitter, rect.y + 6f - yLift, 24f, 16f);
+            Rect midRect = new Rect(rect.x + 5f + xJitter, rect.y + 3f - yLift, 24f, 16f);
+            Rect frontRect = new Rect(rect.x + 2f + xJitter, rect.y - yLift, 24f, 16f);
+
+            DrawRect(backRect, new Color(0.1f, 0.13f, 0.18f, 0.72f));
+            DrawOutline(backRect, new Color(accent.r, accent.g, accent.b, 0.2f + pulse * 0.2f));
+            DrawRect(midRect, new Color(0.12f, 0.16f, 0.22f, 0.82f));
+            DrawOutline(midRect, new Color(accent.r, accent.g, accent.b, 0.3f + pulse * 0.24f));
+            DrawRect(frontRect, new Color(HudPanel.r, HudPanel.g, HudPanel.b, 0.96f));
+            DrawOutline(frontRect, new Color(accent.r, accent.g, accent.b, 0.72f + pulse * 0.18f));
+            DrawRect(new Rect(frontRect.x, frontRect.y, frontRect.width, 3f), new Color(accent.r, accent.g, accent.b, 0.9f));
+            DrawRect(new Rect(frontRect.x + 13f, frontRect.y - 2f, 14f, 12f), new Color(0.05f, 0.07f, 0.1f, 0.98f));
+            DrawOutline(new Rect(frontRect.x + 13f, frontRect.y - 2f, 14f, 12f), new Color(accent.r, accent.g, accent.b, 0.74f));
+            GUI.Label(new Rect(frontRect.x + 13f, frontRect.y - 2f, 14f, 12f), count.ToString(), chipStyle);
+
+            GUI.Label(new Rect(rect.x + 34f, rect.y + 1f, rect.width - 34f, 14f), showShuffle ? "Shuffle" : label, mutedStyle);
+            GUI.Label(new Rect(rect.x + 34f, rect.y + 13f, rect.width - 34f, 14f), count > 0 ? "Ready" : "Empty", sectionStyle);
+        }
+
+        private string BuildRoleLabel(WorkshopSpellRole role)
+        {
+            switch (role)
+            {
+                case WorkshopSpellRole.Attack:
+                    return "Attack";
+                case WorkshopSpellRole.Healing:
+                    return "Heal";
+                case WorkshopSpellRole.Defense:
+                    return "Guard";
+                default:
+                    return "Spell";
+            }
+        }
+
+        private string BuildTierLabel(WorkshopSpellTier tier)
+        {
+            switch (tier)
+            {
+                case WorkshopSpellTier.Basic:
+                    return "Basic";
+                case WorkshopSpellTier.Intermediate:
+                    return "Fusion I";
+                case WorkshopSpellTier.Advanced:
+                    return "Fusion II+";
+                default:
+                    return "Spell";
             }
         }
 
@@ -1238,10 +1370,44 @@ namespace ArcaneAtelier.Battle
 
                     lastObservedActionPoints = controller.Simulation.ActionPoints;
                 }
+
+                BattleDeckController deck = controller.Simulation.Deck;
+                UpdateHandAnimationState(deck);
+
+                if (lastObservedDrawPileCount >= 0)
+                {
+                    if (lastObservedDrawPileCount != deck.DrawPileCount)
+                    {
+                        drawPilePulse = 1f;
+                    }
+
+                    if (lastObservedDiscardPileCount != deck.DiscardPileCount)
+                    {
+                        discardPilePulse = 1f;
+                    }
+
+                    bool shuffled = lastObservedDrawPileCount == 0 &&
+                                    deck.DrawPileCount > 0 &&
+                                    lastObservedDiscardPileCount > deck.DiscardPileCount;
+                    if (shuffled)
+                    {
+                        shufflePulse = 1f;
+                        shuffleNoticeUntil = Time.unscaledTime + 0.8f;
+                    }
+                }
+
+                lastObservedDrawPileCount = deck.DrawPileCount;
+                lastObservedDiscardPileCount = deck.DiscardPileCount;
             }
             else
             {
                 lastObservedActionPoints = -1;
+                lastObservedDrawPileCount = -1;
+                lastObservedDiscardPileCount = -1;
+                lastHandCardIds = System.Array.Empty<string>();
+                animatedHandStartIndex = int.MaxValue;
+                animatedHandEndIndex = -1;
+                handRevealTimes.Clear();
             }
 
             if (controller != null && controller.CurrentResult != lastShownResult)
@@ -1269,6 +1435,347 @@ namespace ArcaneAtelier.Battle
             }
 
             actionPointFlash = Mathf.MoveTowards(actionPointFlash, 0f, Time.unscaledDeltaTime * 2.5f);
+            drawPilePulse = Mathf.MoveTowards(drawPilePulse, 0f, Time.unscaledDeltaTime * 3f);
+            discardPilePulse = Mathf.MoveTowards(discardPilePulse, 0f, Time.unscaledDeltaTime * 3f);
+            shufflePulse = Mathf.MoveTowards(shufflePulse, 0f, Time.unscaledDeltaTime * 2.2f);
+        }
+
+        private void UpdateHandAnimationState(BattleDeckController deck)
+        {
+            if (deck == null || deck.Hand == null)
+            {
+                return;
+            }
+
+            WorkshopBattleCardEntry[] currentCards = new WorkshopBattleCardEntry[deck.Hand.Count];
+            string[] currentIds = new string[deck.Hand.Count];
+            for (int i = 0; i < deck.Hand.Count; i++)
+            {
+                currentCards[i] = deck.Hand[i];
+                currentIds[i] = currentCards[i].CardId ?? string.Empty;
+            }
+
+            animatedHandStartIndex = int.MaxValue;
+            animatedHandEndIndex = -1;
+
+            if (lastHandCards.Length == 0)
+            {
+                if (currentIds.Length > 0)
+                {
+                    handAnimationStartedAt = Time.unscaledTime;
+                    animatedHandStartIndex = 0;
+                    animatedHandEndIndex = currentIds.Length - 1;
+                    QueueDrawAnimations(0, currentIds.Length - 1);
+                }
+
+                lastHandCardIds = currentIds;
+                lastHandCards = currentCards;
+                return;
+            }
+
+            bool changed = currentIds.Length != lastHandCardIds.Length;
+            if (!changed)
+            {
+                for (int i = 0; i < currentIds.Length; i++)
+                {
+                    if (currentIds[i] != lastHandCardIds[i])
+                    {
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!changed)
+            {
+                return;
+            }
+
+            pendingDiscardRequests.Clear();
+            pendingDiscardSourceHandCount = -1;
+            pendingDrawIndices.Clear();
+
+            if (currentIds.Length > lastHandCardIds.Length)
+            {
+                int sharedPrefix = 0;
+                int compareCount = Mathf.Min(lastHandCardIds.Length, currentIds.Length);
+                while (sharedPrefix < compareCount && lastHandCardIds[sharedPrefix] == currentIds[sharedPrefix])
+                {
+                    sharedPrefix++;
+                }
+
+                handAnimationStartedAt = Time.unscaledTime;
+                if (sharedPrefix == lastHandCardIds.Length)
+                {
+                    animatedHandStartIndex = lastHandCardIds.Length;
+                    animatedHandEndIndex = currentIds.Length - 1;
+                    QueueDrawAnimations(animatedHandStartIndex, animatedHandEndIndex);
+                }
+                else
+                {
+                    QueueDiscardAnimations(lastHandCards);
+                    animatedHandStartIndex = 0;
+                    animatedHandEndIndex = currentIds.Length - 1;
+                    QueueDrawAnimations(animatedHandStartIndex, animatedHandEndIndex);
+                }
+            }
+            else if (currentIds.Length < lastHandCardIds.Length)
+            {
+                QueueDiscardAnimations(FindRemovedCards(lastHandCards, currentCards), lastHandCards.Length);
+            }
+            else if (currentIds.Length == lastHandCardIds.Length && currentIds.Length > 0)
+            {
+                QueueDiscardAnimations(lastHandCards);
+                handAnimationStartedAt = Time.unscaledTime;
+                animatedHandStartIndex = 0;
+                animatedHandEndIndex = currentIds.Length - 1;
+                QueueDrawAnimations(animatedHandStartIndex, animatedHandEndIndex);
+            }
+
+            lastHandCardIds = currentIds;
+            lastHandCards = currentCards;
+        }
+
+        private Rect GetAnimatedHandCardRect(Rect rect, int index, out float alpha)
+        {
+            if (IsHandCardHidden(index, Time.unscaledTime))
+            {
+                alpha = 0f;
+                return rect;
+            }
+
+            if (handAnimationStartedAt < 0f || index < animatedHandStartIndex || index > animatedHandEndIndex)
+            {
+                alpha = 1f;
+                return rect;
+            }
+
+            int localIndex = index - animatedHandStartIndex;
+            float progress = Mathf.Clamp01((Time.unscaledTime - handAnimationStartedAt - localIndex * 0.045f) / 0.24f);
+            float eased = progress * progress * (3f - 2f * progress);
+            alpha = eased;
+            return new Rect(rect.x, rect.y + (1f - eased) * 8f, rect.width, rect.height);
+        }
+
+        private void QueueDrawAnimations(int startIndex, int endIndex)
+        {
+            if (startIndex < 0 || endIndex < startIndex)
+            {
+                return;
+            }
+
+            for (int i = startIndex; i <= endIndex; i++)
+            {
+                pendingDrawIndices.Add(i);
+            }
+        }
+
+        private void QueueDiscardAnimations(WorkshopBattleCardEntry[] cards)
+        {
+            if (cards == null || cards.Length == 0)
+            {
+                return;
+            }
+
+            pendingDiscardSourceHandCount = cards.Length;
+            for (int i = 0; i < cards.Length; i++)
+            {
+                pendingDiscardRequests.Add(new PendingDiscardRequest
+                {
+                    Card = cards[i],
+                    SourceIndex = i
+                });
+            }
+        }
+
+        private void QueueDiscardAnimations(PendingDiscardRequest[] requests, int sourceHandCount)
+        {
+            if (requests == null || requests.Length == 0)
+            {
+                return;
+            }
+
+            pendingDiscardSourceHandCount = sourceHandCount;
+            for (int i = 0; i < requests.Length; i++)
+            {
+                pendingDiscardRequests.Add(requests[i]);
+            }
+        }
+
+        private PendingDiscardRequest[] FindRemovedCards(WorkshopBattleCardEntry[] previousCards, WorkshopBattleCardEntry[] currentCards)
+        {
+            if (previousCards == null || previousCards.Length == 0)
+            {
+                return System.Array.Empty<PendingDiscardRequest>();
+            }
+
+            List<PendingDiscardRequest> removed = new List<PendingDiscardRequest>();
+            int currentIndex = 0;
+            for (int previousIndex = 0; previousIndex < previousCards.Length; previousIndex++)
+            {
+                string previousId = previousCards[previousIndex].CardId ?? string.Empty;
+                if (currentIndex < currentCards.Length && previousId == (currentCards[currentIndex].CardId ?? string.Empty))
+                {
+                    currentIndex++;
+                    continue;
+                }
+
+                bool useDraggedStart = !string.IsNullOrWhiteSpace(pendingDraggedDiscardCardId) &&
+                                       pendingDraggedDiscardCardId == previousId;
+                removed.Add(new PendingDiscardRequest
+                {
+                    Card = previousCards[previousIndex],
+                    SourceIndex = previousIndex,
+                    HasStartRect = useDraggedStart,
+                    StartRect = useDraggedStart ? pendingDraggedDiscardStartRect : Rect.zero
+                });
+            }
+
+            pendingDraggedDiscardCardId = string.Empty;
+            pendingDraggedDiscardStartRect = Rect.zero;
+
+            return removed.ToArray();
+        }
+
+        private void ResolvePendingDrawAnimations(Rect handRect, int handCount)
+        {
+            if (pendingDrawIndices.Count == 0 || drawPileScreenRect.width <= 0f)
+            {
+                return;
+            }
+
+            for (int i = 0; i < pendingDrawIndices.Count; i++)
+            {
+                int handIndex = pendingDrawIndices[i];
+                if (handIndex < 0 || handIndex >= handCount)
+                {
+                    continue;
+                }
+
+                Rect endRect = BuildHandCardScreenRect(handRect, handIndex, handCount);
+                float startedAt = handAnimationStartedAt + (handIndex - animatedHandStartIndex) * 0.045f;
+                float revealAt = startedAt + 0.24f;
+                transientCardAnimations.Add(new TransientCardAnimation
+                {
+                    Card = controller.Simulation.Deck.Hand[handIndex],
+                    StartRect = new Rect(drawPileScreenRect.center.x - CardWidth * 0.5f, drawPileScreenRect.center.y - CardHeight * 0.5f, CardWidth, CardHeight),
+                    EndRect = endRect,
+                    StartedAt = startedAt,
+                    Duration = 0.24f
+                });
+                handRevealTimes[handIndex] = revealAt;
+            }
+
+            pendingDrawIndices.Clear();
+        }
+
+        private void ResolvePendingDiscardAnimations(Rect handRect, int currentHandCount)
+        {
+            if (pendingDiscardRequests.Count == 0 || discardPileScreenRect.width <= 0f)
+            {
+                return;
+            }
+
+            int sourceHandCount = pendingDiscardSourceHandCount > 0 ? pendingDiscardSourceHandCount : currentHandCount;
+            for (int i = 0; i < pendingDiscardRequests.Count; i++)
+            {
+                PendingDiscardRequest request = pendingDiscardRequests[i];
+                Rect startRect = request.HasStartRect
+                    ? request.StartRect
+                    : BuildHandCardScreenRect(handRect, request.SourceIndex, sourceHandCount);
+                transientCardAnimations.Add(new TransientCardAnimation
+                {
+                    Card = request.Card,
+                    StartRect = startRect,
+                    EndRect = new Rect(discardPileScreenRect.center.x - CardWidth * 0.35f, discardPileScreenRect.center.y - CardHeight * 0.35f, CardWidth * 0.7f, CardHeight * 0.7f),
+                    StartedAt = Time.unscaledTime + i * 0.03f,
+                    Duration = 0.24f
+                });
+            }
+
+            pendingDiscardRequests.Clear();
+            pendingDiscardSourceHandCount = -1;
+        }
+
+        private Rect BuildHandCardScreenRect(Rect handRect, int index, int handCount)
+        {
+            float localX = CardSpacing + index * (CardWidth + CardSpacing) - handScroll.x;
+            float localY = 10f - handScroll.y;
+            float screenX = handRect.x + 14f + localX;
+            float screenY = handRect.y + 48f + localY;
+            return new Rect(screenX, screenY, CardWidth, CardHeight);
+        }
+
+        private bool IsHandCardHidden(int handIndex, float atTime)
+        {
+            float revealAt = GetHandRevealTime(handIndex);
+            if (revealAt < 0f)
+            {
+                return false;
+            }
+
+            if (atTime < revealAt)
+            {
+                return true;
+            }
+
+            handRevealTimes.Remove(handIndex);
+            return false;
+        }
+
+        private float GetHandRevealTime(int handIndex)
+        {
+            float revealAt;
+            if (handRevealTimes.TryGetValue(handIndex, out revealAt))
+            {
+                return revealAt;
+            }
+
+            return -1f;
+        }
+
+        private void DrawTransientCardAnimations()
+        {
+            if (transientCardAnimations.Count == 0)
+            {
+                return;
+            }
+
+            Color previous = GUI.color;
+            for (int i = transientCardAnimations.Count - 1; i >= 0; i--)
+            {
+                TransientCardAnimation animation = transientCardAnimations[i];
+                float elapsed = Time.unscaledTime - animation.StartedAt;
+                if (elapsed < 0f)
+                {
+                    continue;
+                }
+
+                float progress = Mathf.Clamp01(elapsed / Mathf.Max(0.01f, animation.Duration));
+                if (progress >= 1f)
+                {
+                    transientCardAnimations.RemoveAt(i);
+                    continue;
+                }
+
+                float eased = progress * progress * (3f - 2f * progress);
+                Rect rect = new Rect(
+                    Mathf.Lerp(animation.StartRect.x, animation.EndRect.x, eased),
+                    Mathf.Lerp(animation.StartRect.y, animation.EndRect.y, eased),
+                    Mathf.Lerp(animation.StartRect.width, animation.EndRect.width, eased),
+                    Mathf.Lerp(animation.StartRect.height, animation.EndRect.height, eased));
+                float alpha = 1f - progress * 0.4f;
+                GUI.color = new Color(previous.r, previous.g, previous.b, previous.a * alpha);
+                Color accent = GetElementColor(animation.Card.Element);
+                DrawCardVisual(rect, animation.Card, -1, new Color(accent.r, accent.g, accent.b, 0.7f), accent, true, true);
+            }
+
+            GUI.color = previous;
+        }
+
+        private static Rect OffsetRect(Rect rect, Vector2 offset)
+        {
+            return new Rect(rect.x + offset.x, rect.y + offset.y, rect.width, rect.height);
         }
 
         private void UpdateFinalVictorySequence()
@@ -1509,6 +2016,54 @@ namespace ArcaneAtelier.Battle
             DrawRect(new Rect(rect.x + 3f, rect.y + 4f, rect.width, rect.height), shadowColor);
             DrawRect(rect, fillColor);
             DrawOutline(rect, outlineColor);
+        }
+
+        private void DrawCardIconSlot(Rect rect, WorkshopBattleCardEntry card, Color accent)
+        {
+            DrawRect(rect, new Color(0.08f, 0.1f, 0.14f, 0.96f));
+            DrawOutline(rect, new Color(accent.r, accent.g, accent.b, 0.74f));
+            DrawRect(new Rect(rect.x, rect.y, rect.width, 3f), new Color(accent.r, accent.g, accent.b, 0.9f));
+
+            Sprite icon = GetCardIconSprite(card);
+            if (DrawSprite(new Rect(rect.x + 5f, rect.y + 5f, rect.width - 10f, rect.height - 10f), icon, Color.white))
+            {
+                return;
+            }
+
+            string fallback = card.Element == WorkshopElementAttribute.None ? "?" : card.Element.ToString().Substring(0, 1);
+            GUI.Label(rect, fallback, chipStyle);
+        }
+
+        private static Sprite GetCardIconSprite(WorkshopBattleCardEntry card)
+        {
+            Sprite icon = ArcaneArtCatalog.GetElementIcon(card.Element);
+            if (icon != null)
+            {
+                return icon;
+            }
+
+            return ArcaneArtCatalog.GetSpiritIcon(card.Element);
+        }
+
+        private bool DrawSprite(Rect rect, Sprite sprite, Color tint)
+        {
+            if (sprite == null || sprite.texture == null)
+            {
+                return false;
+            }
+
+            Rect textureRect = sprite.textureRect;
+            Rect uv = new Rect(
+                textureRect.x / sprite.texture.width,
+                textureRect.y / sprite.texture.height,
+                textureRect.width / sprite.texture.width,
+                textureRect.height / sprite.texture.height);
+
+            Color previous = GUI.color;
+            GUI.color = tint;
+            GUI.DrawTextureWithTexCoords(rect, sprite.texture, uv, true);
+            GUI.color = previous;
+            return true;
         }
 
         private void DrawProgressBar(Rect rect, float ratio, Color fillColor, Color backgroundColor)

@@ -44,6 +44,11 @@ AGENTS.md
 Agent.md
 agent.md
 
+# Local report-generation artifacts
+.tmp_pydeps/
+output/doc/
+tmp/docs/
+
 # OS files
 .DS_Store
 Thumbs.db
