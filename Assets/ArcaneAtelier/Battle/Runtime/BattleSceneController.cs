@@ -36,6 +36,11 @@ namespace ArcaneAtelier.Battle
         public BattleVisualManager VisualManager => visualManager;
         public int CurrentEncounterNumber => currentEncounterIndex + 1;
         public int TotalEncounterCount => encounterDefinitions.Count;
+        public bool ShouldShowRunSummaryPage =>
+            CurrentResult != null &&
+            CurrentResult.ResultType == BattleResultType.Victory &&
+            RunProgressBridge.CurrentSummary.RunEnded &&
+            RunProgressBridge.CurrentSummary.RunWon;
         public bool IsPlayerInputAllowed =>
             Simulation != null &&
             Simulation.State == BattleState.WaitingForPlayer &&
@@ -253,6 +258,7 @@ namespace ArcaneAtelier.Battle
             lastObservedState = Simulation.State;
             CurrentResult = null;
             recentEvents.Clear();
+            ApplyPreparationBonus();
             Simulation.PlayerActionResolved += OnPlayerActionResolved;
             Simulation.BossActionResolved += OnBossActionResolved;
             Simulation.PlayerTurnSkipped += OnPlayerTurnSkipped;
@@ -461,6 +467,7 @@ namespace ArcaneAtelier.Battle
             AccumulateEncounterStats(result);
             BattleResult finalResult = BuildFinalResult(result);
             CurrentResult = finalResult;
+            RecordRunProgress(result);
 
             if (result.ResultType == BattleResultType.Victory)
             {
@@ -742,6 +749,19 @@ namespace ArcaneAtelier.Battle
             }
         }
 
+        private void ApplyPreparationBonus()
+        {
+            int openingShieldBonus = Mathf.Max(0, RunProgressBridge.PendingStartingShieldBonus);
+            if (openingShieldBonus <= 0)
+            {
+                return;
+            }
+
+            Player.AddShield(openingShieldBonus);
+            AddRecentEvent($"Workshop bonus: +{openingShieldBonus} opening shield.");
+            Debug.Log($"BattleScene: applied workshop opening shield bonus of {openingShieldBonus}.");
+        }
+
         private void AccumulateEncounterStats(BattleResult result)
         {
             totalDamageDealt += result.TotalDamageDealt;
@@ -767,6 +787,42 @@ namespace ArcaneAtelier.Battle
                 TurnsElapsed = totalTurnsElapsed,
                 DefeatRewardId = result.ResultType == BattleResultType.Victory ? result.DefeatRewardId : string.Empty
             };
+        }
+
+        private void RecordRunProgress(BattleResult result)
+        {
+            bool victory = result != null && result.ResultType == BattleResultType.Victory;
+            bool finalBossVictory = victory && RunProgressBridge.CurrentEncounter != null && RunProgressBridge.CurrentEncounter.IsBoss;
+
+            string finalOutcomeTitle;
+            string finalOutcomeDescription;
+            if (finalBossVictory)
+            {
+                finalOutcomeTitle = "Atelier Secured";
+                finalOutcomeDescription = "The core breach is sealed. Final rewards are still pending implementation, so this report captures the full workshop and battle record instead.";
+            }
+            else if (victory)
+            {
+                finalOutcomeTitle = "Encounter Cleared";
+                finalOutcomeDescription = "Workshop output recorded. Return to the atelier and prepare the next breach response.";
+            }
+            else
+            {
+                finalOutcomeTitle = "Workshop Overrun";
+                finalOutcomeDescription = "The breach held. Review the workshop output and battle pacing before the next run.";
+            }
+
+            RunProgressBridge.RecordBattleResult(
+                result != null ? result.BossDisplayName : Boss != null ? Boss.DisplayName : "Enemy",
+                victory,
+                result != null ? result.TurnsElapsed : 0,
+                result != null ? result.CardsPlayed : 0,
+                result != null ? result.TotalDamageDealt : 0,
+                result != null ? result.TotalHealingDone : 0,
+                result != null ? result.TotalShieldGained : 0,
+                finalOutcomeTitle,
+                finalOutcomeDescription,
+                string.Empty);
         }
 
         private void UnsubscribeFromSimulation()
