@@ -86,15 +86,15 @@ namespace ArcaneAtelier.Workshop.Editor
             EnsureFolder($"{DataRoot}/Nodes");
             EnsureFolder($"{DataRoot}/Rewards");
 
-            var fire = UpsertItem("element.fire", "Fire", "Basic element produced by fire spirits.", WorkshopItemKind.Resource, new Color(0.95f, 0.36f, 0.2f));
-            var water = UpsertItem("element.water", "Water", "Basic element produced by water spirits.", WorkshopItemKind.Resource, new Color(0.26f, 0.62f, 0.97f));
-            var wind = UpsertItem("element.wind", "Wind", "Basic element produced by wind spirits.", WorkshopItemKind.Resource, new Color(0.57f, 0.84f, 0.9f));
-            var earth = UpsertItem("element.earth", "Earth", "Basic element produced by earth spirits.", WorkshopItemKind.Resource, new Color(0.63f, 0.47f, 0.28f));
+            var fire = UpsertItem("element.fire", "Fire", "Basic element produced by fire spirits.", WorkshopItemKind.Resource, new Color(0.95f, 0.36f, 0.2f), element: WorkshopElementAttribute.Fire);
+            var water = UpsertItem("element.water", "Water", "Basic element produced by water spirits.", WorkshopItemKind.Resource, new Color(0.26f, 0.62f, 0.97f), element: WorkshopElementAttribute.Water);
+            var wind = UpsertItem("element.wind", "Wind", "Basic element produced by wind spirits.", WorkshopItemKind.Resource, new Color(0.57f, 0.84f, 0.9f), element: WorkshopElementAttribute.Wind);
+            var earth = UpsertItem("element.earth", "Earth", "Basic element produced by earth spirits.", WorkshopItemKind.Resource, new Color(0.63f, 0.47f, 0.28f), element: WorkshopElementAttribute.Earth);
 
-            var ice = UpsertItem("element.ice", "Ice", "Secondary element from Wind + Water.", WorkshopItemKind.Resource, new Color(0.67f, 0.9f, 1f));
-            var thunder = UpsertItem("element.thunder", "Thunder", "Secondary element from Wind + Fire.", WorkshopItemKind.Resource, new Color(0.95f, 0.88f, 0.3f));
-            var light = UpsertItem("element.light", "Light", "Secondary element from Earth + Fire.", WorkshopItemKind.Resource, new Color(1f, 0.95f, 0.69f));
-            var dark = UpsertItem("element.dark", "Dark", "Secondary element from Earth + Water.", WorkshopItemKind.Resource, new Color(0.45f, 0.4f, 0.62f));
+            var ice = UpsertItem("element.ice", "Ice", "Secondary element from Wind + Water.", WorkshopItemKind.Resource, new Color(0.67f, 0.9f, 1f), element: WorkshopElementAttribute.Ice);
+            var thunder = UpsertItem("element.thunder", "Thunder", "Secondary element from Wind + Fire.", WorkshopItemKind.Resource, new Color(0.95f, 0.88f, 0.3f), element: WorkshopElementAttribute.Thunder);
+            var light = UpsertItem("element.light", "Light", "Secondary element from Earth + Fire.", WorkshopItemKind.Resource, new Color(1f, 0.95f, 0.69f), element: WorkshopElementAttribute.Light);
+            var dark = UpsertItem("element.dark", "Dark", "Secondary element from Earth + Water.", WorkshopItemKind.Resource, new Color(0.45f, 0.4f, 0.62f), element: WorkshopElementAttribute.Dark);
 
             var basicFireSpell = UpsertItem("spell.basic.fire", "Cinder Dart", "Basic fire attack spell shaped from raw Fire.", WorkshopItemKind.Card, new Color(0.95f, 0.43f, 0.2f), "combat.spell.basic.fire", WorkshopElementAttribute.Fire, WorkshopSpellTier.Basic, WorkshopSpellRole.Attack, 10f, 8, 1, 1f, "Burn");
             var basicWaterSpell = UpsertItem("spell.basic.water", "Tidal Mend", "Basic water healing spell shaped from raw Water.", WorkshopItemKind.Card, new Color(0.33f, 0.68f, 1f), "combat.spell.basic.water", WorkshopElementAttribute.Water, WorkshopSpellTier.Basic, WorkshopSpellRole.Healing, 12f, 6, 1, 8f, "Regen");

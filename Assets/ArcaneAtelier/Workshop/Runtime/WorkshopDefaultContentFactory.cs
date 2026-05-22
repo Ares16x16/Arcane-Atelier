@@ -215,14 +215,14 @@ namespace ArcaneAtelier.Workshop
 
         private static WorkshopContentDatabase CreateModernRuntimeDatabase()
         {
-            var fire = CreateItem("element.fire", "Fire", "Basic element produced by fire spirits.", WorkshopItemKind.Resource, new Color(0.95f, 0.36f, 0.2f));
-            var water = CreateItem("element.water", "Water", "Basic element produced by water spirits.", WorkshopItemKind.Resource, new Color(0.26f, 0.62f, 0.97f));
-            var wind = CreateItem("element.wind", "Wind", "Basic element produced by wind spirits.", WorkshopItemKind.Resource, new Color(0.57f, 0.84f, 0.9f));
-            var earth = CreateItem("element.earth", "Earth", "Basic element produced by earth spirits.", WorkshopItemKind.Resource, new Color(0.63f, 0.47f, 0.28f));
-            var ice = CreateItem("element.ice", "Ice", "Secondary element from Wind + Water.", WorkshopItemKind.Resource, new Color(0.67f, 0.9f, 1f));
-            var thunder = CreateItem("element.thunder", "Thunder", "Secondary element from Wind + Fire.", WorkshopItemKind.Resource, new Color(0.95f, 0.88f, 0.3f));
-            var light = CreateItem("element.light", "Light", "Secondary element from Earth + Fire.", WorkshopItemKind.Resource, new Color(1f, 0.95f, 0.69f));
-            var dark = CreateItem("element.dark", "Dark", "Secondary element from Earth + Water.", WorkshopItemKind.Resource, new Color(0.45f, 0.4f, 0.62f));
+            var fire = CreateItem("element.fire", "Fire", "Basic element produced by fire spirits.", WorkshopItemKind.Resource, new Color(0.95f, 0.36f, 0.2f), element: WorkshopElementAttribute.Fire);
+            var water = CreateItem("element.water", "Water", "Basic element produced by water spirits.", WorkshopItemKind.Resource, new Color(0.26f, 0.62f, 0.97f), element: WorkshopElementAttribute.Water);
+            var wind = CreateItem("element.wind", "Wind", "Basic element produced by wind spirits.", WorkshopItemKind.Resource, new Color(0.57f, 0.84f, 0.9f), element: WorkshopElementAttribute.Wind);
+            var earth = CreateItem("element.earth", "Earth", "Basic element produced by earth spirits.", WorkshopItemKind.Resource, new Color(0.63f, 0.47f, 0.28f), element: WorkshopElementAttribute.Earth);
+            var ice = CreateItem("element.ice", "Ice", "Secondary element from Wind + Water.", WorkshopItemKind.Resource, new Color(0.67f, 0.9f, 1f), element: WorkshopElementAttribute.Ice);
+            var thunder = CreateItem("element.thunder", "Thunder", "Secondary element from Wind + Fire.", WorkshopItemKind.Resource, new Color(0.95f, 0.88f, 0.3f), element: WorkshopElementAttribute.Thunder);
+            var light = CreateItem("element.light", "Light", "Secondary element from Earth + Fire.", WorkshopItemKind.Resource, new Color(1f, 0.95f, 0.69f), element: WorkshopElementAttribute.Light);
+            var dark = CreateItem("element.dark", "Dark", "Secondary element from Earth + Water.", WorkshopItemKind.Resource, new Color(0.45f, 0.4f, 0.62f), element: WorkshopElementAttribute.Dark);
 
             var basicFireSpell = CreateSpell("spell.basic.fire", "Cinder Dart", "Basic fire attack spell shaped from raw Fire.", new Color(0.95f, 0.43f, 0.2f), "combat.spell.basic.fire", WorkshopElementAttribute.Fire, WorkshopSpellTier.Basic, WorkshopSpellRole.Attack, 10f, 8, 1, 1f, "Burn");
             var basicWaterSpell = CreateSpell("spell.basic.water", "Tidal Mend", "Basic water healing spell shaped from raw Water.", new Color(0.33f, 0.68f, 1f), "combat.spell.basic.water", WorkshopElementAttribute.Water, WorkshopSpellTier.Basic, WorkshopSpellRole.Healing, 12f, 6, 1, 8f, "Regen");
