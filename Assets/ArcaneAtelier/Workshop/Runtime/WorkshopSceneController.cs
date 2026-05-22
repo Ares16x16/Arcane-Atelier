@@ -12,7 +12,7 @@ namespace ArcaneAtelier.Workshop
     public sealed class WorkshopSceneController : MonoBehaviour
     {
         private const int MaxSimulationCatchUpStepsPerFrame = 16;
-        private const int HackPreparationTickBudget = 700;
+        private const int HackPreparationTickBudget = 3500;
         private const int HackWarmupSteps = 160;
         private const string GeneratedWorkshopScenePath = "Assets/Scenes/SpellAssemblyScene.unity";
         private const float DefaultWorkshopCellSize = 1.22f;
@@ -21,7 +21,7 @@ namespace ArcaneAtelier.Workshop
         [SerializeField] private WorkshopGridView gridView;
         [SerializeField] private WorkshopHudPresenter hudPresenter;
         [SerializeField] private bool autoConfigureSceneEnvironment = true;
-        [SerializeField, Min(1)] private int defaultPreparationTickBudget = 120;
+        [SerializeField, Min(1)] private int defaultPreparationTickBudget = 600;
 
         private float accumulatedSimulationTime;
         private string statusMessage = "Spell Assembly ready.";

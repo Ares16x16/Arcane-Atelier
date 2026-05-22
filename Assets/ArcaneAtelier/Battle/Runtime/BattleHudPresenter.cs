@@ -286,7 +286,7 @@ namespace ArcaneAtelier.Battle
             DrawActionPoints(new Rect(rect.x + 28f, rect.y + 108f, rect.width - 56f, 20f));
 
             bool canEnd = controller.CanEndTurn;
-            if (DrawThemedButton(new Rect(rect.x + rect.width * 0.5f - 82f, rect.y + 136f, 164f, 24f), "End Turn", ApAccent, "end_turn", canEnd))
+            if (DrawThemedButton(new Rect(rect.x + rect.width * 0.5f - 82f, rect.y + 136f, 164f, 24f), "End Turn", ApAccent, "end_turn", canEnd, playClickSound: false))
             {
                 controller.EndTurnFromHud();
             }
@@ -358,7 +358,7 @@ namespace ArcaneAtelier.Battle
                 rect.Contains(currentEvent.mousePosition) &&
                 canInteract)
             {
-                AudioManager.PlaySFX(SFXType.ButtonClick);
+                AudioManager.PlaySFX(SFXType.CardDraw);
                 pressedCardIndex = index;
                 pressMousePosition = currentEvent.mousePosition;
                 dragMousePosition = currentEvent.mousePosition;
@@ -998,7 +998,7 @@ namespace ArcaneAtelier.Battle
             DrawRect(new Rect(rect.x + 6f, rect.y + 6f, rect.width - 12f, rect.height - 12f), new Color(1f, 1f, 1f, 0.012f));
         }
 
-        private bool DrawThemedButton(Rect rect, string label, Color accent, string interactionId, bool enabled)
+        private bool DrawThemedButton(Rect rect, string label, Color accent, string interactionId, bool enabled, bool playClickSound = true)
         {
             bool isHover = enabled && Event.current != null && rect.Contains(Event.current.mousePosition);
             if (isHover)
@@ -1031,7 +1031,8 @@ namespace ArcaneAtelier.Battle
 
             if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
             {
-                AudioManager.PlaySFX(SFXType.ButtonClick);
+                if (playClickSound)
+                    AudioManager.PlaySFX(SFXType.ButtonClick);
                 return true;
             }
 

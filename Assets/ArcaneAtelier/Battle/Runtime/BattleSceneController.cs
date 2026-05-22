@@ -335,7 +335,21 @@ namespace ArcaneAtelier.Battle
 
             bool success = Simulation.TryPlayCard(handIndex);
             if (success)
-                AudioManager.PlaySFX(SFXType.CardPlayWhoosh);
+            {
+                var sfx = card.Element switch
+                {
+                    WorkshopElementAttribute.Fire    => SFXType.FireHit,
+                    WorkshopElementAttribute.Water   => SFXType.WaterHit,
+                    WorkshopElementAttribute.Wind    => SFXType.WindHit,
+                    WorkshopElementAttribute.Earth   => SFXType.EarthHit,
+                    WorkshopElementAttribute.Ice     => SFXType.IceHit,
+                    WorkshopElementAttribute.Thunder => SFXType.ThunderHit,
+                    WorkshopElementAttribute.Light   => SFXType.LightHit,
+                    WorkshopElementAttribute.Dark    => SFXType.DarkHit,
+                    _                                => SFXType.CardPlayWhoosh,
+                };
+                AudioManager.PlaySFX(sfx);
+            }
             return success;
         }
 
@@ -401,7 +415,7 @@ namespace ArcaneAtelier.Battle
             Debug.Log(resolution.LogDescription);
             LogUnitStatus();
             LogHandState();
-            PlayResolutionSFX(resolution);
+            PlayResolutionSFX(resolution, isPlayerAction: true);
         }
 
         private void OnBossActionResolved(BattleActionResolution resolution)
@@ -410,13 +424,17 @@ namespace ArcaneAtelier.Battle
             AddRecentEvent(resolution.LogDescription);
             Debug.Log(resolution.LogDescription);
             LogUnitStatus();
-            PlayResolutionSFX(resolution);
+            PlayResolutionSFX(resolution, isPlayerAction: false);
         }
 
-        private void PlayResolutionSFX(BattleActionResolution resolution)
+        private void PlayResolutionSFX(BattleActionResolution resolution, bool isPlayerAction)
         {
             if (resolution.DamageDealt > 0)
-                AudioManager.PlaySFX(SFXType.AttackHitGeneric);
+            {
+                // Player damage SFX already played on card play — skip generic hit
+                if (!isPlayerAction)
+                    AudioManager.PlaySFX(SFXType.AttackHitGeneric);
+            }
             else if (resolution.HealingDone > 0)
                 AudioManager.PlaySFX(SFXType.HealRestore);
             else if (resolution.ShieldGained > 0)
