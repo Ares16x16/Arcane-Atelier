@@ -20,6 +20,7 @@ public sealed class MainMenuManager : MonoBehaviour
     [SerializeField] private Texture2D battleBackdropTexture;
     [SerializeField] private Texture2D playerCharacterTexture;
     [SerializeField] private Texture2D bossCharacterTexture;
+    [SerializeField] private Texture2D logoImageTexture;
 
     private MenuPage currentPage = MenuPage.Landing;
     private string archiveMessage = string.Empty;
@@ -195,11 +196,23 @@ public sealed class MainMenuManager : MonoBehaviour
     private void DrawLanding(float screenWidth, float screenHeight)
     {
         float titleWidth = Mathf.Min(840f, screenWidth - 64f);
-        Rect titleRect = new Rect((screenWidth - titleWidth) * 0.5f, Mathf.Clamp(screenHeight * 0.14f, 44f, 124f), titleWidth, 72f);
-        Rect subtitleRect = new Rect(titleRect.x, titleRect.yMax + 10f, titleRect.width, 28f);
 
-        GUI.Label(titleRect, "Arcane Atelier", titleStyle);
-        GUI.Label(subtitleRect, "Forge spells. Hold the breach.", subtitleStyle);
+        if (logoImageTexture == null){
+            Rect titleRect = new Rect((screenWidth - titleWidth) * 0.5f, Mathf.Clamp(screenHeight * 0.14f, 44f, 124f), titleWidth, 72f);
+            Rect subtitleRect = new Rect(titleRect.x, titleRect.yMax + 10f, titleRect.width, 28f);
+
+            GUI.Label(titleRect, "Arcane Atelier", titleStyle);
+            GUI.Label(subtitleRect, "Forge spells. Hold the breach.", subtitleStyle);
+
+        }
+        else
+        {
+            float logoAspect = logoImageTexture.width / (float)logoImageTexture.height;
+            float calculatedHeight = titleWidth * logoAspect;
+
+            Rect logoRect = new Rect((screenWidth - titleWidth) * 0.5f, (screenHeight * 0.25f) - (calculatedHeight * 0.5f), titleWidth, calculatedHeight);
+            GUI.DrawTexture(logoRect, logoImageTexture, ScaleMode.ScaleToFit);
+        }
 
         DrawCharacterFrame(screenWidth, screenHeight);
 
