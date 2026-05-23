@@ -121,6 +121,7 @@ namespace ArcaneAtelier.Workshop
             }
 
             UpdateAnimatedNodeEffects(simulation);
+            UpdateSelectionOverlays();
         }
 
         private void LateUpdate()
@@ -387,11 +388,7 @@ namespace ArcaneAtelier.Workshop
                 hoverRenderer.color = controller.SelectedCell == hoveredCell ? selectedTint : hoverTint;
             }
 
-            UpdateCellOverlay(selectedCellOverlayRenderer, controller.SelectedCell, tileSelectedSprite);
-            UpdateCellOverlay(
-                hoverCellOverlayRenderer,
-                hoveredCell == controller.SelectedCell ? new Vector2Int(-1, -1) : hoveredCell,
-                tileHoverSprite);
+            UpdateSelectionOverlays();
 
             foreach (var key in nodeVisuals.Keys.ToArray())
             {
@@ -605,12 +602,8 @@ namespace ArcaneAtelier.Workshop
                 visual.Body.color = state.Definition.Tint;
                 visual.Body.transform.localScale = new Vector3(fallbackScale * spriteDirection, fallbackScale, 1f);
             }
-            visual.Frame.color = controller.SelectedCell == cell
-                ? new Color(0.98f, 0.84f, 0.48f)
-                : Color.Lerp(new Color(0.18f, 0.21f, 0.28f), ResolveActivityColor(state.Definition), 0.28f);
-            visual.Shadow.color = controller.SelectedCell == cell
-                ? new Color(0.92f, 0.66f, 0.2f, 0.32f)
-                : new Color(0f, 0f, 0f, 0.44f);
+            visual.Frame.color = Color.Lerp(new Color(0.18f, 0.21f, 0.28f), ResolveActivityColor(state.Definition), 0.28f);
+            visual.Shadow.color = new Color(0f, 0f, 0f, 0.44f);
 
             for (var index = 0; index < WorkshopDirectionUtility.CardinalDirections.Count; index++)
             {
@@ -675,26 +668,26 @@ namespace ArcaneAtelier.Workshop
                 ? 0f
                 : Mathf.InverseLerp(ActivityZoomBoostStart, maxZoom, targetOrthographicSize);
             var activitySeed = cell.x * 0.73f + cell.y * 0.41f;
-            var breathPhase = Mathf.Repeat(Time.time * 0.68f + activitySeed * 0.07f, 1f);
+            var breathPhase = Mathf.Repeat(Time.time * 0.52f + activitySeed * 0.07f, 1f);
             var inhale = breathPhase < 0.72f
                 ? Mathf.SmoothStep(0f, 1f, breathPhase / 0.72f)
                 : 1f - Mathf.SmoothStep(0f, 1f, (breathPhase - 0.72f) / 0.28f);
             var exhale = breathPhase < 0.72f
                 ? 0f
                 : Mathf.SmoothStep(0f, 1f, (breathPhase - 0.72f) / 0.28f);
-            var breathEnergy = Mathf.Clamp01(0.42f + inhale * 0.38f + exhale * 0.42f);
-            var shimmer = 0.7f + Mathf.Sin(Time.time * 5.4f + activitySeed) * 0.16f;
+            var breathEnergy = Mathf.Clamp01(0.46f + inhale * 0.28f + exhale * 0.34f);
+            var shimmer = 0.86f + Mathf.Sin(Time.time * 3.2f + activitySeed) * 0.08f;
             var inhaleScale = Mathf.Lerp(1.24f, 1.04f, inhale);
             var exhaleScale = Mathf.Lerp(inhaleScale, 1.34f, exhale);
             var auraScale = Mathf.Lerp(exhaleScale, exhaleScale + 0.16f, zoomT);
             var ringScale = Mathf.Lerp(0.9f, Mathf.Lerp(1.34f, 1.54f, zoomT), exhale);
 
             visual.BreathRing.transform.localScale = Vector3.one * ringScale;
-            visual.BreathRing.color = WithAlpha(whiteHot, Mathf.Lerp(0.02f, 0.28f, exhale) * (1f - inhale * 0.35f));
+            visual.BreathRing.color = WithAlpha(whiteHot, Mathf.Lerp(0.015f, 0.2f, exhale) * (1f - inhale * 0.35f));
             visual.Aura.transform.localScale = Vector3.one * auraScale;
-            visual.Aura.color = WithAlpha(accent, Mathf.Lerp(0.12f, 0.25f, zoomT) * shimmer * breathEnergy);
+            visual.Aura.color = WithAlpha(accent, Mathf.Lerp(0.08f, 0.19f, zoomT) * shimmer * breathEnergy);
             visual.CoreGlow.transform.localScale = Vector3.one * Mathf.Lerp(Mathf.Lerp(0.66f, 0.84f, inhale), 0.96f, exhale * 0.5f + zoomT * 0.25f);
-            visual.CoreGlow.color = WithAlpha(whiteHot, Mathf.Lerp(0.08f, 0.2f, zoomT) * shimmer * breathEnergy);
+            visual.CoreGlow.color = WithAlpha(whiteHot, Mathf.Lerp(0.055f, 0.16f, zoomT) * shimmer * breathEnergy);
 
             var edgeLength = Mathf.Lerp(0.9f, 1.05f, zoomT);
             var edgeThickness = Mathf.Lerp(0.052f, 0.09f, zoomT) * Mathf.Lerp(0.86f, 1.28f, breathEnergy);
@@ -703,7 +696,7 @@ namespace ArcaneAtelier.Workshop
             UpdateEdgeGlow(visual.EdgeGlows[2], new Vector3(0f, -0.47f, 0f), new Vector3(edgeLength, edgeThickness, 1f), accent, 2, activitySeed, zoomT, breathEnergy);
             UpdateEdgeGlow(visual.EdgeGlows[3], new Vector3(-0.47f, 0f, 0f), new Vector3(edgeThickness, edgeLength, 1f), accent, 3, activitySeed, zoomT, breathEnergy);
 
-            var pathProgress = Mathf.Repeat(Time.time * 1.15f + activitySeed * 0.08f, 1f);
+            var pathProgress = Mathf.Repeat(Time.time * 0.9f + activitySeed * 0.08f, 1f);
             visual.FlowComet.transform.localPosition = EvaluatePerimeterPosition(pathProgress, Mathf.Lerp(0.48f, 0.54f, zoomT));
             visual.FlowComet.transform.localScale = Vector3.one * Mathf.Lerp(0.14f, 0.22f, zoomT);
             visual.FlowComet.transform.localRotation = Quaternion.Euler(0f, 0f, 45f + Time.time * 210f);
@@ -726,15 +719,15 @@ namespace ArcaneAtelier.Workshop
 
         private static void UpdateEdgeGlow(SpriteRenderer renderer, Vector3 position, Vector3 scale, Color accent, int index, float seed, float zoomT, float breathEnergy)
         {
-            var edgePulse = 0.68f + Mathf.Sin(Time.time * 3.6f + seed + index * 0.9f) * 0.24f;
+            var edgePulse = 0.78f + Mathf.Sin(Time.time * 2.8f + seed + index * 0.9f) * 0.14f;
             renderer.transform.localPosition = position;
             renderer.transform.localScale = scale;
-            renderer.color = WithAlpha(accent, Mathf.Lerp(0.42f, 0.86f, zoomT) * edgePulse * Mathf.Lerp(0.78f, 1.18f, breathEnergy));
+            renderer.color = WithAlpha(accent, Mathf.Lerp(0.3f, 0.62f, zoomT) * edgePulse * Mathf.Lerp(0.78f, 1.08f, breathEnergy));
         }
 
         private static void UpdateOutputBeam(SpriteRenderer renderer, NodePortMask direction, Color accent, int index, float seed, float zoomT, float breathEnergy)
         {
-            var travel = Mathf.Repeat(Time.time * 1.85f + index * 0.2f + seed * 0.05f, 1f);
+            var travel = Mathf.Repeat(Time.time * 1.32f + index * 0.2f + seed * 0.05f, 1f);
             var pulse = Mathf.Sin(travel * Mathf.PI);
             var offset = WorkshopDirectionUtility.ToOffset(direction);
             var centerDistance = Mathf.Lerp(0.17f, 0.42f, travel);
@@ -745,7 +738,7 @@ namespace ArcaneAtelier.Workshop
             renderer.transform.localScale = direction == NodePortMask.East || direction == NodePortMask.West
                 ? new Vector3(length, thickness, 1f)
                 : new Vector3(thickness, length, 1f);
-            renderer.color = WithAlpha(Color.Lerp(accent, Color.white, 0.22f), Mathf.Lerp(0.3f, 0.74f, zoomT) * pulse * Mathf.Lerp(0.82f, 1.2f, breathEnergy));
+            renderer.color = WithAlpha(Color.Lerp(accent, Color.white, 0.22f), Mathf.Lerp(0.22f, 0.58f, zoomT) * pulse * Mathf.Lerp(0.82f, 1.12f, breathEnergy));
         }
 
         private static Vector3 EvaluatePerimeterPosition(float normalizedPath, float radius)
@@ -958,7 +951,17 @@ namespace ArcaneAtelier.Workshop
             return renderer;
         }
 
-        private void UpdateCellOverlay(SpriteRenderer renderer, Vector2Int cell, Sprite sprite)
+        private void UpdateSelectionOverlays()
+        {
+            UpdateCellOverlay(selectedCellOverlayRenderer, controller.SelectedCell, tileSelectedSprite, true);
+            UpdateCellOverlay(
+                hoverCellOverlayRenderer,
+                hoveredCell == controller.SelectedCell ? new Vector2Int(-1, -1) : hoveredCell,
+                tileHoverSprite,
+                false);
+        }
+
+        private void UpdateCellOverlay(SpriteRenderer renderer, Vector2Int cell, Sprite sprite, bool selected)
         {
             if (renderer == null || sprite == null)
             {
@@ -972,7 +975,15 @@ namespace ArcaneAtelier.Workshop
                 return;
             }
 
+            float pulse = selected
+                ? 0.5f + Mathf.Sin(Time.time * 3.4f) * 0.5f
+                : 0.5f + Mathf.Sin(Time.time * 4.2f) * 0.5f;
+            float baseScale = CalculateSpriteScaleToFit(sprite, cellSize * (selected ? 1.06f : 1.01f));
             renderer.transform.position = CellToWorld(cell);
+            renderer.transform.localScale = Vector3.one * (baseScale * (selected ? Mathf.Lerp(0.98f, 1.035f, pulse) : 1f));
+            renderer.color = selected
+                ? new Color(1f, 1f, 1f, Mathf.Lerp(0.78f, 0.98f, pulse))
+                : new Color(1f, 1f, 1f, Mathf.Lerp(0.56f, 0.72f, pulse));
         }
 
         private void CreateBoardLayer(string objectName, float extraSize, Color color, int sortingOrder, Vector3 offset)

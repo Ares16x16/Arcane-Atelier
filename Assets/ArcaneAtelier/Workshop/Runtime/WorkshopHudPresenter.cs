@@ -35,6 +35,12 @@ namespace ArcaneAtelier.Workshop
         private Texture2D whiteTexture;
         private Sprite panelMainSprite;
         private Sprite panelSubSprite;
+        private Sprite statusBarSprite;
+        private Sprite topLeftPanelSprite;
+        private Sprite rightRailPanelSprite;
+        private Sprite paletteDockSprite;
+        private Sprite subPanelColumnSprite;
+        private Sprite ornateFrameSprite;
         private Sprite buttonSprite;
         private Sprite buttonSmallSprite;
         private Sprite tabActiveSprite;
@@ -54,6 +60,10 @@ namespace ArcaneAtelier.Workshop
         private GUIStyle smallButtonStyle;
         private GUIStyle cardTitleStyle;
         private GUIStyle cardBodyStyle;
+        private GUIStyle statusBarStyle;
+        private GUIStyle blueprintTitleStyle;
+        private GUIStyle blueprintMetaStyle;
+        private GUIStyle blueprintModeStyle;
         private GUIStyle tinyLabelStyle;
         private GUIStyle centeredTinyLabelStyle;
         private GUIStyle compactRowLabelStyle;
@@ -142,7 +152,6 @@ namespace ArcaneAtelier.Workshop
         private void DrawBackdrop()
         {
             DrawRect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0.01f, 0.015f, 0.026f, 0.14f));
-            DrawRect(new Rect(0f, 0f, Screen.width, TopHudHeight + Margin), new Color(0.025f, 0.04f, 0.07f, 0.58f));
             DrawRect(new Rect(0f, 0f, Screen.width, 3f), new Color(AtelierGold.r, AtelierGold.g, AtelierGold.b, 0.64f));
             DrawRect(new Rect(0f, TopHudHeight + Margin - 2f, Screen.width, 2f), new Color(ArcaneBlue.r, ArcaneBlue.g, ArcaneBlue.b, 0.22f));
             DrawRect(new Rect(0f, Screen.height - BottomDockHeight - Margin * 2f, Screen.width, BottomDockHeight + Margin * 2f), new Color(0.015f, 0.025f, 0.045f, 0.82f));
@@ -155,27 +164,27 @@ namespace ArcaneAtelier.Workshop
             var stats = controller != null && controller.Simulation != null
                 ? controller.BuildFlowStatsView()
                 : new WorkshopFlowStatsView(0f, 0f, 0f, 0f);
-            DrawPanelFrame(rect, new Color(0.78f, 0.61f, 0.31f));
+            DrawRegionFrame(rect, topLeftPanelSprite, new Color(0.78f, 0.61f, 0.31f));
 
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(18f, 14f, 220f, 24f), "Arcane Atelier", titleStyle);
-            GUI.Label(new Rect(18f, 38f, 220f, 20f), "Workshop", mutedStyle);
+            GUI.Label(new Rect(32f, 16f, 220f, 24f), "Arcane Atelier", titleStyle);
+            GUI.Label(new Rect(32f, 40f, 220f, 18f), "Workshop", mutedStyle);
 
-            DrawMiniStat(new Rect(18f, 62f, 54f, 30f), $"{controller.RemainingPreparationTicks}", "Ticks");
-            DrawMiniStat(new Rect(78f, 62f, 64f, 30f), $"{stats.ElementProductionPerSecond:0.0}", "Flow");
-            DrawMiniStat(new Rect(148f, 62f, 54f, 30f), $"{stats.SpellProductionPerSecond:0.0}", "Spell");
-            DrawMiniStat(new Rect(208f, 62f, 54f, 30f), $"{stats.ElementConsumptionPerSecond:0.0}", "Use");
-            DrawMiniStat(new Rect(268f, 62f, 64f, 30f), $"{controller.Tokens}", "Tokens");
+            DrawMiniStat(new Rect(32f, 61f, 52f, 28f), $"{controller.RemainingPreparationTicks}", "Ticks");
+            DrawMiniStat(new Rect(90f, 61f, 60f, 28f), $"{stats.ElementProductionPerSecond:0.0}", "Flow");
+            DrawMiniStat(new Rect(156f, 61f, 52f, 28f), $"{stats.SpellProductionPerSecond:0.0}", "Spell");
+            DrawMiniStat(new Rect(214f, 61f, 52f, 28f), $"{stats.ElementConsumptionPerSecond:0.0}", "Use");
+            DrawMiniStat(new Rect(272f, 61f, 58f, 28f), $"{controller.Tokens}", "Tokens");
             GUI.EndGroup();
         }
 
         private void DrawStatusPanel(Rect rect)
         {
-            DrawPanelFrame(rect, new Color(0.54f, 0.4f, 0.85f));
+            DrawRegionFrame(rect, statusBarSprite, new Color(0.54f, 0.4f, 0.85f));
 
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(18f, 12f, rect.width - 36f, 18f), "Status", sectionStyle);
-            GUI.Label(new Rect(18f, 24f, rect.width - 36f, 28f), controller.StatusMessage, bodyStyle);
+            GUI.Label(new Rect(34f, 10f, rect.width - 68f, 18f), "Status", sectionStyle);
+            GUI.Label(new Rect(40f, 28f, rect.width - 80f, 20f), controller.StatusMessage, statusBarStyle);
             GUI.EndGroup();
         }
 
@@ -363,26 +372,28 @@ namespace ArcaneAtelier.Workshop
 
         private void DrawRightRail(Rect rect)
         {
-            DrawPanelFrame(rect, new Color(0.37f, 0.72f, 0.94f));
+            DrawTallRegionFrame(rect, rightRailPanelSprite, new Color(0.37f, 0.72f, 0.94f));
+            DrawRect(new Rect(rect.x + 28f, rect.y + 14f, rect.width - 56f, 58f), new Color(0.03f, 0.045f, 0.07f, 0.7f));
 
             GUI.BeginGroup(rect);
-            var contentWidth = rect.width - 36f;
-            GUI.Label(new Rect(18f, 14f, rect.width - 36f, 20f), "Selected", sectionStyle);
-            GUI.Label(new Rect(18f, 34f, rect.width - 36f, 18f), $"{controller.EncounterLabel}  {controller.RemainingPreparationTicks}/{controller.TotalPreparationTicks} ticks", tinyLabelStyle);
-            GUI.Label(new Rect(18f, 50f, rect.width - 36f, 18f), $"Cell {controller.SelectedCell.x}, {controller.SelectedCell.y}", tinyLabelStyle);
+            var contentX = 30f;
+            var contentWidth = rect.width - 60f;
+            GUI.Label(new Rect(contentX, 16f, contentWidth, 20f), "Selected", sectionStyle);
+            GUI.Label(new Rect(contentX, 36f, contentWidth, 18f), $"{controller.EncounterLabel}  {controller.RemainingPreparationTicks}/{controller.TotalPreparationTicks} ticks", tinyLabelStyle);
+            GUI.Label(new Rect(contentX, 52f, contentWidth, 18f), $"Cell {controller.SelectedCell.x}, {controller.SelectedCell.y}", tinyLabelStyle);
 
             var node = controller.SelectedNode;
             const float detailBottom = 166f;
             if (node == null)
             {
-                DrawSubPanel(new Rect(18f, 76f, contentWidth, 70f), ArcaneBlue);
-                GUI.Label(new Rect(32f, 92f, contentWidth - 28f, 34f), "Choose a tile to inspect a machine. Place with LMB on empty cells.", bodyStyle);
+                DrawSubPanel(new Rect(contentX, 80f, contentWidth, 56f), ArcaneBlue);
+                GUI.Label(new Rect(contentX + 16f, 94f, contentWidth - 32f, 30f), "Choose a tile to inspect a machine. Place with LMB on empty cells.", bodyStyle);
             }
             else
             {
-                GUI.Label(new Rect(18f, 70f, contentWidth, 22f), node.Definition.DisplayName, sectionStyle);
-                GUI.Label(new Rect(18f, 92f, contentWidth, 18f), node.Definition.Category.ToString(), tinyLabelStyle);
-                GUI.Label(new Rect(18f, 112f, contentWidth, 18f), $"Rot {node.RotationQuarterTurns * 90}°   Spd x{node.SpeedMultiplier:0.00}", mutedStyle);
+                GUI.Label(new Rect(contentX, 74f, contentWidth, 22f), node.Definition.DisplayName, sectionStyle);
+                GUI.Label(new Rect(contentX, 96f, contentWidth, 18f), node.Definition.Category.ToString(), tinyLabelStyle);
+                GUI.Label(new Rect(contentX, 116f, contentWidth, 18f), $"Rot {node.RotationQuarterTurns * 90}°   Spd x{node.SpeedMultiplier:0.00}", mutedStyle);
 
                 var bufferRows = node.EnumerateBuffer()
                     .Take(rect.height < 420f ? 2 : 3)
@@ -392,16 +403,16 @@ namespace ArcaneAtelier.Workshop
                 var y = 140f;
                 if (bufferRows.Length > 0)
                 {
-                    DrawCompactList(new Rect(18f, y, contentWidth, bufferRows.Length * 18f), bufferRows);
+                    DrawCompactList(new Rect(contentX, y, contentWidth, bufferRows.Length * 18f), bufferRows);
                     y += bufferRows.Length * 18f + 8f;
                 }
                 else
                 {
-                    GUI.Label(new Rect(18f, y, contentWidth, 18f), "Buffer empty", tinyLabelStyle);
+                    GUI.Label(new Rect(contentX, y, contentWidth, 18f), "Buffer empty", tinyLabelStyle);
                     y += 24f;
                 }
 
-                GUI.Label(new Rect(18f, y + 2f, contentWidth, 18f), "R rotate   RMB remove", tinyLabelStyle);
+                GUI.Label(new Rect(contentX, y + 2f, contentWidth, 18f), "R rotate   RMB remove", tinyLabelStyle);
             }
 
             var inventory = controller.BuildInventoryView();
@@ -421,25 +432,25 @@ namespace ArcaneAtelier.Workshop
                 .Select(pair => (ShortItemName(pair.Key.DisplayName), pair.Value, pair.Key.Tint, pair.Key))
                 .ToArray();
 
-            DrawRect(new Rect(18f, detailBottom, contentWidth, 1f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.66f));
+            DrawRect(new Rect(contentX, detailBottom, contentWidth, 1f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.66f));
 
-            DrawSubPanel(new Rect(18f, payloadTop, columnWidth, payloadHeight), ArcaneBlue);
-            GUI.Label(new Rect(30f, payloadTop + 12f, columnWidth - 24f, 20f), "Inventory", sectionStyle);
-            GUI.Label(new Rect(30f, payloadTop + 32f, columnWidth - 24f, 18f), "Network + reserve", tinyLabelStyle);
-            DrawCompactList(new Rect(30f, payloadTop + 58f, columnWidth - 24f, payloadHeight - 70f), inventoryItems);
+            DrawSubPanel(new Rect(contentX, payloadTop, columnWidth, payloadHeight), ArcaneBlue);
+            GUI.Label(new Rect(contentX + 14f, payloadTop + 14f, columnWidth - 28f, 20f), "Inventory", sectionStyle);
+            GUI.Label(new Rect(contentX + 14f, payloadTop + 34f, columnWidth - 28f, 18f), "Network + reserve", tinyLabelStyle);
+            DrawCompactList(new Rect(contentX + 14f, payloadTop + 60f, columnWidth - 28f, payloadHeight - 76f), inventoryItems);
 
-            var deckX = 18f + columnWidth + columnGap;
+            var deckX = contentX + columnWidth + columnGap;
             DrawSubPanel(new Rect(deckX, payloadTop, columnWidth, payloadHeight), AtelierGold);
-            GUI.Label(new Rect(deckX + 12f, payloadTop + 12f, columnWidth - 24f, 20f), "Battle Deck", sectionStyle);
-            GUI.Label(new Rect(deckX + 12f, payloadTop + 32f, columnWidth - 24f, 18f), "Cards that reached collectors", tinyLabelStyle);
-            DrawCompactList(new Rect(deckX + 12f, payloadTop + 58f, columnWidth - 24f, payloadHeight - 70f), deckItems);
+            GUI.Label(new Rect(deckX + 14f, payloadTop + 14f, columnWidth - 28f, 20f), "Battle Deck", sectionStyle);
+            GUI.Label(new Rect(deckX + 14f, payloadTop + 34f, columnWidth - 28f, 18f), "Cards that reached collectors", tinyLabelStyle);
+            DrawCompactList(new Rect(deckX + 14f, payloadTop + 60f, columnWidth - 28f, payloadHeight - 76f), deckItems);
 
-            if (DrawThemedButton(new Rect(18f, stepButtonY, contentWidth, 28f), "Advance 1 Prep Tick", ArcaneBlue, buttonStyle, "advance_tick"))
+            if (DrawThemedButton(new Rect(contentX, stepButtonY, contentWidth, 28f), "Advance 1 Prep Tick", ArcaneBlue, buttonStyle, "advance_tick"))
             {
                 controller.StepPreparationOnce();
             }
 
-            if (DrawThemedButton(new Rect(18f, deployButtonY, contentWidth, 28f), "Forge And Deploy", AtelierGold, buttonStyle, "forge_and_deploy", playClickSound: false))
+            if (DrawThemedButton(new Rect(contentX, deployButtonY, contentWidth, 28f), "Forge And Deploy", AtelierGold, buttonStyle, "forge_and_deploy", playClickSound: false))
             {
                 controller.DeployToBattle();
             }
@@ -449,13 +460,13 @@ namespace ArcaneAtelier.Workshop
 
         private void DrawRewardDrawer(Rect rect)
         {
-            DrawPanelFrame(rect, new Color(0.57f, 0.45f, 0.89f));
+            DrawTallRegionFrame(rect, ornateFrameSprite, new Color(0.57f, 0.45f, 0.89f));
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(18f, 14f, rect.width - 36f, 20f), "Atelier Exchange", sectionStyle);
+            GUI.Label(new Rect(28f, 22f, rect.width - 56f, 20f), "Atelier Exchange", sectionStyle);
             int wallet = controller.Tokens;
-            GUI.Label(new Rect(18f, 34f, rect.width - 36f, 18f), $"Tokens: {wallet}   ·   TAB or ✦ to close", tinyLabelStyle);
+            GUI.Label(new Rect(28f, 42f, rect.width - 56f, 18f), $"Tokens: {wallet}   ·   TAB or ✦ to close", tinyLabelStyle);
 
-            var contentRect = new Rect(14f, 60f, rect.width - 28f, rect.height - 74f);
+            var contentRect = new Rect(26f, 70f, rect.width - 52f, rect.height - 92f);
             var rewards = controller.DebugRewards
                 .Where(reward => reward != null && reward.TokenCost > 0)
                 .ToArray();
@@ -514,16 +525,16 @@ namespace ArcaneAtelier.Workshop
         private void DrawGuideOverlay(Rect rect)
         {
             DrawRect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0f, 0f, 0f, 0.5f));
-            DrawPanelFrame(rect, new Color(0.88f, 0.74f, 0.33f));
+            DrawTallRegionFrame(rect, ornateFrameSprite, new Color(0.88f, 0.74f, 0.33f));
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(24f, 18f, rect.width - 132f, 24f), "Workshop Guide", titleStyle);
-            GUI.Label(new Rect(24f, 48f, rect.width - 132f, 34f), "Place machines, route outputs into matching inputs, then deploy the crafted deck.", mutedStyle);
-            if (DrawThemedButton(new Rect(rect.width - 64f, 18f, 38f, 28f), "X", new Color(0.9f, 0.5f, 0.34f, 1f), buttonStyle, "close_guide"))
+            GUI.Label(new Rect(44f, 30f, rect.width - 156f, 24f), "Workshop Guide", titleStyle);
+            GUI.Label(new Rect(44f, 60f, rect.width - 156f, 34f), "Place machines, route outputs into matching inputs, then deploy the crafted deck.", mutedStyle);
+            if (DrawThemedButton(new Rect(rect.width - 78f, 30f, 38f, 28f), "X", new Color(0.9f, 0.5f, 0.34f, 1f), buttonStyle, "close_guide"))
             {
                 showGuide = false;
             }
 
-            Rect contentViewport = new Rect(20f, 94f, rect.width - 40f, rect.height - 114f);
+            Rect contentViewport = new Rect(38f, 108f, rect.width - 76f, rect.height - 134f);
             float columnGap = 18f;
             float availableWidth = contentViewport.width - columnGap;
             float columnWidth = Mathf.Max(280f, availableWidth * 0.5f);
@@ -581,16 +592,16 @@ namespace ArcaneAtelier.Workshop
 
         private void DrawPaletteDock(Rect rect)
         {
-            DrawPanelFrame(rect, new Color(0.88f, 0.74f, 0.33f));
+            DrawRegionFrame(rect, paletteDockSprite, new Color(0.88f, 0.74f, 0.33f));
 
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(18f, 14f, 220f, 24f), "Workshop Palette", titleStyle);
-            GUI.Label(new Rect(18f, 38f, 760f, 18f), "Choose a blueprint. LMB arms default, RMB arms mirror on corner conduits. Short LMB places/selects; hold LMB and drag pans.", mutedStyle);
-            DrawElementLegend(new Rect(18f, 58f, 272f, 18f));
+            GUI.Label(new Rect(34f, 20f, 220f, 24f), "Workshop Palette", titleStyle);
+            GUI.Label(new Rect(34f, 44f, rect.width - 68f, 18f), "Choose a blueprint. LMB arms default, RMB arms mirror on corner conduits. Short LMB places/selects; hold LMB and drag pans.", mutedStyle);
+            DrawElementLegend(new Rect(34f, 64f, 272f, 18f));
 
-            DrawPaletteTabs(new Rect(18f, 82f, rect.width - 36f, 28f));
+            DrawPaletteTabs(new Rect(34f, 88f, rect.width - 68f, 28f));
 
-            var contentRect = new Rect(14f, 118f, rect.width - 28f, rect.height - 128f);
+            var contentRect = new Rect(28f, 124f, rect.width - 56f, rect.height - 140f);
             var nodes = GetPaletteNodesForActiveTab();
             const float spacing = 12f;
             const float cardHeight = 108f;
@@ -848,14 +859,7 @@ namespace ArcaneAtelier.Workshop
                 if ((selected ? tabActiveSprite : tabInactiveSprite) != null)
                 {
                     DrawRect(new Rect(tabRect.x + 2f, tabRect.y + 3f, tabRect.width, tabRect.height), new Color(0f, 0f, 0f, 0.14f));
-                    DrawNineSlice(
-                        tabRect,
-                        selected ? tabActiveSprite : tabInactiveSprite,
-                        60f,
-                        60f,
-                        60f,
-                        60f,
-                        Color.white);
+                    DrawSpriteCover(tabRect, selected ? tabActiveSprite : tabInactiveSprite, Color.white);
                     if (isHover)
                     {
                         DrawRect(new Rect(tabRect.x + 8f, tabRect.y + 6f, tabRect.width - 16f, tabRect.height - 12f), new Color(1f, 1f, 1f, 0.035f));
@@ -935,7 +939,7 @@ namespace ArcaneAtelier.Workshop
             if (blueprintCardSprite != null)
             {
                 DrawRect(new Rect(drawRect.x + 3f, drawRect.y + 4f, drawRect.width, drawRect.height), new Color(0f, 0f, 0f, 0.18f));
-                DrawNineSlice(drawRect, blueprintCardSprite, 128f, 128f, 90f, 70f, Color.white);
+                DrawSprite(drawRect, blueprintCardSprite, Color.white);
                 DrawRect(new Rect(drawRect.x + 10f, drawRect.y + 10f, drawRect.width - 20f, drawRect.height - 20f), new Color(accent.r, accent.g, accent.b, selected ? 0.11f : isHover ? 0.07f : 0.03f));
             }
             else
@@ -975,18 +979,18 @@ namespace ArcaneAtelier.Workshop
 
             var iconSprite = ResolveNodeSprite(node);
             var iconTint = ResolveNodeSpriteTint(node);
-            if (!DrawSprite(new Rect(drawRect.x + 18f, drawRect.y + 18f, 42f, 42f), iconSprite, iconTint))
+            if (!DrawSprite(new Rect(drawRect.x + 24f, drawRect.y + 20f, 40f, 40f), iconSprite, iconTint))
             {
-                GUI.Label(new Rect(drawRect.x + 20f, drawRect.y + 20f, 38f, 38f), GetCategorySymbol(node.Category), iconStyle);
+                GUI.Label(new Rect(drawRect.x + 25f, drawRect.y + 21f, 38f, 38f), GetCategorySymbol(node.Category), iconStyle);
             }
-            DrawNodeElementBadge(new Rect(drawRect.x + drawRect.width - 42f, drawRect.y + 14f, 24f, 24f), node);
-            GUI.Label(new Rect(drawRect.x + 74f, drawRect.y + 16f, drawRect.width - 136f, 18f), node.DisplayName, cardTitleStyle);
-            GUI.Label(new Rect(drawRect.x + 74f, drawRect.y + 38f, drawRect.width - 94f, 16f), node.Category.ToString(), tinyLabelStyle);
-            GUI.Label(new Rect(drawRect.x + 74f, drawRect.y + 58f, drawRect.width - 94f, 16f), unlocked ? "Ready" : "Locked reward", tinyLabelStyle);
+            DrawNodeElementBadge(new Rect(drawRect.x + drawRect.width - 52f, drawRect.y + 18f, 24f, 24f), node);
+            GUI.Label(new Rect(drawRect.x + 84f, drawRect.y + 18f, drawRect.width - 164f, 18f), node.DisplayName, blueprintTitleStyle);
+            GUI.Label(new Rect(drawRect.x + 84f, drawRect.y + 43f, drawRect.width - 116f, 16f), node.Category.ToString(), blueprintMetaStyle);
+            GUI.Label(new Rect(drawRect.x + 84f, drawRect.y + 64f, drawRect.width - 116f, 16f), unlocked ? "Ready" : "Locked reward", blueprintMetaStyle);
 
             if (mirrorNode != null)
             {
-                DrawCornerVariantStrip(new Rect(drawRect.x + 16f, drawRect.y + drawRect.height - 26f, drawRect.width - 32f, 18f), node, mirrorNode, mirrorSelected, unlocked);
+                DrawCornerVariantStrip(new Rect(drawRect.x + 24f, drawRect.y + drawRect.height - 30f, drawRect.width - 48f, 18f), node, mirrorNode, mirrorSelected, unlocked);
             }
 
             if (!unlocked)
@@ -1018,14 +1022,13 @@ namespace ArcaneAtelier.Workshop
 
             DrawSprite(leftPreview, ResolveNodeSprite(primaryNode), ResolveNodeSpriteTint(primaryNode));
             DrawSprite(rightPreview, ResolveNodeSprite(mirrorNode), ResolveNodeSpriteTint(mirrorNode), true);
-            GUI.Label(new Rect(rect.x + 50f, rect.y + 1f, 60f, 16f), mirrorSelected ? "Mirror" : "Default", tinyLabelStyle);
-            GUI.Label(new Rect(rect.x + 108f, rect.y + 1f, rect.width - 114f, 16f), unlocked ? "LMB default  RMB mirror" : "Unlock to arm", tinyLabelStyle);
+            GUI.Label(new Rect(rect.x + 50f, rect.y + 1f, 60f, 16f), mirrorSelected ? "Mirror" : "Default", blueprintModeStyle);
+            GUI.Label(new Rect(rect.x + 108f, rect.y + 1f, rect.width - 114f, 16f), unlocked ? "LMB default  RMB mirror" : "Unlock to arm", blueprintModeStyle);
         }
 
         private void DrawMiniStat(Rect rect, string value, string label)
         {
-            DrawRect(new Rect(rect.x + 2f, rect.y + 3f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.18f));
-            DrawRect(rect, new Color(0.07f, 0.095f, 0.135f, 0.94f));
+            DrawRect(rect, new Color(0.07f, 0.095f, 0.135f, 0.78f));
             DrawOutline(rect, new Color(AtelierGold.r, AtelierGold.g, AtelierGold.b, 0.42f));
             DrawRect(new Rect(rect.x + 4f, rect.y + 3f, rect.width - 8f, 1f), new Color(1f, 1f, 1f, 0.08f));
             GUI.Label(new Rect(rect.x, rect.y + 3f, rect.width, 14f), value, statValueStyle);
@@ -1150,12 +1153,47 @@ namespace ArcaneAtelier.Workshop
             GUI.Label(new Rect(rect.x + keyWidth + 12f, rect.y + 1f, rect.width - keyWidth - 12f, rect.height - 2f), action, bodyStyle);
         }
 
+        private void DrawRegionFrame(Rect rect, Sprite sprite, Color accent)
+        {
+            if (sprite == null)
+            {
+                DrawPanelFrame(rect, accent);
+                return;
+            }
+
+            DrawRect(new Rect(rect.x + 4f, rect.y + 5f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.18f));
+            DrawSprite(rect, sprite, Color.white);
+            DrawRect(InsetRect(rect, 22f, 18f, 22f, 18f), new Color(accent.r, accent.g, accent.b, 0.025f));
+        }
+
+        private void DrawTallRegionFrame(Rect rect, Sprite sprite, Color accent)
+        {
+            if (sprite == null)
+            {
+                DrawPanelFrame(rect, accent);
+                return;
+            }
+
+            DrawRect(new Rect(rect.x + 4f, rect.y + 5f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.18f));
+            DrawSprite(rect, sprite, Color.white);
+            DrawRect(InsetRect(rect, 24f, 24f, 24f, 24f), new Color(accent.r, accent.g, accent.b, 0.035f));
+        }
+
+        private static Rect InsetRect(Rect rect, float left, float top, float right, float bottom)
+        {
+            return new Rect(
+                rect.x + left,
+                rect.y + top,
+                Mathf.Max(0f, rect.width - left - right),
+                Mathf.Max(0f, rect.height - top - bottom));
+        }
+
         private void DrawPanelFrame(Rect rect, Color accent)
         {
             if (panelMainSprite != null)
             {
                 DrawRect(new Rect(rect.x + 5f, rect.y + 7f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.22f));
-                DrawNineSlice(rect, panelMainSprite, 124f, 124f, 124f, 124f, Color.white);
+                DrawSprite(rect, panelMainSprite, Color.white);
                 DrawRect(new Rect(rect.x + 12f, rect.y + 12f, rect.width - 24f, rect.height - 24f), new Color(accent.r, accent.g, accent.b, 0.05f));
                 DrawRect(new Rect(rect.x + 32f, rect.y + 18f, rect.width - 64f, 2f), new Color(accent.r, accent.g, accent.b, 0.3f));
                 return;
@@ -1174,7 +1212,7 @@ namespace ArcaneAtelier.Workshop
             if (tooltipFrameSprite != null)
             {
                 DrawRect(new Rect(rect.x + 4f, rect.y + 5f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.18f));
-                DrawNineSlice(rect, tooltipFrameSprite, 120f, 120f, 90f, 90f, Color.white);
+                DrawSprite(rect, tooltipFrameSprite, Color.white);
                 DrawRect(new Rect(rect.x + 14f, rect.y + 12f, rect.width - 28f, rect.height - 24f), new Color(accent.r, accent.g, accent.b, 0.04f));
                 return;
             }
@@ -1184,10 +1222,16 @@ namespace ArcaneAtelier.Workshop
 
         private void DrawSubPanel(Rect rect, Color accent)
         {
+            if (subPanelColumnSprite != null && rect.height >= rect.width * 0.82f)
+            {
+                DrawTallRegionFrame(rect, subPanelColumnSprite, accent);
+                return;
+            }
+
             if (panelSubSprite != null)
             {
                 DrawRect(new Rect(rect.x + 3f, rect.y + 4f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.16f));
-                DrawNineSlice(rect, panelSubSprite, 92f, 92f, 92f, 92f, Color.white);
+                DrawSprite(rect, panelSubSprite, Color.white);
                 DrawRect(new Rect(rect.x + 10f, rect.y + 10f, rect.width - 20f, rect.height - 20f), new Color(accent.r, accent.g, accent.b, 0.045f));
                 return;
             }
@@ -1206,8 +1250,17 @@ namespace ArcaneAtelier.Workshop
             if (useWideArtButton)
             {
                 DrawRect(new Rect(rect.x + 2f, rect.y + 3f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.18f));
-                DrawNineSlice(rect, buttonSprite, 44f, 44f, 44f, 44f, Color.white);
+                DrawSprite(rect, buttonSprite, Color.white);
                 DrawRect(new Rect(rect.x + 10f, rect.y + 8f, rect.width - 20f, rect.height - 16f), new Color(accent.r, accent.g, accent.b, isHover ? 0.14f : 0.08f));
+                GUI.Label(rect, label, labelStyle);
+                return HandleInteractiveRect(rect, interactionId, true, playClickSound);
+            }
+
+            if (buttonSmallSprite != null)
+            {
+                DrawRect(new Rect(rect.x + 2f, rect.y + 3f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.16f));
+                DrawSprite(rect, buttonSmallSprite, Color.white);
+                DrawRect(new Rect(rect.x + 4f, rect.y + 4f, rect.width - 8f, rect.height - 8f), new Color(accent.r, accent.g, accent.b, isHover ? 0.14f : 0.06f));
                 GUI.Label(rect, label, labelStyle);
                 return HandleInteractiveRect(rect, interactionId, true, playClickSound);
             }
@@ -1300,6 +1353,52 @@ namespace ArcaneAtelier.Workshop
                 width,
                 height);
             DrawSprite(fitRect, sprite, tint);
+        }
+
+        private void DrawSpriteCover(Rect rect, Sprite sprite, Color tint)
+        {
+            if (sprite == null || sprite.texture == null)
+            {
+                return;
+            }
+
+            Rect textureRect = sprite.textureRect;
+            float sourceWidth = textureRect.width;
+            float sourceHeight = textureRect.height;
+            if (sourceWidth <= 0.0001f || sourceHeight <= 0.0001f)
+            {
+                DrawSprite(rect, sprite, tint);
+                return;
+            }
+
+            float destAspect = rect.width / Mathf.Max(0.0001f, rect.height);
+            float sourceAspect = sourceWidth / Mathf.Max(0.0001f, sourceHeight);
+            float cropX = 0f;
+            float cropY = 0f;
+            float cropWidth = sourceWidth;
+            float cropHeight = sourceHeight;
+
+            if (destAspect > sourceAspect)
+            {
+                cropHeight = sourceWidth / destAspect;
+                cropY = (sourceHeight - cropHeight) * 0.5f;
+            }
+            else
+            {
+                cropWidth = sourceHeight * destAspect;
+                cropX = (sourceWidth - cropWidth) * 0.5f;
+            }
+
+            Rect uv = new Rect(
+                (textureRect.x + cropX) / sprite.texture.width,
+                (textureRect.y + cropY) / sprite.texture.height,
+                cropWidth / sprite.texture.width,
+                cropHeight / sprite.texture.height);
+
+            Color previousColor = GUI.color;
+            GUI.color = tint;
+            GUI.DrawTextureWithTexCoords(rect, sprite.texture, uv, true);
+            GUI.color = previousColor;
         }
 
         private void DrawNineSlice(Rect rect, Sprite sprite, float borderLeft, float borderRight, float borderTop, float borderBottom, Color tint)
@@ -1427,6 +1526,12 @@ namespace ArcaneAtelier.Workshop
             {
                 panelMainSprite = ArcaneArtCatalog.GetWorkshopPanelMain();
                 panelSubSprite = ArcaneArtCatalog.GetWorkshopPanelSub();
+                statusBarSprite = ArcaneArtCatalog.GetWorkshopStatusBar();
+                topLeftPanelSprite = ArcaneArtCatalog.GetWorkshopTopLeftPanel();
+                rightRailPanelSprite = ArcaneArtCatalog.GetWorkshopRightRailPanel();
+                paletteDockSprite = ArcaneArtCatalog.GetWorkshopPaletteDock();
+                subPanelColumnSprite = ArcaneArtCatalog.GetWorkshopSubPanelColumn();
+                ornateFrameSprite = ArcaneArtCatalog.GetWorkshopOrnateFrame();
                 buttonSprite = ArcaneArtCatalog.GetWorkshopButton();
                 buttonSmallSprite = ArcaneArtCatalog.GetWorkshopButtonSmall();
                 tabActiveSprite = ArcaneArtCatalog.GetWorkshopTabActive();
@@ -1537,6 +1642,46 @@ namespace ArcaneAtelier.Workshop
                 fontSize = 11,
                 wordWrap = true,
                 normal = { textColor = new Color(0.76f, 0.81f, 0.88f) }
+            };
+
+            statusBarStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 12,
+                fontStyle = FontStyle.Bold,
+                wordWrap = true,
+                clipping = TextClipping.Clip,
+                alignment = TextAnchor.MiddleLeft,
+                normal = { textColor = new Color(0.96f, 0.94f, 0.88f) }
+            };
+
+            blueprintTitleStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 14,
+                fontStyle = FontStyle.Bold,
+                wordWrap = false,
+                clipping = TextClipping.Clip,
+                alignment = TextAnchor.MiddleLeft,
+                normal = { textColor = new Color(0.12f, 0.085f, 0.045f) }
+            };
+
+            blueprintMetaStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 11,
+                fontStyle = FontStyle.Bold,
+                wordWrap = false,
+                clipping = TextClipping.Clip,
+                alignment = TextAnchor.MiddleLeft,
+                normal = { textColor = new Color(0.18f, 0.135f, 0.08f) }
+            };
+
+            blueprintModeStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 10,
+                fontStyle = FontStyle.Bold,
+                wordWrap = false,
+                clipping = TextClipping.Clip,
+                alignment = TextAnchor.MiddleCenter,
+                normal = { textColor = new Color(0.94f, 0.94f, 0.92f) }
             };
 
             tinyLabelStyle = new GUIStyle(GUI.skin.label)
