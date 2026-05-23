@@ -6,14 +6,7 @@ namespace ArcaneAtelier
 {
     public static class ArcaneArtCatalog
     {
-        private sealed class SpriteCacheEntry
-        {
-            public Sprite Sprite;
-            public long Length;
-            public long LastWriteUtcTicks;
-        }
-
-        private static readonly Dictionary<string, SpriteCacheEntry> SpriteCache = new Dictionary<string, SpriteCacheEntry>();
+        private static readonly Dictionary<string, Sprite> SpriteCache = new Dictionary<string, Sprite>();
         private const string ConduitSpritePath = "Nodes/Factories/node_factory_conduit.png";
         private const string TurnConduitSpritePath = "Nodes/Factories/node_factory_turn_conduit.png";
         private const string TurnSpellConduitSpritePath = "Nodes/Factories/node_factory_turn_spell_conduit.png";
@@ -100,31 +93,6 @@ namespace ArcaneAtelier
             return LoadSprite($"{WorkshopArtRoot}WS_BG_Far.png");
         }
 
-        public static Sprite GetWorkshopStatusBar()
-        {
-            return LoadSprite($"{WorkshopArtRoot}WS_Status_Bar.png");
-        }
-
-        public static Sprite GetWorkshopTopLeftPanel()
-        {
-            return LoadSprite($"{WorkshopArtRoot}WS_TopLeft_Panel.png");
-        }
-
-        public static Sprite GetWorkshopRightRailPanel()
-        {
-            return LoadSprite($"{WorkshopArtRoot}WS_RightRail_Panel.png");
-        }
-
-        public static Sprite GetWorkshopPaletteDock()
-        {
-            return LoadSprite($"{WorkshopArtRoot}WS_PaletteDock.png");
-        }
-
-        public static Sprite GetWorkshopSubPanelColumn()
-        {
-            return LoadSprite($"{WorkshopArtRoot}WS_SubPanel_Column.png");
-        }
-
         public static Sprite GetWorkshopBoardUnderlay()
         {
             return LoadSprite($"{WorkshopArtRoot}WS_Board_Underlay.png");
@@ -172,7 +140,7 @@ namespace ArcaneAtelier
 
         public static Sprite GetWorkshopButton()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Button.png", true, 28);
+            return LoadSprite($"{WorkshopArtRoot}WS_Button.png", true);
         }
 
         public static Sprite GetWorkshopButtonSmall()
@@ -192,7 +160,7 @@ namespace ArcaneAtelier
 
         public static Sprite GetWorkshopBlueprintCard()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Blueprint_Card.png", true, 20);
+            return LoadSprite($"{WorkshopArtRoot}WS_Blueprint_Card.png", true);
         }
 
         public static Sprite GetWorkshopSlotFrame()
@@ -205,37 +173,24 @@ namespace ArcaneAtelier
             return LoadSprite($"{WorkshopArtRoot}WS_Tooltip_Frame.png", true);
         }
 
-        private static Sprite LoadSprite(string relativePath, bool trimTransparentBounds = false, byte alphaThreshold = 8)
+        private static Sprite LoadSprite(string relativePath, bool trimTransparentBounds = false)
         {
             if (string.IsNullOrWhiteSpace(relativePath))
             {
                 return null;
             }
 
-            string cacheKey = trimTransparentBounds ? $"{relativePath}|trim|{alphaThreshold}" : relativePath;
+            string cacheKey = trimTransparentBounds ? $"{relativePath}|trim" : relativePath;
+            if (SpriteCache.TryGetValue(cacheKey, out Sprite cached))
+            {
+                return cached;
+            }
+
             string fullPath = Path.Combine(Application.dataPath, "ArcaneAtelier", "Art", relativePath.Replace('/', Path.DirectorySeparatorChar));
-            FileInfo fileInfo = new FileInfo(fullPath);
-            if (!fileInfo.Exists)
+            if (!File.Exists(fullPath))
             {
                 SpriteCache[cacheKey] = null;
                 return null;
-            }
-
-            long fileLength = fileInfo.Length;
-            long lastWriteUtcTicks = fileInfo.LastWriteTimeUtc.Ticks;
-
-            if (SpriteCache.TryGetValue(cacheKey, out SpriteCacheEntry cached) &&
-                cached != null &&
-                cached.Sprite != null &&
-                cached.Length == fileLength &&
-                cached.LastWriteUtcTicks == lastWriteUtcTicks)
-            {
-                return cached.Sprite;
-            }
-
-            if (cached != null)
-            {
-                DestroyCachedSprite(cached.Sprite);
             }
 
             byte[] bytes = File.ReadAllBytes(fullPath);
@@ -261,7 +216,7 @@ namespace ArcaneAtelier
             }
 
             Rect spriteRect = trimTransparentBounds
-                ? FindVisibleRect(texture, alphaThreshold)
+                ? FindVisibleRect(texture)
                 : new Rect(0f, 0f, texture.width, texture.height);
 
             Sprite sprite = Sprite.Create(
@@ -270,31 +225,11 @@ namespace ArcaneAtelier
                 new Vector2(0.5f, 0.5f),
                 100f);
             sprite.hideFlags = HideFlags.HideAndDontSave;
-            SpriteCache[cacheKey] = new SpriteCacheEntry
-            {
-                Sprite = sprite,
-                Length = fileLength,
-                LastWriteUtcTicks = lastWriteUtcTicks
-            };
+            SpriteCache[cacheKey] = sprite;
             return sprite;
         }
 
-        private static void DestroyCachedSprite(Sprite sprite)
-        {
-            if (sprite == null)
-            {
-                return;
-            }
-
-            if (sprite.texture != null)
-            {
-                Object.Destroy(sprite.texture);
-            }
-
-            Object.Destroy(sprite);
-        }
-
-        private static Rect FindVisibleRect(Texture2D texture, byte alphaThreshold)
+        private static Rect FindVisibleRect(Texture2D texture)
         {
             if (texture == null)
             {
@@ -314,7 +249,7 @@ namespace ArcaneAtelier
                 int rowStart = y * width;
                 for (int x = 0; x < width; x++)
                 {
-                    if (pixels[rowStart + x].a <= alphaThreshold)
+                    if (pixels[rowStart + x].a <= 8)
                     {
                         continue;
                     }

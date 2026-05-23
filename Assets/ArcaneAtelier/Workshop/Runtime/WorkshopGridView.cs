@@ -10,6 +10,7 @@ namespace ArcaneAtelier.Workshop
         [SerializeField] private float cellSize = 1.22f;
         [SerializeField] private Color gridTintA = new Color(0.08f, 0.1f, 0.14f, 0.92f);
         [SerializeField] private Color gridTintB = new Color(0.1f, 0.13f, 0.18f, 0.92f);
+        [SerializeField] private Color selectedTint = new Color(0.93f, 0.73f, 0.28f, 0.98f);
         [SerializeField] private Color hoverTint = new Color(0.32f, 0.58f, 0.76f, 0.9f);
         [SerializeField] private Color boardTint = new Color(0.025f, 0.035f, 0.06f, 1f);
         [SerializeField, Min(1.01f)] private float wheelZoomFactor = 1.12f;
@@ -372,11 +373,18 @@ namespace ArcaneAtelier.Workshop
                 pair.Value.color = GetBaseCellTint(pair.Key);
             }
 
+            if (tileSelectedSprite == null &&
+                controller.SelectedCell.x >= 0 &&
+                cellRenderers.TryGetValue(controller.SelectedCell, out var selectedRenderer))
+            {
+                selectedRenderer.color = selectedTint;
+            }
+
             if (tileHoverSprite == null &&
                 hoveredCell.x >= 0 &&
                 cellRenderers.TryGetValue(hoveredCell, out var hoverRenderer))
             {
-                hoverRenderer.color = hoverTint;
+                hoverRenderer.color = controller.SelectedCell == hoveredCell ? selectedTint : hoverTint;
             }
 
             UpdateCellOverlay(selectedCellOverlayRenderer, controller.SelectedCell, tileSelectedSprite);
@@ -896,6 +904,7 @@ namespace ArcaneAtelier.Workshop
         {
             gridTintA = new Color(0.075f, 0.095f, 0.135f, 0.92f);
             gridTintB = new Color(0.095f, 0.125f, 0.17f, 0.92f);
+            selectedTint = new Color(0.93f, 0.73f, 0.28f, 0.98f);
             hoverTint = new Color(0.32f, 0.58f, 0.76f, 0.92f);
             boardTint = new Color(0.025f, 0.035f, 0.06f, 1f);
         }
