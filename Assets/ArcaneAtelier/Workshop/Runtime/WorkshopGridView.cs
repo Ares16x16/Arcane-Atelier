@@ -24,13 +24,24 @@ namespace ArcaneAtelier.Workshop
         private const int MajorGridStep = 5;
 
         private readonly Dictionary<Vector2Int, SpriteRenderer> cellRenderers = new Dictionary<Vector2Int, SpriteRenderer>();
+        private readonly Dictionary<Vector2Int, SpriteRenderer> cellTextureRenderers = new Dictionary<Vector2Int, SpriteRenderer>();
         private readonly Dictionary<Vector2Int, NodeVisual> nodeVisuals = new Dictionary<Vector2Int, NodeVisual>();
 
         private Camera cachedCamera;
         private WorkshopSceneController controller;
         private Sprite sharedSprite;
+        private Sprite workshopBackgroundSprite;
+        private Sprite boardUnderlaySprite;
+        private Sprite tileSpriteA;
+        private Sprite tileSpriteB;
+        private Sprite tileHoverSprite;
+        private Sprite tileSelectedSprite;
+        private Sprite leylineHorizontalSprite;
+        private Sprite leylineVerticalSprite;
         private Transform gridRoot;
         private Transform nodeRoot;
+        private SpriteRenderer hoverCellOverlayRenderer;
+        private SpriteRenderer selectedCellOverlayRenderer;
         private Vector2Int hoveredCell = new Vector2Int(-1, -1);
         private bool isDraggingCamera;
         private bool isTrackingLeftPress;
@@ -63,6 +74,7 @@ namespace ArcaneAtelier.Workshop
             controller = sceneController;
             cachedCamera = Camera.main;
             sharedSprite = CreateSquareSprite();
+            LoadWorkshopArt();
             ApplyWorkshopTheme();
             InitializeCameraState();
 
@@ -361,15 +373,25 @@ namespace ArcaneAtelier.Workshop
                 pair.Value.color = GetBaseCellTint(pair.Key);
             }
 
-            if (controller.SelectedCell.x >= 0 && cellRenderers.TryGetValue(controller.SelectedCell, out var selectedRenderer))
+            if (tileSelectedSprite == null &&
+                controller.SelectedCell.x >= 0 &&
+                cellRenderers.TryGetValue(controller.SelectedCell, out var selectedRenderer))
             {
                 selectedRenderer.color = selectedTint;
             }
 
-            if (hoveredCell.x >= 0 && cellRenderers.TryGetValue(hoveredCell, out var hoverRenderer))
+            if (tileHoverSprite == null &&
+                hoveredCell.x >= 0 &&
+                cellRenderers.TryGetValue(hoveredCell, out var hoverRenderer))
             {
                 hoverRenderer.color = controller.SelectedCell == hoveredCell ? selectedTint : hoverTint;
             }
+
+            UpdateCellOverlay(selectedCellOverlayRenderer, controller.SelectedCell, tileSelectedSprite);
+            UpdateCellOverlay(
+                hoverCellOverlayRenderer,
+                hoveredCell == controller.SelectedCell ? new Vector2Int(-1, -1) : hoveredCell,
+                tileHoverSprite);
 
             foreach (var key in nodeVisuals.Keys.ToArray())
             {
@@ -407,7 +429,10 @@ namespace ArcaneAtelier.Workshop
             }
 
             cellRenderers.Clear();
+            cellTextureRenderers.Clear();
             nodeVisuals.Clear();
+            hoverCellOverlayRenderer = null;
+            selectedCellOverlayRenderer = null;
 
             gridRoot = new GameObject("Workshop Board").transform;
             gridRoot.SetParent(transform, false);
@@ -415,24 +440,53 @@ namespace ArcaneAtelier.Workshop
             nodeRoot = new GameObject("Node Visuals").transform;
             nodeRoot.SetParent(transform, false);
 
-            var board = new GameObject("Board Backdrop");
-            board.transform.SetParent(gridRoot, false);
-            board.transform.position = new Vector3(
+            float boardWidth = controller.Simulation.GridSize.x * cellSize + 1.4f;
+            float boardHeight = controller.Simulation.GridSize.y * cellSize + 1.4f;
+            Vector3 boardCenter = new Vector3(
                 (controller.Simulation.GridSize.x - 1) * cellSize * 0.5f,
                 (controller.Simulation.GridSize.y - 1) * cellSize * 0.5f,
                 1f);
-            board.transform.localScale = new Vector3(
-                controller.Simulation.GridSize.x * cellSize + 1.4f,
-                controller.Simulation.GridSize.y * cellSize + 1.4f,
-                1f);
-            var boardRenderer = board.AddComponent<SpriteRenderer>();
-            boardRenderer.sprite = sharedSprite;
-            boardRenderer.color = boardTint;
-            boardRenderer.sortingOrder = -2;
 
             CreateBoardLayer("Board Shadow", 2.4f, new Color(0f, 0f, 0f, 0.32f), -5, new Vector3(0.12f, -0.14f, 0f));
-            CreateBoardLayer("Outer Brass Frame", 1.95f, new Color(0.58f, 0.43f, 0.18f, 0.32f), -4, Vector3.zero);
-            CreateBoardLayer("Inner Arcane Wash", 0.62f, new Color(0.1f, 0.2f, 0.28f, 0.2f), -1, Vector3.zero);
+
+            if (workshopBackgroundSprite != null)
+            {
+                CreateScaledSpriteLayer(
+                    "Workshop Far Background",
+                    workshopBackgroundSprite,
+                    boardCenter + new Vector3(0f, 0f, 0.15f),
+                    boardWidth + 18f,
+                    boardHeight + 18f,
+                    -8,
+                    Color.white,
+                    true);
+            }
+
+            if (boardUnderlaySprite != null)
+            {
+                CreateScaledSpriteLayer(
+                    "Board Underlay",
+                    boardUnderlaySprite,
+                    boardCenter,
+                    boardWidth,
+                    boardHeight,
+                    -2,
+                    Color.white);
+            }
+            else
+            {
+                var board = new GameObject("Board Backdrop");
+                board.transform.SetParent(gridRoot, false);
+                board.transform.position = boardCenter;
+                board.transform.localScale = new Vector3(boardWidth, boardHeight, 1f);
+                var boardRenderer = board.AddComponent<SpriteRenderer>();
+                boardRenderer.sprite = sharedSprite;
+                boardRenderer.color = boardTint;
+                boardRenderer.sortingOrder = -2;
+
+                CreateBoardLayer("Outer Brass Frame", 1.95f, new Color(0.58f, 0.43f, 0.18f, 0.32f), -4, Vector3.zero);
+                CreateBoardLayer("Inner Arcane Wash", 0.62f, new Color(0.1f, 0.2f, 0.28f, 0.2f), -1, Vector3.zero);
+            }
 
             for (var y = 0; y < controller.Simulation.GridSize.y; y++)
             {
@@ -449,10 +503,27 @@ namespace ArcaneAtelier.Workshop
                     spriteRenderer.color = GetBaseCellTint(cell);
                     spriteRenderer.sortingOrder = 0;
                     cellRenderers.Add(cell, spriteRenderer);
+
+                    Sprite tileSprite = ((x + y) & 1) == 0 ? tileSpriteA : tileSpriteB;
+                    if (tileSprite != null)
+                    {
+                        var tileObject = new GameObject($"TileArt_{x}_{y}");
+                        tileObject.transform.SetParent(go.transform, false);
+                        tileObject.transform.localPosition = Vector3.zero;
+                        tileObject.transform.localScale = Vector3.one * CalculateSpriteScaleToFit(tileSprite, cellSize * 0.965f);
+
+                        var tileRenderer = tileObject.AddComponent<SpriteRenderer>();
+                        tileRenderer.sprite = tileSprite;
+                        tileRenderer.color = new Color(1f, 1f, 1f, 0.74f);
+                        tileRenderer.sortingOrder = 1;
+                        cellTextureRenderers.Add(cell, tileRenderer);
+                    }
                 }
             }
 
             BuildMajorGridLines();
+            selectedCellOverlayRenderer = CreateCellOverlayRenderer("Selected Cell Overlay", tileSelectedSprite, 2);
+            hoverCellOverlayRenderer = CreateCellOverlayRenderer("Hover Cell Overlay", tileHoverSprite, 3);
         }
 
         private NodeVisual CreateNodeVisual(Vector2Int cell)
@@ -786,6 +857,35 @@ namespace ArcaneAtelier.Workshop
             return targetSize / largestDimension;
         }
 
+        private static Vector3 CalculateSpriteScale(Sprite sprite, float targetWidth, float targetHeight, bool cover)
+        {
+            if (sprite == null)
+            {
+                return new Vector3(targetWidth, targetHeight, 1f);
+            }
+
+            Vector2 bounds = sprite.bounds.size;
+            float width = Mathf.Max(0.0001f, bounds.x);
+            float height = Mathf.Max(0.0001f, bounds.y);
+            float scaleFactor = cover
+                ? Mathf.Max(targetWidth / width, targetHeight / height)
+                : Mathf.Min(targetWidth / width, targetHeight / height);
+            return new Vector3(scaleFactor, scaleFactor, 1f);
+        }
+
+        private static float CalculateSpriteScaleToFit(Sprite sprite, float targetSize)
+        {
+            if (sprite == null)
+            {
+                return targetSize;
+            }
+
+            Vector2 bounds = sprite.bounds.size;
+            float width = Mathf.Max(0.0001f, bounds.x);
+            float height = Mathf.Max(0.0001f, bounds.y);
+            return Mathf.Min(targetSize / width, targetSize / height);
+        }
+
         private SpriteRenderer CreateVisualLayer(Transform parent, string objectName, Vector3 localPosition, Vector3 localScale, Color tint, int sortingOrder)
         {
             var go = new GameObject(objectName);
@@ -807,6 +907,72 @@ namespace ArcaneAtelier.Workshop
             selectedTint = new Color(0.93f, 0.73f, 0.28f, 0.98f);
             hoverTint = new Color(0.32f, 0.58f, 0.76f, 0.92f);
             boardTint = new Color(0.025f, 0.035f, 0.06f, 1f);
+        }
+
+        private void LoadWorkshopArt()
+        {
+            workshopBackgroundSprite = ArcaneArtCatalog.GetWorkshopBackground();
+            boardUnderlaySprite = ArcaneArtCatalog.GetWorkshopBoardUnderlay();
+            tileSpriteA = ArcaneArtCatalog.GetWorkshopTileA();
+            tileSpriteB = ArcaneArtCatalog.GetWorkshopTileB();
+            tileHoverSprite = ArcaneArtCatalog.GetWorkshopTileHover();
+            tileSelectedSprite = ArcaneArtCatalog.GetWorkshopTileSelected();
+            leylineHorizontalSprite = ArcaneArtCatalog.GetWorkshopLeylineHorizontal();
+            leylineVerticalSprite = ArcaneArtCatalog.GetWorkshopLeylineVertical();
+        }
+
+        private void CreateScaledSpriteLayer(string objectName, Sprite sprite, Vector3 position, float targetWidth, float targetHeight, int sortingOrder, Color tint, bool cover = false)
+        {
+            if (sprite == null)
+            {
+                return;
+            }
+
+            var layer = new GameObject(objectName);
+            layer.transform.SetParent(gridRoot, false);
+            layer.transform.position = position;
+            layer.transform.localScale = CalculateSpriteScale(sprite, targetWidth, targetHeight, cover);
+
+            var renderer = layer.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            renderer.color = tint;
+            renderer.sortingOrder = sortingOrder;
+        }
+
+        private SpriteRenderer CreateCellOverlayRenderer(string objectName, Sprite sprite, int sortingOrder)
+        {
+            if (sprite == null)
+            {
+                return null;
+            }
+
+            var overlay = new GameObject(objectName);
+            overlay.transform.SetParent(gridRoot, false);
+            overlay.transform.localScale = Vector3.one * CalculateSpriteScaleToFit(sprite, cellSize * 0.99f);
+
+            var renderer = overlay.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            renderer.color = Color.white;
+            renderer.sortingOrder = sortingOrder;
+            renderer.enabled = false;
+            return renderer;
+        }
+
+        private void UpdateCellOverlay(SpriteRenderer renderer, Vector2Int cell, Sprite sprite)
+        {
+            if (renderer == null || sprite == null)
+            {
+                return;
+            }
+
+            bool show = controller != null && controller.Simulation != null && controller.Simulation.IsInsideGrid(cell);
+            renderer.enabled = show;
+            if (!show)
+            {
+                return;
+            }
+
+            renderer.transform.position = CellToWorld(cell);
         }
 
         private void CreateBoardLayer(string objectName, float extraSize, Color color, int sortingOrder, Vector3 offset)
@@ -852,7 +1018,8 @@ namespace ArcaneAtelier.Workshop
                     $"Leyline_V_{x}",
                     new Vector3(x * cellSize, centerY, 0f),
                     new Vector3(0.035f, height, 1f),
-                    new Color(0.64f, 0.8f, 0.9f, 0.16f));
+                    new Color(0.64f, 0.8f, 0.9f, 0.16f),
+                    leylineVerticalSprite);
             }
 
             for (var y = 0; y < gridSize.y; y += MajorGridStep)
@@ -861,21 +1028,24 @@ namespace ArcaneAtelier.Workshop
                     $"Leyline_H_{y}",
                     new Vector3(centerX, y * cellSize, 0f),
                     new Vector3(width, 0.035f, 1f),
-                    new Color(0.88f, 0.67f, 0.28f, 0.13f));
+                    new Color(0.88f, 0.67f, 0.28f, 0.13f),
+                    leylineHorizontalSprite);
             }
         }
 
-        private void CreateGridLine(string objectName, Vector3 position, Vector3 scale, Color color)
+        private void CreateGridLine(string objectName, Vector3 position, Vector3 scale, Color color, Sprite lineSprite)
         {
             var line = new GameObject(objectName);
             line.transform.SetParent(gridRoot, false);
             line.transform.localPosition = position;
-            line.transform.localScale = scale;
 
             var renderer = line.AddComponent<SpriteRenderer>();
-            renderer.sprite = sharedSprite;
+            renderer.sprite = lineSprite != null ? lineSprite : sharedSprite;
             renderer.color = color;
             renderer.sortingOrder = 1;
+            renderer.transform.localScale = lineSprite != null
+                ? CalculateSpriteScale(lineSprite, scale.x, scale.y, false)
+                : scale;
         }
 
         private Color GetBaseCellTint(Vector2Int cell)
