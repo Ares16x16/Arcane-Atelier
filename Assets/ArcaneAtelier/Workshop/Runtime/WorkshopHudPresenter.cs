@@ -189,7 +189,7 @@ namespace ArcaneAtelier.Workshop
 
             GUI.BeginGroup(rect);
             GUI.Label(new Rect(60f, 10f, rect.width - 68f, 18f), "Status", sectionStyle);
-            GUI.Label(new Rect(60f, 28f, rect.width - 80f, 20f), controller.StatusMessage, statusBarStyle);
+            GUI.Label(new Rect(60f, 28f, rect.width - 80f, 27f), controller.StatusMessage, statusBarStyle);
             GUI.EndGroup();
         }
 
@@ -363,8 +363,8 @@ namespace ArcaneAtelier.Workshop
             Rect rect = PositionUiTooltip(mouse, width, 44f + bodyHeight);
             DrawTooltipFrame(rect, hoveredMetaAccent);
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(14f, 12f, rect.width - 28f, 18f), hoveredMetaTitle, sectionStyle);
-            GUI.Label(new Rect(14f, 34f, rect.width - 28f, bodyHeight), hoveredMetaBody, bodyStyle);
+            GUI.Label(new Rect(40f, 12f, rect.width - 28f, 18f), hoveredMetaTitle, sectionStyle);
+            GUI.Label(new Rect(40f, 34f, rect.width - 28f, bodyHeight), hoveredMetaBody, bodyStyle);
             GUI.EndGroup();
         }
 
@@ -657,22 +657,22 @@ namespace ArcaneAtelier.Workshop
 
             DrawTooltipFrame(rect, node == null ? new Color(0.42f, 0.54f, 0.7f) : GetCategoryColor(node.Definition.Category, node.Definition.Tint));
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(14f, 12f, rect.width - 28f, 18f), node == null ? "Empty Tile" : node.Definition.DisplayName, sectionStyle);
-            GUI.Label(new Rect(14f, 30f, rect.width - 28f, 18f), $"Cell {controller.HoveredCell.x}, {controller.HoveredCell.y}", tinyLabelStyle);
+            GUI.Label(new Rect(28f, 12f, rect.width - 28f, 18f), node == null ? "Empty Tile" : node.Definition.DisplayName, sectionStyle);
+            GUI.Label(new Rect(28f, 30f, rect.width - 28f, 18f), $"Cell {controller.HoveredCell.x}, {controller.HoveredCell.y}", tinyLabelStyle);
 
             if (node == null)
             {
-                GUI.Label(new Rect(14f, 50f, rect.width - 28f, 18f), "LMB place armed machine", bodyStyle);
+                GUI.Label(new Rect(28f, 50f, rect.width - 28f, 18f), "LMB place armed machine", bodyStyle);
             }
             else
             {
-                GUI.Label(new Rect(14f, 50f, rect.width - 28f, 18f), node.Definition.Category.ToString(), tinyLabelStyle);
-                GUI.Label(new Rect(14f, 68f, rect.width - 28f, 34f), node.Definition.Description, bodyStyle);
+                GUI.Label(new Rect(28f, 50f, rect.width - 28f, 18f), node.Definition.Category.ToString(), tinyLabelStyle);
+                GUI.Label(new Rect(28f, 68f, rect.width - 28f, 34f), node.Definition.Description, bodyStyle);
                 string activeText = node.IsRecentlyActive ? "Active" : "Idle";
-                GUI.Label(new Rect(14f, 104f, rect.width - 28f, 18f), $"Rot {node.RotationQuarterTurns * 90}°  Buffer {node.BufferedItemCount}/{node.Definition.BufferCapacity}  {activeText}", tinyLabelStyle);
+                GUI.Label(new Rect(28f, 104f, rect.width - 28f, 18f), $"Rot {node.RotationQuarterTurns * 90}°  Buffer {node.BufferedItemCount}/{node.Definition.BufferCapacity}  {activeText}", tinyLabelStyle);
                 if (showBufferDetails)
                 {
-                    DrawTooltipBuffer(new Rect(14f, 126f, rect.width - 28f, rect.height - 138f), node, bufferEntries);
+                    DrawTooltipBuffer(new Rect(28f, 126f, rect.width - 28f, rect.height - 138f), node, bufferEntries);
                 }
             }
 
