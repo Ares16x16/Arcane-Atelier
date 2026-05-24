@@ -18,6 +18,7 @@ namespace ArcaneAtelier
         private const string TurnConduitSpritePath = "Nodes/Factories/node_factory_turn_conduit.png";
         private const string TurnSpellConduitSpritePath = "Nodes/Factories/node_factory_turn_spell_conduit.png";
         private const string UiArtRoot = "Workshop/";
+        private const string StatusBoxArtRoot = "Resources/UI/Status Boxes/";
 
         public static Sprite GetElementIcon(ArcaneAtelier.Workshop.WorkshopElementAttribute element)
         {
@@ -208,6 +209,21 @@ namespace ArcaneAtelier
         public static Sprite GetUiTooltipFrame()
         {
             return LoadSprite($"{UiArtRoot}WS_Tooltip_Frame.png", true);
+        }
+
+        public static Sprite GetPlayerStatusBox()
+        {
+            return LoadSprite($"{StatusBoxArtRoot}Player_Stat_Box.png");
+        }
+
+        public static Sprite GetEnemyStatusBox()
+        {
+            return LoadSprite($"{StatusBoxArtRoot}Enemy_Stat_Box.png");
+        }
+
+        public static Sprite GetTurnStatusBox()
+        {
+            return LoadSprite($"{StatusBoxArtRoot}Turn_Stat_Box.png");
         }
 
         public static Sprite GetWorkshopBackground()

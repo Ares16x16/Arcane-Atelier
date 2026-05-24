@@ -8,7 +8,7 @@ namespace ArcaneAtelier.Battle
     public sealed class BattleHudPresenter : MonoBehaviour
     {
         private const float Margin = 18f;
-        private const float TopBarHeight = 192f;
+        private const float TopBarHeight = 218f;
         private const float BottomPanelHeight = 276f;
         private const float CardWidth = 196f;
         private const float CardHeight = 176f;
@@ -38,6 +38,9 @@ namespace ArcaneAtelier.Battle
         private Sprite uiPaletteDockSprite;
         private Sprite uiButtonSprite;
         private Sprite uiButtonSmallSprite;
+        private Sprite playerStatusBoxSprite;
+        private Sprite enemyStatusBoxSprite;
+        private Sprite turnStatusBoxSprite;
         private GUIStyle titleStyle;
         private GUIStyle sectionStyle;
         private GUIStyle bodyStyle;
@@ -252,19 +255,38 @@ namespace ArcaneAtelier.Battle
             DrawPaletteDockFrame(rect, ApAccent, 0.94f);
             GUI.BeginGroup(rect);
 
-            float sideWidth = Mathf.Clamp((rect.width - 400f) * 0.5f, 300f, 400f);
-            Rect playerRect = new Rect(16f, 16f, sideWidth, rect.height - 32f);
-            Rect centerRect = new Rect(rect.width * 0.5f - 190f, 16f, 380f, rect.height - 32f);
-            Rect bossRect = new Rect(rect.width - sideWidth - 16f, 16f, sideWidth, rect.height - 32f);
+            float baseGap = 12f;
+            float availableWidth = rect.width - 32f;
+            float availableHeight = rect.height - 32f;
+            float playerAspect = GetSpriteAspect(playerStatusBoxSprite, 489f / 281f);
+            float enemyAspect = GetSpriteAspect(enemyStatusBoxSprite, 503f / 296f);
+            float turnAspect = GetSpriteAspect(turnStatusBoxSprite, 1004f / 391f);
+            float sideBoxWidthScale = 1.18f;
+            float turnBoxWidthScale = 1.16f;
+            float totalAspect = playerAspect * sideBoxWidthScale + turnAspect * turnBoxWidthScale + enemyAspect * sideBoxWidthScale;
+            float fittedHeight = Mathf.Min(
+                availableHeight,
+                availableWidth / Mathf.Max(0.01f, totalAspect + (baseGap * 2f / Mathf.Max(1f, availableHeight))));
+            float playerWidth = fittedHeight * playerAspect * sideBoxWidthScale;
+            float centerWidth = fittedHeight * turnAspect * turnBoxWidthScale;
+            float enemyWidth = fittedHeight * enemyAspect * sideBoxWidthScale;
+            float originY = 16f + Mathf.Max(0f, (availableHeight - fittedHeight) * 0.5f);
+            Rect playerRect = new Rect(16f, originY, playerWidth, fittedHeight);
+            Rect bossRect = new Rect(rect.width - 16f - enemyWidth, originY, enemyWidth, fittedHeight);
+            float centerX = Mathf.Clamp(
+                rect.width * 0.5f - centerWidth * 0.5f,
+                playerRect.xMax + baseGap,
+                bossRect.x - baseGap - centerWidth);
+            Rect centerRect = new Rect(centerX, originY, centerWidth, fittedHeight);
 
-            DrawUnitStatusBlock(playerRect, controller.Player, "Player", false);
-            DrawCenterBattleStrip(centerRect);
-            DrawUnitStatusBlock(bossRect, controller.Boss, "Enemy", true);
+            DrawUnitStatusBlock(playerRect, controller.Player, "Player", false, playerStatusBoxSprite);
+            DrawCenterBattleStrip(centerRect, turnStatusBoxSprite);
+            DrawUnitStatusBlock(bossRect, controller.Boss, "Enemy", true, enemyStatusBoxSprite);
 
             GUI.EndGroup();
         }
 
-        private void DrawUnitStatusBlock(Rect rect, BattleUnit unit, string fallbackTitle, bool alignRight)
+        private void DrawUnitStatusBlock(Rect rect, BattleUnit unit, string fallbackTitle, bool alignRight, Sprite backgroundSprite)
         {
             string displayName = unit != null && !string.IsNullOrWhiteSpace(unit.DisplayName) ? unit.DisplayName : fallbackTitle;
             int currentHealth = unit != null ? unit.CurrentHealth : 0;
@@ -272,8 +294,12 @@ namespace ArcaneAtelier.Battle
             int shield = unit != null ? unit.Shield : 0;
             WorkshopElementAttribute element = unit != null ? unit.Element : WorkshopElementAttribute.None;
             Color accent = GetElementColor(element);
-
-            //DrawPaletteCardFrame(rect, accent, 0.98f, 0.08f);
+            Rect contentRect = DrawStatusBoxBackground(
+                rect,
+                backgroundSprite,
+                accent,
+                alignRight ? new RectOffset(34, 38, 24, 26) : new RectOffset(38, 34, 22, 26),
+                new Color(0.03f, 0.05f, 0.09f, 0.7f));
 
             GUIStyle nameStyle = new GUIStyle(sectionStyle)
             {
@@ -284,26 +310,27 @@ namespace ArcaneAtelier.Battle
                 alignment = alignRight ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft
             };
 
-            float contentX = rect.x + 20f;
-            float contentWidth = rect.width - 35f;
+            float contentX = contentRect.x + 6f;
+            float contentWidth = Mathf.Max(120f, contentRect.width - 12f);
             float labelWidth = Mathf.Max(64f, contentWidth * 0.26f);
             string elementText = element == WorkshopElementAttribute.None ? "Neutral" : element.ToString();
+            float topY = contentRect.y + 10f;
 
-            GUI.Label(new Rect(contentX, rect.y + 15f, contentWidth, 18f), displayName, nameStyle);
-            GUI.Label(new Rect(contentX, rect.y + 35f, contentWidth, 14f), elementText, valueStyle);
-            GUI.Label(new Rect(contentX, rect.y + 57f, labelWidth, 14f), $"HP {currentHealth}/{maxHealth}", valueStyle);
+            GUI.Label(new Rect(contentX, topY, contentWidth, 18f), displayName, nameStyle);
+            GUI.Label(new Rect(contentX, topY + 20f, contentWidth, 14f), elementText, valueStyle);
+            GUI.Label(new Rect(contentX, topY + 42f, labelWidth, 14f), $"HP {currentHealth}/{maxHealth}", valueStyle);
 
             float barWidth = contentWidth - labelWidth - 18f;
-            Rect healthBarRect = new Rect(contentX + labelWidth + 8f, rect.y + 59f, barWidth, 10f);
-            Rect shieldBarRect = new Rect(contentX + labelWidth + 8f, rect.y + 83f, barWidth, 8f);
+            Rect healthBarRect = new Rect(contentX + labelWidth + 8f, topY + 44f, barWidth, 10f);
+            Rect shieldBarRect = new Rect(contentX + labelWidth + 8f, topY + 68f, barWidth, 8f);
             float healthRatio = maxHealth > 0 ? Mathf.Clamp01(currentHealth / (float)maxHealth) : 0f;
             float shieldRatio = maxHealth > 0 ? Mathf.Clamp01(shield / (float)maxHealth) : 0f;
 
             DrawProgressBar(healthBarRect, healthRatio, accent, new Color(0.12f, 0.16f, 0.22f, 1f));
             DrawProgressBar(shieldBarRect, shieldRatio, ShieldAccent, new Color(0.09f, 0.12f, 0.18f, 1f));
-            GUI.Label(new Rect(contentX, rect.y + 74f, labelWidth, 14f), shield > 0 ? $"Shield {shield}" : "Shield 0", valueStyle);
+            GUI.Label(new Rect(contentX, topY + 59f, labelWidth, 14f), shield > 0 ? $"Shield {shield}" : "Shield 0", valueStyle);
 
-            DrawRect(new Rect(contentX, rect.y + 98f, contentWidth, 1f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.6f));
+            DrawRect(new Rect(contentX, topY + 83f, contentWidth, 1f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.6f));
 
             string statusText = BuildStatusList(unit);
             if (string.IsNullOrEmpty(statusText))
@@ -311,7 +338,7 @@ namespace ArcaneAtelier.Battle
                 statusText = "Status: None";
             }
 
-            GUI.Label(new Rect(contentX, rect.y + 106f, contentWidth, 36f), statusText, mutedStyle);
+            GUI.Label(new Rect(contentX, topY + 91f, contentWidth, Mathf.Max(28f, contentRect.yMax - (topY + 91f) - 6f)), statusText, mutedStyle);
         }
 
         private void DrawActionPoints(Rect rect)
@@ -483,39 +510,48 @@ namespace ArcaneAtelier.Battle
             hoveredMetaAccent = Color.white;
         }
 
-        private void DrawCenterBattleStrip(Rect rect)
+        private void DrawCenterBattleStrip(Rect rect, Sprite backgroundSprite)
         {
-            //DrawPaletteCardFrame(rect, WorkshopBlue, 0.97f, 0.07f);
-
             BattleBossAction nextAction = controller.Simulation.BossAI.PeekNextAction();
             Color intentAccent = GetIntentColor(nextAction.ActionType);
             string intentBadge = GetIntentBadge(nextAction.ActionType);
             string intent = TruncateText(controller.BossIntentDescription, 44);
             bool bossTurnPending = controller.IsBossTurnPending;
             float windupProgress = controller.BossTurnWindupProgress;
+            Color stripAccent = bossTurnPending
+                ? Color.Lerp(WorkshopBlue, intentAccent, 0.55f)
+                : WorkshopBlue;
+            Rect contentRect = DrawStatusBoxBackground(
+                rect,
+                backgroundSprite,
+                stripAccent,
+                new RectOffset(40, 40, 20, 20),
+                new Color(0.03f, 0.05f, 0.09f, 0.62f + (bossTurnPending ? 0.06f : 0f)));
+            float centerScale = Mathf.Clamp(contentRect.height / 142f, 0.72f, 1f);
+            DrawRect(new Rect(contentRect.x + 8f, contentRect.y + 2f, contentRect.width - 16f, 2f), new Color(stripAccent.r, stripAccent.g, stripAccent.b, 0.22f));
 
             if (bossTurnPending)
             {
                 DrawRect(
-                    new Rect(rect.x + 8f, rect.y + 8f, rect.width - 16f, rect.height - 16f),
+                    contentRect,
                     new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.08f + windupProgress * 0.08f));
             }
 
-            GUI.Label(new Rect(rect.x, rect.y + 15f, rect.width, 14f), $"Encounter {controller.CurrentEncounterNumber}/{controller.TotalEncounterCount}", turnInfoStyle);
+            GUI.Label(new Rect(contentRect.x, contentRect.y + 0f, contentRect.width, 14f), $"Encounter {controller.CurrentEncounterNumber}/{controller.TotalEncounterCount}", turnInfoStyle);
             GUI.Label(
-                new Rect(rect.x, rect.y + 31f, rect.width, 14f),
+                new Rect(contentRect.x, contentRect.y + 15f * centerScale, contentRect.width, 14f),
                 bossTurnPending ? "Enemy action incoming" : $"Turn {controller.Simulation.TurnsElapsed + 1}",
                 turnInfoStyle);
-            DrawTag(new Rect(rect.x + rect.width * 0.5f - 56f, rect.y + 53f, 112f, 20f), intentBadge, new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.88f));
+            DrawTag(new Rect(contentRect.center.x - 60f, contentRect.y + 34f * centerScale, 120f, 20f), intentBadge, new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.88f));
             GUI.Label(
-                new Rect(rect.x + 18f, rect.y + 79f, rect.width - 36f, 30f),
+                new Rect(contentRect.x + 14f, contentRect.y + 59f * centerScale, contentRect.width - 28f, 30f),
                 bossTurnPending ? $"Preparing: {intent}" : intent,
                 turnInfoStyle);
 
-            DrawActionPoints(new Rect(rect.x + 28f, rect.y + 108f, rect.width - 56f, 20f));
+            DrawActionPoints(new Rect(contentRect.x + 28f, contentRect.y + 88f * centerScale, contentRect.width - 56f, 20f));
 
             bool canEnd = controller.CanEndTurn;
-            if (DrawThemedButton(new Rect(rect.x + rect.width * 0.5f - 82f, rect.y + 136f, 164f, 24f), "End Turn", ApAccent, "end_turn", canEnd, playClickSound: false))
+            if (DrawThemedButton(new Rect(contentRect.center.x - 86f, contentRect.y + 116f * centerScale, 172f, 24f), "End Turn", ApAccent, "end_turn", canEnd, playClickSound: false))
             {
                 controller.EndTurnFromHud();
             }
@@ -523,7 +559,7 @@ namespace ArcaneAtelier.Battle
             if (bossTurnPending)
             {
                 DrawRect(
-                    new Rect(rect.x + 18f, rect.y + rect.height - 7f, (rect.width - 36f) * windupProgress, 3f),
+                    new Rect(rect.x + 42f, rect.yMax - 16f, (rect.width - 84f) * windupProgress, 3f),
                     new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.88f));
             }
         }
@@ -1030,7 +1066,8 @@ namespace ArcaneAtelier.Battle
 
             float tileGap = 12f;
             float tileWidth = (rect.width - 102f - tileGap * (columns - 1)) / columns;
-            float startX = rect.x + 20f;
+            float totalGridWidth = tileWidth * columns + tileGap * (columns - 1);
+            float startX = rect.x + (rect.width - totalGridWidth) * 0.5f;
             float startY = rect.y + 52f;
             for (int i = 0; i < labels.Length; i++)
             {
@@ -2292,6 +2329,21 @@ namespace ArcaneAtelier.Battle
                 uiButtonSmallSprite = ArcaneArtCatalog.GetUiButtonSmall();
             }
 
+            if (playerStatusBoxSprite == null)
+            {
+                playerStatusBoxSprite = ArcaneArtCatalog.GetPlayerStatusBox();
+            }
+
+            if (enemyStatusBoxSprite == null)
+            {
+                enemyStatusBoxSprite = ArcaneArtCatalog.GetEnemyStatusBox();
+            }
+
+            if (turnStatusBoxSprite == null)
+            {
+                turnStatusBoxSprite = ArcaneArtCatalog.GetTurnStatusBox();
+            }
+
             if (titleStyle != null)
             {
                 return;
@@ -2582,6 +2634,29 @@ namespace ArcaneAtelier.Battle
             GUI.color = previous;
         }
 
+        private Rect DrawStatusBoxBackground(Rect rect, Sprite sprite, Color accent, RectOffset contentPadding, Color veilColor)
+        {
+            DrawRect(new Rect(rect.x + 4f, rect.y + 5f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.2f));
+
+            if (sprite != null)
+            {
+                DrawSprite(rect, sprite, Color.white);
+            }
+            else
+            {
+                DrawPanelFrame(rect, accent, 0.98f);
+            }
+
+            Rect contentRect = new Rect(
+                rect.x + contentPadding.left,
+                rect.y + contentPadding.top,
+                Mathf.Max(0f, rect.width - contentPadding.left - contentPadding.right),
+                Mathf.Max(0f, rect.height - contentPadding.top - contentPadding.bottom));
+
+            DrawRect(contentRect, veilColor);
+            return contentRect;
+        }
+
         private void DrawOutline(Rect rect, Color color)
         {
             DrawRect(new Rect(rect.x, rect.y, rect.width, 1f), color);
@@ -2693,6 +2768,22 @@ namespace ArcaneAtelier.Battle
             }
 
             DrawRect(new Rect(rect.x + 1f, rect.y + 1f, (rect.width - 2f) * ratio, rect.height - 2f), fillColor);
+        }
+
+        private static float GetSpriteAspect(Sprite sprite, float fallbackAspect)
+        {
+            if (sprite == null || sprite.texture == null)
+            {
+                return fallbackAspect;
+            }
+
+            Rect textureRect = sprite.textureRect;
+            if (textureRect.width <= 0f || textureRect.height <= 0f)
+            {
+                return fallbackAspect;
+            }
+
+            return textureRect.width / textureRect.height;
         }
     }
 }
