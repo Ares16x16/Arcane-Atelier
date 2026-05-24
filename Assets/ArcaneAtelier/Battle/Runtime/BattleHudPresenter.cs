@@ -34,6 +34,9 @@ namespace ArcaneAtelier.Battle
 
         private BattleSceneController controller;
         private Texture2D whiteTexture;
+        private Sprite workshopPanelMainSprite;
+        private Sprite workshopButtonSprite;
+        private Sprite workshopButtonSmallSprite;
         private GUIStyle titleStyle;
         private GUIStyle sectionStyle;
         private GUIStyle bodyStyle;
@@ -2148,6 +2151,13 @@ namespace ArcaneAtelier.Battle
                 whiteTexture.Apply();
             }
 
+            if (workshopPanelMainSprite == null)
+            {
+                workshopPanelMainSprite = ArcaneArtCatalog.GetWorkshopPanelMain();
+                workshopButtonSprite = ArcaneArtCatalog.GetWorkshopButton();
+                workshopButtonSmallSprite = ArcaneArtCatalog.GetWorkshopButtonSmall();
+            }
+
             if (titleStyle != null)
             {
                 return;
@@ -2266,6 +2276,15 @@ namespace ArcaneAtelier.Battle
 
         private void DrawPanelFrame(Rect rect, Color accent, float alpha)
         {
+            if (workshopPanelMainSprite != null)
+            {
+                DrawRect(new Rect(rect.x + 5f, rect.y + 7f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.22f * alpha));
+                DrawSprite(rect, workshopPanelMainSprite, new Color(1f, 1f, 1f, alpha));
+                DrawRect(new Rect(rect.x + 14f, rect.y + 14f, rect.width - 28f, rect.height - 28f), new Color(accent.r, accent.g, accent.b, 0.05f * alpha));
+                DrawRect(new Rect(rect.x + 28f, rect.y + 18f, rect.width - 56f, 2f), new Color(accent.r, accent.g, accent.b, 0.32f * alpha));
+                return;
+            }
+
             DrawRect(rect, new Color(HudBackground.r, HudBackground.g, HudBackground.b, alpha));
             DrawOutline(rect, new Color(accent.r, accent.g, accent.b, 0.7f));
             DrawRect(new Rect(rect.x, rect.y, rect.width, 3f), accent);
@@ -2294,9 +2313,27 @@ namespace ArcaneAtelier.Battle
                 normal = { textColor = textColor }
             };
 
-            DrawPanelWithShadow(rect, fillColor, outlineColor, new Color(0f, 0f, 0f, 0.18f));
-            DrawRect(new Rect(rect.x, rect.y, rect.width, 3f), new Color(accent.r, accent.g, accent.b, enabled ? (isHover ? 1f : 0.88f) : 0.26f));
-            GUI.Label(rect, label, labelStyle);
+            bool useWideWorkshopButton = workshopButtonSprite != null && rect.width >= rect.height * 2.1f;
+            if (useWideWorkshopButton)
+            {
+                DrawRect(new Rect(rect.x + 2f, rect.y + 3f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.18f));
+                DrawSprite(rect, workshopButtonSprite, enabled ? Color.white : new Color(0.72f, 0.72f, 0.72f, 0.82f));
+                DrawRect(new Rect(rect.x + 10f, rect.y + 8f, rect.width - 20f, rect.height - 16f), new Color(accent.r, accent.g, accent.b, enabled ? (isHover ? 0.14f : 0.08f) : 0.04f));
+                GUI.Label(rect, label, labelStyle);
+            }
+            else if (workshopButtonSmallSprite != null)
+            {
+                DrawRect(new Rect(rect.x + 2f, rect.y + 3f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.16f));
+                DrawSprite(rect, workshopButtonSmallSprite, enabled ? Color.white : new Color(0.72f, 0.72f, 0.72f, 0.82f));
+                DrawRect(new Rect(rect.x + 4f, rect.y + 4f, rect.width - 8f, rect.height - 8f), new Color(accent.r, accent.g, accent.b, enabled ? (isHover ? 0.14f : 0.06f) : 0.03f));
+                GUI.Label(rect, label, labelStyle);
+            }
+            else
+            {
+                DrawPanelWithShadow(rect, fillColor, outlineColor, new Color(0f, 0f, 0f, 0.18f));
+                DrawRect(new Rect(rect.x, rect.y, rect.width, 3f), new Color(accent.r, accent.g, accent.b, enabled ? (isHover ? 1f : 0.88f) : 0.26f));
+                GUI.Label(rect, label, labelStyle);
+            }
 
             if (!enabled)
             {

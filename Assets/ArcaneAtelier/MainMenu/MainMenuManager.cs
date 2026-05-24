@@ -1,3 +1,4 @@
+using ArcaneAtelier;
 using ArcaneAtelier.Audio;
 using ArcaneAtelier.Battle;
 using ArcaneAtelier.Workshop;
@@ -42,6 +43,7 @@ public sealed class MainMenuManager : MonoBehaviour
     private GUIStyle smallButtonStyle;
     private GUIStyle footerStyle;
 
+    private Texture2D whiteTexture;
     private Texture2D fallbackBackgroundTexture;
     private Texture2D screenTintTexture;
     private Texture2D topGlowTexture;
@@ -54,6 +56,14 @@ public sealed class MainMenuManager : MonoBehaviour
     private Texture2D buttonHoverTexture;
     private Texture2D secondaryButtonTexture;
     private Texture2D secondaryButtonHoverTexture;
+    private Sprite workshopBackgroundSprite;
+    private Sprite workshopPanelMainSprite;
+    private Sprite workshopPanelSubSprite;
+    private Sprite workshopStatusBarSprite;
+    private Sprite workshopTopLeftPanelSprite;
+    private Sprite workshopOrnateFrameSprite;
+    private Sprite workshopButtonSprite;
+    private Sprite workshopButtonSmallSprite;
 
     private enum MenuPage
     {
@@ -228,9 +238,7 @@ public sealed class MainMenuManager : MonoBehaviour
         float panelHeight = Mathf.Min(screenHeight - 96f, 676f);
         Rect panelRect = new Rect((screenWidth - panelWidth) * 0.5f, (screenHeight - panelHeight) * 0.5f, panelWidth, panelHeight);
 
-        GUI.DrawTexture(new Rect(panelRect.x + 8f, panelRect.y + 10f, panelRect.width, panelRect.height), panelShadowTexture, ScaleMode.StretchToFill);
-        GUI.DrawTexture(panelRect, panelTexture, ScaleMode.StretchToFill);
-        GUI.DrawTexture(new Rect(panelRect.x, panelRect.y, panelRect.width, HeaderAccentHeight), accentTexture, ScaleMode.StretchToFill);
+        DrawRegionFrame(panelRect, workshopOrnateFrameSprite, new Color(0.88f, 0.72f, 0.3f, 1f));
 
         GUI.BeginGroup(panelRect);
         GUI.Label(new Rect(28f, 22f, panelRect.width - 56f, 32f), "Legacy Archive", pageTitleStyle);
@@ -262,14 +270,13 @@ public sealed class MainMenuManager : MonoBehaviour
         float archiveActionWidth = 172f;
         float archiveActionX = panelRect.width - archiveActionWidth - 42f;
         GUI.Label(new Rect(28f, panelRect.height - 100f, panelRect.width - 280f, 38f), archiveMessage, bodyStyle);
-        if (GUI.Button(new Rect(archiveActionX, panelRect.height - 98f, archiveActionWidth, 34f), "Enter Next Breach", archivePrimaryButtonStyle))
+        if (DrawThemedButton(new Rect(archiveActionX, panelRect.height - 98f, archiveActionWidth, 34f), "Enter Next Breach", new Color(0.88f, 0.72f, 0.3f, 1f), "archive_enter"))
         {
             StartLoadedRun();
         }
 
-        if (GUI.Button(new Rect(archiveActionX, panelRect.height - 56f, archiveActionWidth, 30f), "Back", secondaryButtonStyle))
+        if (DrawThemedButton(new Rect(archiveActionX, panelRect.height - 56f, archiveActionWidth, 30f), "Back", new Color(0.42f, 0.72f, 0.94f, 1f), "archive_back"))
         {
-            AudioManager.PlaySFX(SFXType.ButtonClick);
             currentPage = MenuPage.Landing;
         }
 
@@ -282,9 +289,7 @@ public sealed class MainMenuManager : MonoBehaviour
         float panelHeight = Mathf.Min(screenHeight - 96f, 520f);
         Rect panelRect = new Rect((screenWidth - panelWidth) * 0.5f, (screenHeight - panelHeight) * 0.5f, panelWidth, panelHeight);
 
-        GUI.DrawTexture(new Rect(panelRect.x + 8f, panelRect.y + 10f, panelRect.width, panelRect.height), panelShadowTexture, ScaleMode.StretchToFill);
-        GUI.DrawTexture(panelRect, panelTexture, ScaleMode.StretchToFill);
-        GUI.DrawTexture(new Rect(panelRect.x, panelRect.y, panelRect.width, HeaderAccentHeight), accentTexture, ScaleMode.StretchToFill);
+        DrawRegionFrame(panelRect, workshopOrnateFrameSprite, new Color(0.42f, 0.72f, 0.94f, 1f));
 
         GUI.BeginGroup(panelRect);
         GUI.Label(new Rect(28f, 22f, panelRect.width - 56f, 32f), "Settings", pageTitleStyle);
@@ -292,8 +297,8 @@ public sealed class MainMenuManager : MonoBehaviour
 
         Rect audioRect = new Rect(32f, 112f, panelRect.width - 64f, 132f);
         DrawSettingsPanel(audioRect, "Audio");
-        float musicValue = DrawVolumeRow(new Rect(audioRect.x + 20f, audioRect.y + 42f, audioRect.width - 40f, 28f), "Music", settingsMusicVolume);
-        float sfxValue = DrawVolumeRow(new Rect(audioRect.x + 20f, audioRect.y + 82f, audioRect.width - 40f, 28f), "SFX", settingsSfxVolume);
+        float musicValue = DrawVolumeRow(new Rect(audioRect.x + 30f, audioRect.y + 42f, audioRect.width - 40f, 28f), "Music", settingsMusicVolume);
+        float sfxValue = DrawVolumeRow(new Rect(audioRect.x + 30f, audioRect.y + 82f, audioRect.width - 40f, 28f), "SFX", settingsSfxVolume);
         if (!Mathf.Approximately(musicValue, settingsMusicVolume) || !Mathf.Approximately(sfxValue, settingsSfxVolume))
         {
             settingsMusicVolume = musicValue;
@@ -306,8 +311,8 @@ public sealed class MainMenuManager : MonoBehaviour
         DrawSettingsPanel(videoRect, "Video");
         bool oldFullscreen = settingsFullscreen;
         bool oldVsync = settingsVsync;
-        settingsFullscreen = DrawSettingToggle(new Rect(videoRect.x + 20f, videoRect.y + 42f, 180f, 28f), "Fullscreen", settingsFullscreen, "settings_fullscreen");
-        settingsVsync = DrawSettingToggle(new Rect(videoRect.x + 220f, videoRect.y + 42f, 160f, 28f), "VSync", settingsVsync, "settings_vsync");
+        settingsFullscreen = DrawSettingToggle(new Rect(videoRect.x + 30f, videoRect.y + 42f, 180f, 28f), "Fullscreen", settingsFullscreen, "settings_fullscreen");
+        settingsVsync = DrawSettingToggle(new Rect(videoRect.x + 230f, videoRect.y + 42f, 160f, 28f), "VSync", settingsVsync, "settings_vsync");
         if (oldFullscreen != settingsFullscreen || oldVsync != settingsVsync)
         {
             SaveSettings();
@@ -316,9 +321,8 @@ public sealed class MainMenuManager : MonoBehaviour
 
         DrawFpsSelector(new Rect(videoRect.x + 20f, videoRect.y + 86f, videoRect.width - 40f, 32f));
 
-        if (GUI.Button(new Rect(panelRect.width - 220f, panelRect.height - 58f, 178f, 34f), "Back", secondaryButtonStyle))
+        if (DrawThemedButton(new Rect(panelRect.width - 250f, panelRect.height - 78f, 178f, 34f), "Back", new Color(0.42f, 0.72f, 0.94f, 1f), "settings_back"))
         {
-            AudioManager.PlaySFX(SFXType.ButtonClick);
             currentPage = MenuPage.Landing;
         }
 
@@ -327,8 +331,7 @@ public sealed class MainMenuManager : MonoBehaviour
 
     private void DrawSettingsPanel(Rect rect, string title)
     {
-        GUI.DrawTexture(rect, panelSoftTexture, ScaleMode.StretchToFill);
-        GUI.DrawTexture(new Rect(rect.x, rect.y, rect.width, HeaderAccentHeight), accentTexture, ScaleMode.StretchToFill);
+        DrawSubPanel(rect, new Color(0.42f, 0.72f, 0.94f, 1f));
         GUI.Label(new Rect(rect.x + 18f, rect.y + 12f, rect.width - 36f, 20f), title, sectionStyle);
     }
 
@@ -342,30 +345,27 @@ public sealed class MainMenuManager : MonoBehaviour
 
     private bool DrawSettingToggle(Rect rect, string label, bool value, string interactionId)
     {
-        GUI.DrawTexture(rect, value ? buttonTexture : secondaryButtonTexture, ScaleMode.StretchToFill);
-        GUI.Label(new Rect(rect.x + 12f, rect.y + 5f, rect.width - 24f, 18f), value ? $"{label}: On" : $"{label}: Off", footerStyle);
-        if (DrawRawButton(rect, interactionId))
+        Color accent = value ? new Color(0.88f, 0.72f, 0.3f, 1f) : new Color(0.42f, 0.72f, 0.94f, 1f);
+        if (DrawThemedButton(rect, value ? $"{label}: On" : $"{label}: Off", accent, interactionId))
         {
             value = !value;
         }
 
-        GUI.DrawTexture(new Rect(rect.x, rect.y, rect.width, HeaderAccentHeight), value ? accentTexture : secondaryButtonHoverTexture, ScaleMode.StretchToFill);
         return value;
     }
 
     private void DrawFpsSelector(Rect rect)
     {
-        GUI.Label(new Rect(rect.x, rect.y + 6f, 96f, 18f), "Frame Cap", bodyStyle);
+        GUI.Label(new Rect(rect.x + 10f, rect.y + 6f, 96f, 18f), "Frame Cap", bodyStyle);
         int[] fpsValues = { 30, 60, 120 };
         float buttonWidth = 74f;
         for (int i = 0; i < fpsValues.Length; i++)
         {
             int fps = fpsValues[i];
             Rect buttonRect = new Rect(rect.x + 108f + i * (buttonWidth + 10f), rect.y, buttonWidth, 28f);
-            GUIStyle style = settingsTargetFps == fps ? buttonStyle : secondaryButtonStyle;
-            if (GUI.Button(buttonRect, fps.ToString(), style))
+            Color accent = settingsTargetFps == fps ? new Color(0.88f, 0.72f, 0.3f, 1f) : new Color(0.42f, 0.72f, 0.94f, 1f);
+            if (DrawThemedButton(buttonRect, fps.ToString(), accent, $"fps_{fps}"))
             {
-                AudioManager.PlaySFX(SFXType.ButtonClick);
                 settingsTargetFps = fps;
                 SaveSettings();
                 ApplySettings();
@@ -375,13 +375,22 @@ public sealed class MainMenuManager : MonoBehaviour
 
     private void DrawBackdrop(float screenWidth, float screenHeight)
     {
-        if (battleBackdropTexture != null)
+        if (workshopBackgroundSprite != null)
+        {
+            DrawSprite(new Rect(0f, 0f, screenWidth, screenHeight), workshopBackgroundSprite, Color.white);
+        }
+        else if (battleBackdropTexture != null)
         {
             GUI.DrawTexture(new Rect(0f, 0f, screenWidth, screenHeight), battleBackdropTexture, ScaleMode.ScaleAndCrop);
         }
         else
         {
             GUI.DrawTexture(new Rect(0f, 0f, screenWidth, screenHeight), fallbackBackgroundTexture, ScaleMode.StretchToFill);
+        }
+
+        if (battleBackdropTexture != null)
+        {
+            DrawTextureContain(new Rect(0f, 0f, screenWidth, screenHeight), battleBackdropTexture, 0.14f);
         }
 
         GUI.DrawTexture(new Rect(0f, 0f, screenWidth, screenHeight), screenTintTexture, ScaleMode.StretchToFill);
@@ -392,8 +401,7 @@ public sealed class MainMenuManager : MonoBehaviour
     private void DrawSaveBadge(float screenWidth)
     {
         Rect badgeRect = new Rect(screenWidth - 250f, 22f, 226f, 64f);
-        GUI.DrawTexture(badgeRect, panelSoftTexture, ScaleMode.StretchToFill);
-        GUI.DrawTexture(new Rect(badgeRect.x, badgeRect.y, badgeRect.width, HeaderAccentHeight), accentTexture, ScaleMode.StretchToFill);
+        DrawRegionFrame(badgeRect, workshopStatusBarSprite, new Color(0.72f, 0.5f, 0.96f, 1f));
         GUI.Label(new Rect(badgeRect.x + 12f, badgeRect.y + 10f, badgeRect.width - 24f, 18f), $"Cycle {MetaProgressionStore.SealedCycles}", sectionStyle);
         GUI.Label(new Rect(badgeRect.x + 12f, badgeRect.y + 34f, badgeRect.width - 24f, 18f), $"Legacy Sigils {MetaProgressionStore.LegacySigils}", footerStyle);
     }
@@ -440,9 +448,7 @@ public sealed class MainMenuManager : MonoBehaviour
 
     private void DrawMenuPanel(Rect panelRect)
     {
-        GUI.DrawTexture(new Rect(panelRect.x + 6f, panelRect.y + 8f, panelRect.width, panelRect.height), panelShadowTexture, ScaleMode.StretchToFill);
-        GUI.DrawTexture(panelRect, panelTexture, ScaleMode.StretchToFill);
-        GUI.DrawTexture(new Rect(panelRect.x, panelRect.y, panelRect.width, HeaderAccentHeight), accentTexture, ScaleMode.StretchToFill);
+        DrawRegionFrame(panelRect, workshopTopLeftPanelSprite, new Color(0.88f, 0.72f, 0.3f, 1f));
 
         GUI.Label(new Rect(panelRect.x, panelRect.y + 18f, panelRect.width, 22f), "MAIN MENU", sectionStyle);
 
@@ -457,28 +463,23 @@ public sealed class MainMenuManager : MonoBehaviour
 
         bool previousEnabled = GUI.enabled;
         GUI.enabled = hasSave;
-        ReportHover(continueButtonRect, "continue");
-        if (GUI.Button(continueButtonRect, hasSave ? "Continue" : "No Save", buttonStyle))
+        if (DrawThemedButton(continueButtonRect, hasSave ? "Continue" : "No Save", new Color(0.88f, 0.72f, 0.3f, 1f), "continue", hasSave))
         {
             LoadGame();
         }
         GUI.enabled = previousEnabled;
 
-        ReportHover(newButtonRect, "new_game");
-        if (GUI.Button(newButtonRect, "New Game", buttonStyle))
+        if (DrawThemedButton(newButtonRect, "New Game", new Color(0.88f, 0.72f, 0.3f, 1f), "new_game"))
         {
             StartNewGame();
         }
 
-        ReportHover(settingsButtonRect, "settings");
-        if (GUI.Button(settingsButtonRect, "Settings", secondaryButtonStyle))
+        if (DrawThemedButton(settingsButtonRect, "Settings", new Color(0.42f, 0.72f, 0.94f, 1f), "settings"))
         {
-            AudioManager.PlaySFX(SFXType.ButtonClick);
             currentPage = MenuPage.Settings;
         }
 
-        ReportHover(quitButtonRect, "quit");
-        if (GUI.Button(quitButtonRect, "Quit", secondaryButtonStyle))
+        if (DrawThemedButton(quitButtonRect, "Quit", new Color(0.72f, 0.5f, 0.96f, 1f), "quit"))
         {
             QuitGame();
         }
@@ -491,8 +492,7 @@ public sealed class MainMenuManager : MonoBehaviour
 
     private void DrawArchiveStat(Rect rect, string value, string label)
     {
-        GUI.DrawTexture(rect, panelSoftTexture, ScaleMode.StretchToFill);
-        GUI.DrawTexture(new Rect(rect.x, rect.y, rect.width, HeaderAccentHeight), accentTexture, ScaleMode.StretchToFill);
+        DrawSubPanel(rect, new Color(0.88f, 0.72f, 0.3f, 1f));
         GUI.Label(new Rect(rect.x, rect.y + 14f, rect.width, 28f), value, statStyle);
         GUI.Label(new Rect(rect.x, rect.y + 46f, rect.width, 18f), label, footerStyle);
     }
@@ -501,22 +501,18 @@ public sealed class MainMenuManager : MonoBehaviour
     {
         bool maxed = upgrade.IsMaxed;
         bool affordable = MetaProgressionStore.LegacySigils >= upgrade.SigilCost;
-        GUI.DrawTexture(rect, panelSoftTexture, ScaleMode.StretchToFill);
-        GUI.DrawTexture(new Rect(rect.x, rect.y, rect.width, HeaderAccentHeight), maxed ? secondaryButtonHoverTexture : accentTexture, ScaleMode.StretchToFill);
+        DrawSubPanel(rect, maxed ? new Color(0.42f, 0.72f, 0.94f, 1f) : new Color(0.88f, 0.72f, 0.3f, 1f));
         GUI.Label(new Rect(rect.x + 16f, rect.y + 10f, rect.width - 220f, 20f), upgrade.DisplayName, sectionStyle);
         GUI.Label(new Rect(rect.x + 16f, rect.y + 28f, 120f, 16f), upgrade.CategoryLabel, footerStyle);
         GUI.Label(new Rect(rect.x + 120f, rect.y + 28f, 90f, 16f), $"{upgrade.CurrentRank}/{upgrade.MaxRank} carved", footerStyle);
         GUI.Label(new Rect(rect.x + 16f, rect.y + 46f, rect.width - 190f, 24f), upgrade.Description, bodyStyle);
         GUI.Label(new Rect(rect.x + rect.width - 154f, rect.y + 14f, 130f, 18f), $"{upgrade.SigilCost} Sigils", footerStyle);
 
-        bool previousEnabled = GUI.enabled;
-        GUI.enabled = !maxed && affordable;
         string buttonLabel = maxed ? "Maxed" : affordable ? "Carve" : "Locked";
-        if (GUI.Button(new Rect(rect.x + rect.width - 154f, rect.y + 40f, 130f, 26f), buttonLabel, smallButtonStyle))
+        if (DrawThemedButton(new Rect(rect.x + rect.width - 154f, rect.y + 40f, 130f, 26f), buttonLabel, affordable ? new Color(0.72f, 0.5f, 0.96f, 1f) : new Color(0.42f, 0.72f, 0.94f, 1f), $"archive_upgrade_{upgrade.Id}", !maxed && affordable))
         {
             if (MetaProgressionStore.TryPurchaseUpgrade(upgrade.Id, out string message))
             {
-                AudioManager.PlaySFX(SFXType.ButtonClick);
                 archiveMessage = message;
             }
             else
@@ -524,14 +520,12 @@ public sealed class MainMenuManager : MonoBehaviour
                 archiveMessage = message;
             }
         }
-        GUI.enabled = previousEnabled;
     }
 
     private void DrawArchiveOmen(Rect rect)
     {
         LegacyOmenView omen = MetaProgressionStore.ActiveOmen;
-        GUI.DrawTexture(rect, panelSoftTexture, ScaleMode.StretchToFill);
-        GUI.DrawTexture(new Rect(rect.x, rect.y, rect.width, HeaderAccentHeight), accentTexture, ScaleMode.StretchToFill);
+        DrawSubPanel(rect, new Color(0.72f, 0.5f, 0.96f, 1f));
         GUI.Label(new Rect(rect.x + 16f, rect.y + 10f, rect.width - 32f, 18f), "Cycle Omen", sectionStyle);
         GUI.Label(new Rect(rect.x + 16f, rect.y + 30f, rect.width - 32f, 18f), omen != null ? omen.DisplayName : "None", bodyStyle);
         GUI.Label(new Rect(rect.x + 16f, rect.y + 48f, rect.width - 32f, 18f), MetaProgressionStore.BuildRunModifierSummary(), footerStyle);
@@ -539,6 +533,25 @@ public sealed class MainMenuManager : MonoBehaviour
 
     private void EnsureStyles()
     {
+        if (whiteTexture == null)
+        {
+            whiteTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+            whiteTexture.SetPixel(0, 0, Color.white);
+            whiteTexture.Apply();
+        }
+
+        if (workshopPanelMainSprite == null)
+        {
+            workshopBackgroundSprite = ArcaneArtCatalog.GetWorkshopBackground();
+            workshopPanelMainSprite = ArcaneArtCatalog.GetWorkshopPanelMain();
+            workshopPanelSubSprite = ArcaneArtCatalog.GetWorkshopPanelSub();
+            workshopStatusBarSprite = ArcaneArtCatalog.GetWorkshopStatusBar();
+            workshopTopLeftPanelSprite = ArcaneArtCatalog.GetWorkshopTopLeftPanel();
+            workshopOrnateFrameSprite = ArcaneArtCatalog.GetWorkshopOrnateFrame();
+            workshopButtonSprite = ArcaneArtCatalog.GetWorkshopButton();
+            workshopButtonSmallSprite = ArcaneArtCatalog.GetWorkshopButtonSmall();
+        }
+
         if (titleStyle != null)
         {
             return;
@@ -650,6 +663,101 @@ public sealed class MainMenuManager : MonoBehaviour
         Application.targetFrameRate = settingsVsync ? -1 : settingsTargetFps;
     }
 
+    private void DrawRegionFrame(Rect rect, Sprite sprite, Color accent)
+    {
+        if (sprite != null)
+        {
+            DrawRect(new Rect(rect.x + 4f, rect.y + 5f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.18f));
+            DrawSprite(rect, sprite, Color.white);
+            DrawRect(new Rect(rect.x + 22f, rect.y + 18f, Mathf.Max(0f, rect.width - 44f), Mathf.Max(0f, rect.height - 36f)), new Color(accent.r, accent.g, accent.b, 0.03f));
+            return;
+        }
+
+        DrawPanelFrame(rect, accent);
+    }
+
+    private void DrawPanelFrame(Rect rect, Color accent)
+    {
+        if (workshopPanelMainSprite != null)
+        {
+            DrawRect(new Rect(rect.x + 5f, rect.y + 7f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.22f));
+            DrawSprite(rect, workshopPanelMainSprite, Color.white);
+            DrawRect(new Rect(rect.x + 14f, rect.y + 14f, rect.width - 28f, rect.height - 28f), new Color(accent.r, accent.g, accent.b, 0.05f));
+            DrawRect(new Rect(rect.x + 28f, rect.y + 18f, rect.width - 56f, 2f), new Color(accent.r, accent.g, accent.b, 0.28f));
+            return;
+        }
+
+        GUI.DrawTexture(rect, panelTexture, ScaleMode.StretchToFill);
+        DrawRect(new Rect(rect.x, rect.y, rect.width, HeaderAccentHeight), accent);
+    }
+
+    private void DrawSubPanel(Rect rect, Color accent)
+    {
+        if (workshopPanelSubSprite != null)
+        {
+            DrawRect(new Rect(rect.x + 3f, rect.y + 4f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.16f));
+            DrawSprite(rect, workshopPanelSubSprite, Color.white);
+            DrawRect(new Rect(rect.x + 10f, rect.y + 10f, rect.width - 20f, rect.height - 20f), new Color(accent.r, accent.g, accent.b, 0.045f));
+            return;
+        }
+
+        GUI.DrawTexture(rect, panelSoftTexture, ScaleMode.StretchToFill);
+        DrawRect(new Rect(rect.x, rect.y, rect.width, HeaderAccentHeight), accent);
+    }
+
+    private bool DrawThemedButton(Rect rect, string label, Color accent, string interactionId, bool enabled = true)
+    {
+        bool isHover = enabled && Event.current != null && rect.Contains(Event.current.mousePosition);
+        if (isHover)
+        {
+            AudioManager.ReportUIHover($"main_menu:{interactionId}");
+        }
+
+        GUIStyle labelStyle = rect.height <= 28f ? smallButtonStyle : rect.height <= 34f ? secondaryButtonStyle : buttonStyle;
+        GUIStyle style = new GUIStyle(labelStyle)
+        {
+            normal =
+            {
+                textColor = enabled ? labelStyle.normal.textColor : new Color32(146, 152, 165, 255)
+            }
+        };
+
+        bool useWideArtButton = workshopButtonSprite != null && rect.width >= rect.height * 2.1f;
+        if (useWideArtButton)
+        {
+            DrawRect(new Rect(rect.x + 2f, rect.y + 3f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.18f));
+            DrawSprite(rect, workshopButtonSprite, enabled ? Color.white : new Color(0.72f, 0.72f, 0.72f, 0.82f));
+            DrawRect(new Rect(rect.x + 10f, rect.y + 8f, rect.width - 20f, rect.height - 16f), new Color(accent.r, accent.g, accent.b, enabled ? (isHover ? 0.14f : 0.08f) : 0.03f));
+            GUI.Label(rect, label, style);
+        }
+        else if (workshopButtonSmallSprite != null)
+        {
+            DrawRect(new Rect(rect.x + 2f, rect.y + 3f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.16f));
+            DrawSprite(rect, workshopButtonSmallSprite, enabled ? Color.white : new Color(0.72f, 0.72f, 0.72f, 0.82f));
+            DrawRect(new Rect(rect.x + 4f, rect.y + 4f, rect.width - 8f, rect.height - 8f), new Color(accent.r, accent.g, accent.b, enabled ? (isHover ? 0.14f : 0.06f) : 0.03f));
+            GUI.Label(rect, label, style);
+        }
+        else
+        {
+            GUI.DrawTexture(rect, enabled ? buttonTexture : secondaryButtonTexture, ScaleMode.StretchToFill);
+            DrawRect(new Rect(rect.x, rect.y, rect.width, HeaderAccentHeight), new Color(accent.r, accent.g, accent.b, enabled ? 1f : 0.2f));
+            GUI.Label(rect, label, style);
+        }
+
+        if (!enabled)
+        {
+            return false;
+        }
+
+        if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
+        {
+            AudioManager.PlaySFX(SFXType.ButtonClick);
+            return true;
+        }
+
+        return false;
+    }
+
     private bool DrawRawButton(Rect rect, string interactionId)
     {
         ReportHover(rect, interactionId);
@@ -667,6 +775,14 @@ public sealed class MainMenuManager : MonoBehaviour
         Color previous = GUI.color;
         GUI.color = new Color(0f, 0f, 0f, alpha);
         GUI.DrawTexture(rect, Texture2D.whiteTexture, ScaleMode.StretchToFill);
+        GUI.color = previous;
+    }
+
+    private void DrawRect(Rect rect, Color color)
+    {
+        Color previous = GUI.color;
+        GUI.color = color;
+        GUI.DrawTexture(rect, whiteTexture, ScaleMode.StretchToFill);
         GUI.color = previous;
     }
 
@@ -715,6 +831,25 @@ public sealed class MainMenuManager : MonoBehaviour
         GUI.color = new Color(1f, 1f, 1f, alpha);
         GUI.DrawTexture(drawRect, texture, ScaleMode.StretchToFill, true);
         GUI.color = previous;
+    }
+
+    private void DrawSprite(Rect rect, Sprite sprite, Color tint)
+    {
+        if (sprite == null || sprite.texture == null)
+        {
+            return;
+        }
+
+        Color previousColor = GUI.color;
+        GUI.color = tint;
+        Rect textureRect = sprite.textureRect;
+        Rect uv = new Rect(
+            textureRect.x / sprite.texture.width,
+            textureRect.y / sprite.texture.height,
+            textureRect.width / sprite.texture.width,
+            textureRect.height / sprite.texture.height);
+        GUI.DrawTextureWithTexCoords(rect, sprite.texture, uv, true);
+        GUI.color = previousColor;
     }
 
     private static void ReportHover(Rect rect, string controlId)
