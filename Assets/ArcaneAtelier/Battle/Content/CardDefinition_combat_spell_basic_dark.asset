@@ -19,13 +19,13 @@ MonoBehaviour:
   instructions:
   - Type: 2
     Target: 1
-    Value: 4
+    Value: 6
     HitCount: 1
     StatusId: 
     Duration: 0
   - Type: 3
     Target: 1
-    Value: 10
+    Value: 20
     HitCount: 1
     StatusId: Veil
     Duration: 2

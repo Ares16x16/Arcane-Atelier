@@ -51,15 +51,15 @@ They provided:
 
 The new doc set expands and replaces those fragments with a production-ready structure.
 
-### 2.3 `origin/integration` references
+### 2.3 Current integration references
 
-These branch files define the current scene naming and return-flow assumptions:
+These files define the current scene naming and return-flow assumptions:
 
-- `origin/integration:Assets/ArcaneAtelier/MainMenu/MainMenuManager.cs`
-- `origin/integration:Assets/ArcaneAtelier/Integration/Runtime/GameFlowRuntime.cs`
-- `origin/integration:Assets/ArcaneAtelier/Battle/Runtime/BattleSceneController.cs`
-- `origin/integration:Documentation/BattleArchitecture.md`
-- `origin/integration:Documentation/BattleWorkshopDependencies.md`
+- `Assets/ArcaneAtelier/MainMenu/MainMenuManager.cs`
+- `Assets/ArcaneAtelier/Integration/Runtime/GameFlowRuntime.cs`
+- `Assets/ArcaneAtelier/Battle/Runtime/BattleSceneController.cs`
+- `Documentation/Battle/BattleCoreArchitecture.md`
+- `Documentation/BattleWorkshopDependencies.md`
 
 They are the direct reference for:
 

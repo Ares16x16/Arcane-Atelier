@@ -19,13 +19,13 @@ MonoBehaviour:
   instructions:
   - Type: 2
     Target: 1
-    Value: 9
+    Value: 12
     HitCount: 1
     StatusId: 
     Duration: 0
   - Type: 3
     Target: 1
-    Value: 16
+    Value: 28
     HitCount: 1
     StatusId: Ward
     Duration: 3

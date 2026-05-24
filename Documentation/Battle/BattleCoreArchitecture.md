@@ -1,7 +1,7 @@
 # Battle 核心架构
 
 > 当前 Battle 模块中除表现与交互层之外的三层：数据与内容层、战斗模拟层、场景编排层。
-> Last Updated: 2026-04-30
+> Last Updated: 2026-05-24
 
 ---
 
@@ -60,9 +60,9 @@ Battle 的核心逻辑可以拆成三层：
 
 **Per-card 指令化定义**，与 Workshop 产出的每张卡牌一一对应。
 
-当前为 23 张卡牌生成了独立定义：
+当前为 27 张卡牌生成了独立定义：
 
-- 20 张完整 Workshop 卡牌（8 Basic + 8 Intermediate + 4 Advanced）
+- 24 张完整 Workshop 卡牌（8 Basic + 8 Intermediate + 4 Advanced + 4 Ultimate）
 - 3 张运行时回退卡牌（Flame Bolt / Frost Sigil / Arcane Ward）
 
 每张定义包含：
@@ -100,22 +100,11 @@ Battle 的核心逻辑可以拆成三层：
 
 负责把 Workshop 传来的 `WorkshopBattleCardEntry` 转成可结算的 Battle 效果。
 
-**当前角色变化**：它不再是主路径，而是 **fallback 卡组专用**。
+**当前角色变化**：它不再是主路径，而是 **fallback 效果结算专用**。
 
 当 `BattleDeckController` 按 `CardId` 找不到 `BattleCardDefinition` 时，才会回退到按 `Role` 匹配旧模板。
 
-当前 fallback deck 本身也改为直接复用 Workshop 的 8 张基础卡定义，当前默认分布为：
-
-- 3 × `Cinder Dart`
-- 2 × `Zephyr Cut`
-- 2 × `Frost Pin`
-- 2 × `Volt Javelin`
-- 2 × `Tidal Mend`
-- 2 × `Lumen Prayer`
-- 2 × `Stoneguard Sigil`
-- 1 × `Gloam Ward`
-
-旧模板路径仍保留，但已降级为安全网，不再是正常内容流。
+旧模板路径仍保留，但已降级为安全网，不再是正常内容流。当前代码不会在缺少 Workshop payload 时自动生成默认卡组；没有 payload 时会得到空手牌，便于暴露部署链路问题。
 
 ### 2.5 `BattlePresentationProfile`
 
@@ -129,7 +118,7 @@ Battle 的核心逻辑可以拆成三层：
 - `BossScale`
 - `BackgroundScale`
 
-当前 4 个 encounter 对应的 `Presentation_*` 已全部接入实际 sprite 资源，运行时切换 encounter 时会优先按这些 profile 更新敌人与背景表现；场景上的同名 sprite 引用仅保留为 fallback。
+当前 4 个可用 encounter 对应的 `Presentation_*` 已全部接入实际 sprite 资源。每次 BattleScene 启动会按当前 encounter 载入对应 profile；场景上的同名 sprite 引用仅保留为 fallback。
 
 ### 2.6 `BattleStatusEffectDefinition`
 
@@ -303,7 +292,7 @@ Battle 当前把“敌方回合开始”拆成了两段：
 支持：
 
 - 开局抽 5 张
-- 出牌后补 1 张
+- 出牌后手牌减少，不会立即补牌
 - 结束回合时弃掉整手并重抽
 - 抽空后把弃牌洗回抽牌堆
 
@@ -316,12 +305,12 @@ Battle 当前把“敌方回合开始”拆成了两段：
 
 `LastPlayedDefinition` 属性会记录最近一次出牌匹配到的 `BattleCardDefinition`，供 `BattleSimulation` 判断走哪条执行路径。
 
-fallback deck 的构建现在也收敛成 `AddFallbackCard(...)` 辅助方法，避免手写重复条目。
+如果没有传入 Workshop payload，牌库保持为空；这让直接打开 BattleScene 时能明显暴露“尚未从 Workshop 部署”的状态。
 
 AP 消耗查询：
 
-- `Attack` → 2 AP
-- `Defense` / `Healing` → 1 AP
+- `Attack` → 1 AP
+- `Defense` / `Healing` → 2 AP
 
 此外，当前还存在按手牌索引读取 AP 费用的只读查询：
 
@@ -329,37 +318,28 @@ AP 消耗查询：
 
 这个入口主要用于出牌前校验和 HUD 可用性判断，不会修改牌库状态。
 
-如果没有 Workshop payload，会生成 fallback deck（采用 Workshop 基础卡牌定义）：
-
-- 3 张 Cinder Dart（Fire，8 伤害 + Burn，2 AP）
-- 2 张 Zephyr Cut（Wind，5x2 伤害 + Expose，2 AP）
-- 2 张 Frost Pin（Ice，4x2 伤害 + Slow，2 AP）
-- 2 张 Volt Javelin（Thunder，7 伤害 + Shock，2 AP）
-- 2 张 Tidal Mend（Water，6 治疗 + Regen，1 AP）
-- 2 张 Lumen Prayer（Light，5x2 治疗 + Bless，1 AP）
-- 2 张 Stoneguard Sigil（Earth，7 护盾 + Bulwark，1 AP）
-- 1 张 Gloam Ward（Dark，6 护盾 + Veil，1 AP）
-
-Battle 当前也不再是“单场单敌人结束”，而是固定连续 encounter：
+BattleScene 支持以下固定 encounter id 序列，并通过 `RunProgressBridge.CurrentEncounter.EncounterIndex` 选择本次要打的 encounter：
 
 - `Ash Imp`
 - `Mist Leech`
 - `Moss Shell`
 - `Corrupted Earth Golem`
 
-中间 encounter 胜利时，`BattleSceneController` 会直接切到下一个敌人；只有击败最后的 Boss 才提交最终 Victory。
+当前运行流是“每次进入 BattleScene 打一场”。普通胜利后结果层提供 `To Workshop`，由 `GameFlowRuntime` 在 WorkshopScene 重载后配置下一场；最终 Boss 胜利或失败进入主菜单/总结路径。
 
-跨 encounter 当前保留：
+跨场次当前通过 Workshop/RunProgress 桥接保留：
 
-- 玩家剩余 HP
-- 当前牌库 / 手牌 / 弃牌堆进度
-- 全局累计战斗统计
+- 运行统计与奖励记录
+- 下一场 encounter 上下文
 
-跨 encounter 当前重置：
+每次 BattleScene 启动都会重新创建：
 
+- 玩家 HP（按 `playerMaxHealth` + meta progression 加成回满）
+- 当前战斗单位
+- 当前牌库 / 手牌 / 弃牌堆
 - 玩家护盾
 - 玩家临时状态
-- 当前敌人单位与其 AI
+- 当前敌人 AI
 
 ### 3.3 `BattleBossAI`
 
@@ -535,7 +515,7 @@ Battle 的场景入口是单向的：
 消费失败时：
 
 - 记录 warning
-- 回退到 fallback deck
+- 使用空牌库启动；这通常只应发生在直接打开 BattleScene 或部署链路异常时
 
 ### 4.3 Battle -> 外部系统出口
 
@@ -557,7 +537,7 @@ Battle 的场景入口是单向的：
 - `TurnsElapsed`
 - `DefeatRewardId`
 
-这个出口已经存在，但“提交结果后如何切回 Workshop”还没有完成。
+结果会同时提交到 `BattleResultBridge`。普通胜利时结果覆盖层提供 `To Workshop`，最终 Boss 胜利或失败时提供主菜单路径。
 
 ---
 
@@ -596,7 +576,7 @@ BattleSimulation.TryPlayCard(...)  [先查询并校验 AP]
         ↓
 BattleDeckController.TryPlayCard(...)
         ↓
-BattleCardDefinition  [所有玩家卡牌，含 fallback]
+BattleCardDefinition  [正常玩家卡牌主路径]
         ↓
 BattleEffectExecutor.Execute(...)
         ↓
@@ -621,12 +601,12 @@ BattleResultBridge.Commit(...)
 - `contentDatabase` 已绑定
 - `startingBossId` 默认是 `enemy.ash.imp`
 - 四个 `Presentation_*` 已完整配置，并且已经接入各自独立的敌人 sprite 与背景 sprite
-- 没有 Workshop payload 时，场景可直接用 fallback deck 进入可玩状态
+- 没有 Workshop payload 时会记录 warning 并保持空牌库，便于发现未部署的测试入口
 
 这意味着：
 
 - 场景开发现在主要是“表现层调试和资源替换”
-- 这三层本身已经能支持完整的连续战斗闭环
+- 这三层本身已经能支持单场 BattleScene 结算，并与 WorkshopScene/RunProgress 桥接成完整运行闭环
 
 ---
 
@@ -636,14 +616,14 @@ BattleResultBridge.Commit(...)
 
 已完成：
 
-- 4 encounter 连续战斗主循环
+- Workshop -> single BattleScene encounter -> Workshop 的运行闭环
 - 固定循环敌方 AI
 - 数据驱动内容查找
 - Workshop -> Battle payload 消费
 - Battle -> ResultBridge 输出
-- fallback deck
-- **行动点（AP）机制：每回合 3 AP，Attack 2 AP / Defense·Healing 1 AP**
-- **Per-card 指令化效果系统：22 张卡牌定义 + EffectExecutor Command Pattern**
+- 旧模板 fallback 效果路径
+- **行动点（AP）机制：每回合 3 AP，Attack 1 AP / Defense·Healing 2 AP**
+- **Per-card 指令化效果系统：27 张卡牌定义 + EffectExecutor Command Pattern**
 - **状态效果基础框架：16 个状态定义 + 回合触发 + 堆叠 + 过期清理**
 - **敌方回合过渡状态：`BossTurnPending` + 场景侧延时推进**
 - **最小 Battle EditMode 测试基线：锁定结束回合后不会立即同步执行敌方动作**
@@ -653,7 +633,7 @@ BattleResultBridge.Commit(...)
 - 多敌战斗
 - 复杂关键词行为（Freeze 跳过行动、Expose 增伤、Stun 眩晕等仍为占位实现）
 - 敌方攻击元素修正
-- 完整战后返场流程
+- 路线选择 / 奖励选择仍是原型级自动配置，不是最终 UI
 - 保存 / 读档
 
 ---

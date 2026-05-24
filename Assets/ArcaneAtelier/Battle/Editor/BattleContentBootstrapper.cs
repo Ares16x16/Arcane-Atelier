@@ -486,8 +486,8 @@ namespace ArcaneAtelier.Battle.Editor
             definitions.Add(CreateCardDefinition(
                 "combat.spell.basic.water", "Tidal Mend",
                 WorkshopElementAttribute.Water, WorkshopSpellTier.Basic,
-                BattleEffectInstruction.Heal(4, 1),
-                BattleEffectInstruction.ApplyStatus("Regen", 2, 5, BattleEffectTarget.Self)));
+                BattleEffectInstruction.Heal(6, 1),
+                BattleEffectInstruction.ApplyStatus("Regen", 2, 8, BattleEffectTarget.Self)));
 
             definitions.Add(CreateCardDefinition(
                 "combat.spell.basic.wind", "Zephyr Cut",
@@ -498,8 +498,8 @@ namespace ArcaneAtelier.Battle.Editor
             definitions.Add(CreateCardDefinition(
                 "combat.spell.basic.earth", "Stoneguard Sigil",
                 WorkshopElementAttribute.Earth, WorkshopSpellTier.Basic,
-                BattleEffectInstruction.Shield(4, 1),
-                BattleEffectInstruction.ApplyStatus("Bulwark", 2, 10, BattleEffectTarget.Self)));
+                BattleEffectInstruction.Shield(7, 1),
+                BattleEffectInstruction.ApplyStatus("Bulwark", 2, 18, BattleEffectTarget.Self)));
 
             definitions.Add(CreateCardDefinition(
                 "combat.spell.basic.ice", "Frost Pin",
@@ -516,14 +516,14 @@ namespace ArcaneAtelier.Battle.Editor
             definitions.Add(CreateCardDefinition(
                 "combat.spell.basic.light", "Lumen Prayer",
                 WorkshopElementAttribute.Light, WorkshopSpellTier.Basic,
-                BattleEffectInstruction.Heal(3, 2),
-                BattleEffectInstruction.ApplyStatus("Bless", 2, 8, BattleEffectTarget.Self)));
+                BattleEffectInstruction.Heal(5, 2),
+                BattleEffectInstruction.ApplyStatus("Bless", 2, 12, BattleEffectTarget.Self)));
 
             definitions.Add(CreateCardDefinition(
                 "combat.spell.basic.dark", "Gloam Ward",
                 WorkshopElementAttribute.Dark, WorkshopSpellTier.Basic,
-                BattleEffectInstruction.Shield(4, 1),
-                BattleEffectInstruction.ApplyStatus("Veil", 2, 10, BattleEffectTarget.Self)));
+                BattleEffectInstruction.Shield(6, 1),
+                BattleEffectInstruction.ApplyStatus("Veil", 2, 20, BattleEffectTarget.Self)));
 
             // Intermediate spells (8)
             definitions.Add(CreateCardDefinition(
@@ -535,8 +535,8 @@ namespace ArcaneAtelier.Battle.Editor
             definitions.Add(CreateCardDefinition(
                 "combat.spell.intermediate.water", "Tide Chorus",
                 WorkshopElementAttribute.Water, WorkshopSpellTier.Intermediate,
-                BattleEffectInstruction.Heal(8, 2),
-                BattleEffectInstruction.ApplyStatus("Regen", 3, 8, BattleEffectTarget.Self)));
+                BattleEffectInstruction.Heal(11, 2),
+                BattleEffectInstruction.ApplyStatus("Regen", 3, 14, BattleEffectTarget.Self)));
 
             definitions.Add(CreateCardDefinition(
                 "combat.spell.intermediate.wind", "Razor Monsoon",
@@ -547,8 +547,8 @@ namespace ArcaneAtelier.Battle.Editor
             definitions.Add(CreateCardDefinition(
                 "combat.spell.intermediate.earth", "Bastion Pulse",
                 WorkshopElementAttribute.Earth, WorkshopSpellTier.Intermediate,
-                BattleEffectInstruction.Shield(9, 1),
-                BattleEffectInstruction.ApplyStatus("Ward", 3, 16, BattleEffectTarget.Self)));
+                BattleEffectInstruction.Shield(12, 1),
+                BattleEffectInstruction.ApplyStatus("Ward", 3, 28, BattleEffectTarget.Self)));
 
             definitions.Add(CreateCardDefinition(
                 "combat.spell.intermediate.ice", "Glacier Bind",
@@ -571,8 +571,8 @@ namespace ArcaneAtelier.Battle.Editor
             definitions.Add(CreateCardDefinition(
                 "combat.spell.intermediate.dark", "Umbral Bastion",
                 WorkshopElementAttribute.Dark, WorkshopSpellTier.Intermediate,
-                BattleEffectInstruction.Shield(8, 2),
-                BattleEffectInstruction.ApplyStatus("Shade", 3, 16, BattleEffectTarget.Self)));
+                BattleEffectInstruction.Shield(10, 2),
+                BattleEffectInstruction.ApplyStatus("Shade", 3, 24, BattleEffectTarget.Self)));
 
             // Advanced spells (4)
             definitions.Add(CreateCardDefinition(

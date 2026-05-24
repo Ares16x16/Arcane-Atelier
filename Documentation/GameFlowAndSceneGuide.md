@@ -75,10 +75,10 @@ flowchart TD
 
 ## 4. Current implementation reference
 
-The scene names above are not invented. They come from the integration branch flow:
+The scene names above are not invented. They come from the current integration flow:
 
-- `MainMenuScene`, `WorkshopScene`, and `BattleScene` are referenced in `origin/integration:Assets/ArcaneAtelier/Integration/Runtime/GameFlowRuntime.cs`
-- start-game menu loading is defined in `origin/integration:Assets/ArcaneAtelier/MainMenu/MainMenuManager.cs`
+- `MainMenuScene`, `WorkshopScene`, and `BattleScene` are referenced in `Assets/ArcaneAtelier/Integration/Runtime/GameFlowRuntime.cs`
+- start-game menu loading is defined in `Assets/ArcaneAtelier/MainMenu/MainMenuManager.cs`
 - workshop-to-battle card handoff is defined by [WorkshopBattleContract.md](WorkshopBattleContract.md)
 
 The new design keeps those names so teammates do not need to throw away the current integration path.
@@ -135,8 +135,9 @@ Rules:
 Current runnable prototype behavior:
 
 - every non-boss victory increments the current act combat clear count by `1`
-- when the threshold is reached, the next preparation label becomes `Act X Boss`
-- boss victories reset the act clear count and advance to the next act
+- current prototype threshold is `3` normal victories before the final boss preparation
+- each battle is a single BattleScene encounter, then returns to WorkshopScene for reward application and next preparation
+- final boss victory records the run summary / legacy reward path instead of advancing to a multi-act flow
 
 ---
 

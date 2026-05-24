@@ -1,7 +1,7 @@
 # Battle 表现与交互层
 
 > 当前 Battle 模块中与“玩家看到什么、如何操作、场景如何反馈”直接相关的部分。
-> Last Updated: 2026-04-30
+> Last Updated: 2026-05-24
 
 ---
 
@@ -70,7 +70,7 @@
 
 `BattleVisualManager.Initialize(...)` 会从 `BattleContentDatabase` 查找当前 `bossId` 对应的 `BattlePresentationProfile`，再把资源和布局应用到场景视觉对象上。
 
-当前 4 个 encounter 已分别绑定独立的 `Presentation_*` 资源，因此敌人切换时会同时更新：
+当前 4 个可用 encounter 已分别绑定独立的 `Presentation_*` 资源。每次 BattleScene 启动会按当前 encounter 应用对应 profile，因此敌人和背景会随本场 encounter 更新：
 
 - 敌人 sprite
 - 背景 sprite
@@ -299,7 +299,7 @@ Battle 目前仍然按卡牌 `Role` 判定拖拽合法目标：
 - 伤害、治疗、护盾、出牌数的卡片化统计块
 - 最终 encounter id
 - 总回合数
-- 当前提示语：结果已提交，但场景切换尚未完成
+- 结果按钮：普通胜利显示 `To Workshop`，最终胜利或失败显示 `Main Menu`
 
 当前动画感受来自：
 
@@ -307,7 +307,7 @@ Battle 目前仍然按卡牌 `Role` 判定拖拽合法目标：
 - modal 尺寸放大过渡
 - 标题区单独着色
 
-这一层目前是只读覆盖层，没有继续按钮，也不负责返回 Workshop。
+这一层会通过 `BattleSceneController.ReturnToWorkshop()` 或 `ReturnToMainMenu()` 发起场景跳转；奖励与下一场配置仍由 WorkshopScene 载入后的集成层处理。
 
 ---
 
@@ -332,7 +332,7 @@ Battle 目前仍然按卡牌 `Role` 判定拖拽合法目标：
 
 ## 8. 当前状态与限制
 
-目前这层已经可以支撑一个可玩的连续 BattleScene（3 个普通敌人 + 1 个 Boss），并且文档描述应以当前实现为准，而不是早期原型草图。
+目前这层已经可以支撑一个可玩的单场 BattleScene，并通过 Workshop 返回流串起 3 个普通敌人 + 1 个 Boss 的原型运行。文档描述应以当前实现为准，而不是早期原型草图。
 
 已完成：
 
@@ -355,10 +355,10 @@ Battle 目前仍然按卡牌 `Role` 判定拖拽合法目标：
 当前限制：
 
 - HUD 仍是 IMGUI，不是最终 UI 技术方案
-- 当前连续 encounter 顺序仍是固定写死
+- 当前 encounter 顺序仍由原型代码固定配置，尚未接入最终路线 UI
 - 玩家立绘仍是占位资源
 - 拖拽判定高度依赖 sprite 边界质量
-- 结果覆盖层后没有完整场景 handoff
+- 结果覆盖层已有返回 Workshop / Main Menu 的按钮，但奖励选择和路线选择仍是原型级自动流程
 - 状态列表较长时仍可能占用较多顶部空间
 - 极长标题虽然不再遮挡其他卡面元素，但超出两行范围后仍会被直接裁切，尚未实现像素级省略号策略
 - Scene 视图中的显示效果依赖编辑器观察角度，Game 视图才是最终玩家视角

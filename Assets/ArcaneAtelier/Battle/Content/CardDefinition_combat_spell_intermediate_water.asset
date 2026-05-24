@@ -19,13 +19,13 @@ MonoBehaviour:
   instructions:
   - Type: 1
     Target: 1
-    Value: 8
+    Value: 11
     HitCount: 2
     StatusId: 
     Duration: 0
   - Type: 3
     Target: 1
-    Value: 8
+    Value: 14
     HitCount: 1
     StatusId: Regen
     Duration: 3

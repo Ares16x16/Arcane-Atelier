@@ -247,8 +247,8 @@ Do not wait for full keyword complexity before validating the workshop-to-battle
 This design is intentionally compatible with:
 
 - [Workshop ↔ Battle Contract](WorkshopBattleContract.md)
-- `origin/integration:Assets/ArcaneAtelier/Battle/Runtime/BattleSceneController.cs`
-- `origin/integration:Documentation/BattleArchitecture.md`
-- `origin/integration:Documentation/BattleWorkshopDependencies.md`
+- `Assets/ArcaneAtelier/Battle/Runtime/BattleSceneController.cs`
+- `Documentation/Battle/BattleCoreArchitecture.md`
+- `Documentation/BattleWorkshopDependencies.md`
 
 Those references define the current boundary and skeleton. This document defines the intended game behavior on top of that boundary.

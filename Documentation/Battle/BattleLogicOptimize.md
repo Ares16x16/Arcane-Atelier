@@ -1,14 +1,20 @@
-# Battle Logic Optimization Plan
+# Battle Logic Optimization Notes
 
 ## Summary
 
-当前战斗体验的主要问题不是单点 bug，而是三层一起偏软：
+> Last Updated: 2026-05-24
 
-- 玩家容错过高：`playerMaxHealth = 100`、每回合 `3 AP`、起手 `5` 张，治疗与护盾成本偏低。
-- 敌人压迫过低：前三只敌人血量和伤害都不足，且每回合只做一次低威胁动作。
-- 操作反馈不足：虽然已有 HUD、turn banner、floating numbers 和 action callout，但玩家几乎不需要承担风险就能稳定获胜，导致操作决策缺乏重量。
+当前战斗体验已经完成一轮 demo 向收紧，本文记录当前可运行数值方向，避免再按旧方案误改。
 
-本方案目标是把战斗调整为“中等偏紧”：
+当前实现重点：
+
+- 玩家生命使用 `BattleSceneController.playerMaxHealth = 60`，再叠加 meta progression 加成。
+- 每回合 `3 AP`，起手 `5` 张。
+- 攻击牌 `1 AP`，防御牌和治疗牌 `2 AP`。
+- 出牌后不会立即补牌；结束回合才弃整手并重抽。
+- 敌方回合通过 `BossTurnPending` 展示约 `1.1s` 的 intent windup。
+
+当前 balance 目标是把战斗保持在“demo 可赢，但不能无脑只点输出”的区间：
 
 - 普通玩家可以赢，但不能再稳定无伤通关。
 - 玩家每回合必须在输出、防御、续航之间做取舍。
@@ -16,23 +22,21 @@
 
 ## Key Changes
 
-### 1. 收紧玩家行动经济
+### 1. 玩家行动经济
 
-优先通过现有 AP 和手牌系统解决“输出、治疗、护盾三项全拿”的问题，不新增复杂资源系统。
+当前不再采用旧方案里的 `2 AP / 4 hand` 收紧方式。实际代码使用：
 
-- 将 `BattleSceneController` 中的玩家初始生命从 `100` 下调到 `65`。
-- 将 `BattleSimulation` 中的每回合 AP 从 `3` 下调到 `2`。
-- 保持费用结构不变：
-  - 攻击牌 `2 AP`
-  - 防御牌 `1 AP`
-  - 治疗牌 `1 AP`
-- 将 `BattleDeckController` 的起手和回合补牌数量从 `5` 张下调到 `4` 张。
-- 回合结束时仍弃掉整手并补满，但目标手牌数改为 `4`。
+- `MaxActionPoints = 3`
+- `TurnDrawCount = 5`
+- 攻击牌 `1 AP`
+- 防御牌 `2 AP`
+- 治疗牌 `2 AP`
 
 预期效果：
 
-- 玩家通常每回合只能选择“打一张攻击”或“打一防一补”，不能再无脑兼顾全部。
-- 每张牌的决策价值提升，回合选择更接近真正的取舍。
+- 玩家能打出多张攻击牌保持演示节奏。
+- 防御和治疗占用更大行动经济，避免低成本完全抹平敌方伤害。
+- 支援牌需要足够强，才能在 `2 AP` 成本下值得选择。
 
 ### 2. 重做敌人压力曲线
 
@@ -76,21 +80,19 @@
 - `Defensive` 敌人加盾后下一拍应尽快形成输出，不允许长期空转。
 - 继续保持单敌战斗，不在本轮扩展多敌人框架。
 
-### 3. 下调玩家基础续航强度
+### 3. 支援牌当前 tuning
 
-在 `BattleContentBootstrapper.CreateAllCardDefinitions()` 中削弱基础治疗和基础护盾的稳定收益，解决玩家“边打边无损站桩”的问题。
+基础与中级支援牌应与 Workshop 产出定义保持一致，不再使用旧方案里的下调建议。当前 Battle content 已对齐以下 Workshop 数值：
 
-建议方向：
+- `Tidal Mend`：`Heal(6, 1)` + `Regen 8`
+- `Lumen Prayer`：`Heal(5, 2)` + `Bless 12`
+- `Stoneguard Sigil`：`Shield(7, 1)` + `Bulwark 18`
+- `Gloam Ward`：`Shield(6, 1)` + `Veil 20`
+- `Tide Chorus`：`Heal(11, 2)` + `Regen 14`
+- `Bastion Pulse`：`Shield(12, 1)` + `Ward 28`
+- `Umbral Bastion`：`Shield(10, 2)` + `Shade 24`
 
-- 基础治疗牌整体下调约 `15%-25%`
-  - `Tidal Mend`：`Heal(6, 1) -> Heal(5, 1)`
-  - `Lumen Prayer`：`Heal(5, 2) -> Heal(4, 2)`，必要时同步降低 `Bless` 的收益
-- 基础护盾牌整体下调约 `10%-20%`
-  - `Stoneguard Sigil`：`Shield(7, 1) -> Shield(6, 1)`
-  - `Gloam Ward`：`Shield(6, 1) -> Shield(5, 1)`
-- 中级和高级恢复牌保留强度梯度，但不能在 `2 AP` 环境中继续成为稳定无脑解。
-- 基础攻击牌不做大砍，优先压缩玩家防守资源，而不是直接削弱输出节奏。
-- 保留状态效果特色，但减少基础牌单张同时提供的纯数值安全垫。
+中级和高级恢复牌保留强度梯度。后续如果玩家仍过稳，优先调整敌方压力、奖励节奏或支援牌成本，不要让 Battle content 再和 Workshop card table 分叉。
 
 预期效果：
 
@@ -99,9 +101,8 @@
 
 ### 4. 缩短敌方回合等待，增强回合压迫
 
-当前 `BossTurnTransitionDelay = 3.0f` 过长，会削弱战斗张力。保留 windup 设计，但让它服务于威胁提示，而不是拖慢节奏。
+当前 `BossTurnTransitionDelay = 1.1f`。保留 windup 设计，但让它服务于威胁提示，而不是拖慢节奏。
 
-- 将 `BattleSceneController` 中的 `BossTurnTransitionDelay` 从 `3.0f` 下调到 `1.1f`。
 - 保留 `BossTurnPending` 状态。
 - 继续通过 `BossTurnPending` 展示回合切换和敌方意图。
 - 在 HUD 顶部更突出展示下一次敌方动作描述。
@@ -130,15 +131,17 @@
 
 ### Automated Tests
 
-- `BattleSimulation` 在 `2 AP` 条件下，玩家打出一张攻击牌后不能继续打第二张攻击牌。
-- `EndTurn()` 后仍先进入 `BossTurnPending`，且等待时间符合新的短延迟设定。
+- `BattleSimulation` 使用 `3 AP`。
+- `BattleDeckController.GetActionPointCost()` 保持 Attack = `1`，Defense/Healing = `2`。
+- `EndTurn()` 后仍先进入 `BossTurnPending`，不会同步立即执行敌方动作。
 - `Freeze` / `Stun` 仍能在数值调整后阻止敌方动作，不破坏现有控制逻辑。
 - 各 archetype 敌人不会连续多回合做无压力空转动作。
+- 缺少 Workshop payload 时，Battle deck 保持空手牌。
 
 ### Manual Validation
 
-- 使用 fallback deck 或基础工坊牌组对战 `Ash Imp` 时，玩家应在正常流程中明显掉血。
-- 连战四场后，普通玩家不应再稳定满血进入 `Earth Golem`。
+- 使用基础工坊牌组对战 `Ash Imp` 时，玩家应在正常流程中明显掉血。
+- 每场战斗结束后应能通过结果层回到 Workshop，由集成层配置下一场。
 - 如果玩家连续贪输出、不做防守，应较容易被中后段敌人压低血量。
 - 如果玩家合理轮换攻击、防御和恢复，应能以中低血而不是满血状态完成通关。
 - 敌方回合提示应清晰，但整体战斗不应拖沓。
@@ -147,16 +150,10 @@
 
 本方案不引入新的公共系统，只调整现有参数和少量展示行为。
 
-- `BattleSceneController`
-  - 调整 `playerMaxHealth`
-  - 调整 `BossTurnTransitionDelay`
-- `BattleSimulation`
-  - 调整 `MaxActionPoints`
-- `BattleDeckController`
-  - 调整起手和补牌数量
 - `BattleContentBootstrapper`
-  - 重新平衡敌方 `BattleBossDefinition`
-  - 重新平衡玩家 `BattleCardDefinition`
+  - Battle card support values should stay aligned with `WorkshopDefaultContentFactory`
+- `Assets/ArcaneAtelier/Battle/Content/CardDefinition_*.asset`
+  - Existing generated card assets must be updated alongside bootstrapper changes
 
 不新增新的 `ScriptableObject` 类型，不改变现有 bridge、payload 或 asmdef 依赖。
 

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ArcaneAtelier.Workshop;
 using NUnit.Framework;
+using UnityEditor;
 
 namespace ArcaneAtelier.Battle.Tests
 {
@@ -68,6 +69,20 @@ namespace ArcaneAtelier.Battle.Tests
         }
 
         [Test]
+        public void SupportCardDefinitions_MirrorWorkshopRuntimeValues()
+        {
+            WorkshopContentDatabase workshopDatabase = WorkshopDefaultContentFactory.CreateRuntimeDatabase();
+
+            AssertPrimaryInstructionMirrorsWorkshopCard(workshopDatabase, "spell.basic.water", "combat_spell_basic_water");
+            AssertPrimaryInstructionMirrorsWorkshopCard(workshopDatabase, "spell.basic.earth", "combat_spell_basic_earth");
+            AssertPrimaryInstructionMirrorsWorkshopCard(workshopDatabase, "spell.basic.light", "combat_spell_basic_light");
+            AssertPrimaryInstructionMirrorsWorkshopCard(workshopDatabase, "spell.basic.dark", "combat_spell_basic_dark");
+            AssertPrimaryInstructionMirrorsWorkshopCard(workshopDatabase, "spell.intermediate.water", "combat_spell_intermediate_water");
+            AssertPrimaryInstructionMirrorsWorkshopCard(workshopDatabase, "spell.intermediate.earth", "combat_spell_intermediate_earth");
+            AssertPrimaryInstructionMirrorsWorkshopCard(workshopDatabase, "spell.intermediate.dark", "combat_spell_intermediate_dark");
+        }
+
+        [Test]
         public void EmptyOrMissingWorkshopPayload_ProducesNoBattleHand()
         {
             BattleDeckController missingPayloadDeck = new BattleDeckController(null, null);
@@ -107,6 +122,33 @@ namespace ArcaneAtelier.Battle.Tests
             }
 
             return null;
+        }
+
+        private static void AssertPrimaryInstructionMirrorsWorkshopCard(WorkshopContentDatabase workshopDatabase, string workshopCardId, string assetSlug)
+        {
+            WorkshopItemDefinition card = FindCardById(workshopDatabase, workshopCardId);
+            string path = $"Assets/ArcaneAtelier/Battle/Content/CardDefinition_{assetSlug}.asset";
+            BattleCardDefinition definition = AssetDatabase.LoadAssetAtPath<BattleCardDefinition>(path);
+
+            Assert.That(card, Is.Not.Null, $"{workshopCardId} should exist in runtime workshop content.");
+            Assert.That(definition, Is.Not.Null, $"{path} should exist.");
+            Assert.That(definition.Instructions.Count, Is.GreaterThanOrEqualTo(1));
+            Assert.That(definition.Instructions[0].Type, Is.EqualTo(GetExpectedPrimaryEffectType(card.SpellRole)), definition.DisplayName);
+            Assert.That(definition.Instructions[0].Value, Is.EqualTo(card.EffectPrimaryValue), definition.DisplayName);
+            Assert.That(definition.Instructions[0].HitCount, Is.EqualTo(card.EffectHitCount), definition.DisplayName);
+        }
+
+        private static BattleEffectType GetExpectedPrimaryEffectType(WorkshopSpellRole role)
+        {
+            switch (role)
+            {
+                case WorkshopSpellRole.Healing:
+                    return BattleEffectType.Heal;
+                case WorkshopSpellRole.Defense:
+                    return BattleEffectType.Shield;
+                default:
+                    return BattleEffectType.Damage;
+            }
         }
     }
 }
