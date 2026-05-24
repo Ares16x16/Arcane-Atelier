@@ -34,9 +34,6 @@ namespace ArcaneAtelier.Battle
 
         private BattleSceneController controller;
         private Texture2D whiteTexture;
-        [SerializeField] private Texture2D playerPanelTexture;
-        [SerializeField] private Texture2D bossPanelTexture;
-        [SerializeField] private Texture2D centerPanelTexture;
         private Sprite uiPanelMainSprite;
         private Sprite uiPaletteDockSprite;
         private Sprite uiButtonSprite;
@@ -260,14 +257,14 @@ namespace ArcaneAtelier.Battle
             Rect centerRect = new Rect(rect.width * 0.5f - 190f, 16f, 380f, rect.height - 32f);
             Rect bossRect = new Rect(rect.width - sideWidth - 16f, 16f, sideWidth, rect.height - 32f);
 
-            DrawUnitStatusBlock(playerRect, controller.Player, "Player", false, playerPanelTexture);
-            DrawCenterBattleStrip(centerRect, centerPanelTexture);
-            DrawUnitStatusBlock(bossRect, controller.Boss, "Enemy", true, bossPanelTexture);
+            DrawUnitStatusBlock(playerRect, controller.Player, "Player", false);
+            DrawCenterBattleStrip(centerRect);
+            DrawUnitStatusBlock(bossRect, controller.Boss, "Enemy", true);
 
             GUI.EndGroup();
         }
 
-        private void DrawUnitStatusBlock(Rect rect, BattleUnit unit, string fallbackTitle, bool alignRight, Texture2D panelTexture)
+        private void DrawUnitStatusBlock(Rect rect, BattleUnit unit, string fallbackTitle, bool alignRight)
         {
             string displayName = unit != null && !string.IsNullOrWhiteSpace(unit.DisplayName) ? unit.DisplayName : fallbackTitle;
             int currentHealth = unit != null ? unit.CurrentHealth : 0;
@@ -276,14 +273,7 @@ namespace ArcaneAtelier.Battle
             WorkshopElementAttribute element = unit != null ? unit.Element : WorkshopElementAttribute.None;
             Color accent = GetElementColor(element);
 
-            if (panelTexture != null)
-            {
-                GUI.DrawTexture(rect, panelTexture, ScaleMode.StretchToFill, true);
-            }
-            else
-            {
-                DrawPanelWithShadow(rect, new Color(HudPanel.r, HudPanel.g, HudPanel.b, 0.96f), new Color(accent.r, accent.g, accent.b, 0.48f));
-            }
+            DrawPaletteCardFrame(rect, accent, 0.98f, 0.08f);
 
             GUIStyle nameStyle = new GUIStyle(sectionStyle)
             {
@@ -294,17 +284,18 @@ namespace ArcaneAtelier.Battle
                 alignment = alignRight ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft
             };
 
-            float contentX = rect.x + 14f;
-            float contentWidth = rect.width - 28f;
+            float contentX = rect.x + 20f;
+            float contentWidth = rect.width - 35f;
             float labelWidth = Mathf.Max(64f, contentWidth * 0.26f);
             string elementText = element == WorkshopElementAttribute.None ? "Neutral" : element.ToString();
 
-            GUI.Label(new Rect(contentX, rect.y + 10f, contentWidth, 18f), displayName, nameStyle);
-            GUI.Label(new Rect(contentX, rect.y + 30f, contentWidth, 14f), elementText, valueStyle);
-            GUI.Label(new Rect(contentX, rect.y + 52f, labelWidth, 14f), $"HP {currentHealth}/{maxHealth}", valueStyle);
+            GUI.Label(new Rect(contentX, rect.y + 15f, contentWidth, 18f), displayName, nameStyle);
+            GUI.Label(new Rect(contentX, rect.y + 35f, contentWidth, 14f), elementText, valueStyle);
+            GUI.Label(new Rect(contentX, rect.y + 57f, labelWidth, 14f), $"HP {currentHealth}/{maxHealth}", valueStyle);
 
-            Rect healthBarRect = new Rect(contentX + labelWidth + 8f, rect.y + 54f, contentWidth - labelWidth - 8f, 10f);
-            Rect shieldBarRect = new Rect(contentX + labelWidth + 8f, rect.y + 78f, contentWidth - labelWidth - 8f, 8f);
+            float barWidth = contentWidth - labelWidth - 18f;
+            Rect healthBarRect = new Rect(contentX + labelWidth + 8f, rect.y + 59f, barWidth, 10f);
+            Rect shieldBarRect = new Rect(contentX + labelWidth + 8f, rect.y + 83f, barWidth, 8f);
             float healthRatio = maxHealth > 0 ? Mathf.Clamp01(currentHealth / (float)maxHealth) : 0f;
             float shieldRatio = maxHealth > 0 ? Mathf.Clamp01(shield / (float)maxHealth) : 0f;
 
@@ -492,16 +483,9 @@ namespace ArcaneAtelier.Battle
             hoveredMetaAccent = Color.white;
         }
 
-        private void DrawCenterBattleStrip(Rect rect, Texture2D centerPanelTexture)
+        private void DrawCenterBattleStrip(Rect rect)
         {
-            if (centerPanelTexture != null)
-            {
-                GUI.DrawTexture(rect, centerPanelTexture, ScaleMode.StretchToFill, true);
-            }
-            else
-            {
-                DrawPanelWithShadow(rect, new Color(HudPanelSoft.r, HudPanelSoft.g, HudPanelSoft.b, 0.9f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.82f));
-            }
+            DrawPaletteCardFrame(rect, WorkshopBlue, 0.97f, 0.07f);
 
             BattleBossAction nextAction = controller.Simulation.BossAI.PeekNextAction();
             Color intentAccent = GetIntentColor(nextAction.ActionType);
@@ -517,14 +501,14 @@ namespace ArcaneAtelier.Battle
                     new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.08f + windupProgress * 0.08f));
             }
 
-            GUI.Label(new Rect(rect.x, rect.y + 8f, rect.width, 14f), $"Encounter {controller.CurrentEncounterNumber}/{controller.TotalEncounterCount}", turnInfoStyle);
+            GUI.Label(new Rect(rect.x, rect.y + 15f, rect.width, 14f), $"Encounter {controller.CurrentEncounterNumber}/{controller.TotalEncounterCount}", turnInfoStyle);
             GUI.Label(
-                new Rect(rect.x, rect.y + 24f, rect.width, 14f),
+                new Rect(rect.x, rect.y + 31f, rect.width, 14f),
                 bossTurnPending ? "Enemy action incoming" : $"Turn {controller.Simulation.TurnsElapsed + 1}",
                 turnInfoStyle);
-            DrawTag(new Rect(rect.x + rect.width * 0.5f - 56f, rect.y + 46f, 112f, 20f), intentBadge, new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.88f));
+            DrawTag(new Rect(rect.x + rect.width * 0.5f - 56f, rect.y + 53f, 112f, 20f), intentBadge, new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.88f));
             GUI.Label(
-                new Rect(rect.x + 18f, rect.y + 72f, rect.width - 36f, 30f),
+                new Rect(rect.x + 18f, rect.y + 79f, rect.width - 36f, 30f),
                 bossTurnPending ? $"Preparing: {intent}" : intent,
                 turnInfoStyle);
 
@@ -554,7 +538,7 @@ namespace ArcaneAtelier.Battle
             Rect contentRect = new Rect(14f, 48f, rect.width - 28f, rect.height - 62f);
             float handCardOffsetX = 30f;
 
-            //DrawPaletteCardFrame(headerRect, WorkshopGold, 0.98f, 0.08f);
+            DrawPaletteCardFrame(headerRect, WorkshopGold, 0.98f, 0.08f);
             GUI.Label(new Rect(headerRect.x + 32f, headerRect.y + 12f, 140f, 18f), "Hand", sectionStyle);
 
             float pileWidth = 72f;
@@ -567,7 +551,7 @@ namespace ArcaneAtelier.Battle
             discardPileScreenRect = OffsetRect(new Rect(discardX, headerRect.y + 10f, pileWidth, 50f), rect.position);
             GUI.Label(new Rect(drawX - 118f, headerRect.y + 8f, 104f, 16f), $"Hand {handCount}", new GUIStyle(mutedStyle) { alignment = TextAnchor.MiddleRight });
 
-            //DrawPaletteCardFrame(contentRect, WorkshopBlue, 0.97f, 0.05f);
+            DrawPaletteCardFrame(contentRect, WorkshopBlue, 0.97f, 0.05f);
             DrawRect(new Rect(contentRect.x + 10f, contentRect.y + 8f, contentRect.width - 20f, 1f), new Color(1f, 1f, 1f, 0.03f));
             DrawRect(new Rect(contentRect.x + 10f, contentRect.yMax - 9f, contentRect.width - 20f, 1f), new Color(0f, 0f, 0f, 0.18f));
 
@@ -920,45 +904,44 @@ namespace ArcaneAtelier.Battle
                 ? "Reward system not ready yet. Showing your run board instead."
                 : summary.FinalOutcomeDescription;
 
-            float headerHeight = 112f;
-            float footerHeight = 76f;
-            float contentHeight = CalculateRunSummaryContentHeight(summary, rect.width - 66f);
-            float runBoardHeight = 124f;
+            float headerHeight = 138f;
+            float footerHeight = 84f;
+            float contentHeight = CalculateRunSummaryContentHeight(summary, rect.width - 84f);
+            float runBoardHeight = 154f;
 
             DrawRect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0f, 0f, 0f, 0.68f));
-            DrawPanelFrame(rect, WorkshopGold, 0.99f);
-            DrawRect(new Rect(rect.x, rect.y, rect.width, headerHeight), new Color(0.05f, 0.08f, 0.12f, 0.96f));
-            DrawRect(new Rect(rect.x, rect.y + 58f, rect.width, 1f), new Color(WorkshopBlue.r, WorkshopBlue.g, WorkshopBlue.b, 0.26f));
+            DrawPaletteDockFrame(rect, WorkshopGold, 0.99f);
+            DrawPaletteCardFrame(new Rect(rect.x + 18f, rect.y + 16f, rect.width - 36f, headerHeight - 20f), WorkshopGold, 0.98f, 0.05f);
 
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(24f, 18f, rect.width - 240f, 30f), outcomeTitle, resultStyle);
-            GUI.Label(new Rect(24f, 48f, rect.width - 240f, 18f), finalBossName, sectionStyle);
-            GUI.Label(new Rect(24f, 70f, rect.width - 48f, 20f), outcomeDescription, bodyStyle);
-            GUI.Label(new Rect(rect.width - 210f, 20f, 186f, 18f), $"Wins {summary.Victories}  •  Losses {summary.Defeats}", new GUIStyle(mutedStyle) { alignment = TextAnchor.MiddleRight });
-            GUI.Label(new Rect(rect.width - 210f, 42f, 186f, 18f), $"{battleCount} fights logged", new GUIStyle(mutedStyle) { alignment = TextAnchor.MiddleRight });
-            GUI.Label(new Rect(rect.width - 210f, 64f, 186f, 18f), "Run Result", new GUIStyle(mutedStyle) { alignment = TextAnchor.MiddleRight });
+            GUIStyle rightMutedStyle = new GUIStyle(summaryMutedStyle) { alignment = TextAnchor.UpperRight };
+            GUI.Label(new Rect(34f, 26f, rect.width - 300f, 36f), outcomeTitle, summaryTitleStyle);
+            GUI.Label(new Rect(34f, 66f, rect.width - 300f, 22f), finalBossName, summaryHeadingStyle);
+            GUI.Label(new Rect(34f, 92f, rect.width - 68f, 30f), outcomeDescription, summaryBodyStyle);
+            GUI.Label(new Rect(rect.width - 256f, 28f, 220f, 20f), $"Wins {summary.Victories}  •  Losses {summary.Defeats}", rightMutedStyle);
+            GUI.Label(new Rect(rect.width - 256f, 52f, 220f, 20f), $"{battleCount} fights logged", rightMutedStyle);
+            GUI.Label(new Rect(rect.width - 256f, 76f, 220f, 20f), "Run Result Ledger", rightMutedStyle);
 
-            Rect scrollViewport = new Rect(24f, headerHeight, rect.width - 48f, rect.height - headerHeight - footerHeight);
+            Rect scrollViewport = new Rect(32f, headerHeight, rect.width - 64f, rect.height - headerHeight - footerHeight);
             Rect contentRect = new Rect(0f, 0f, scrollViewport.width - 18f, contentHeight);
             runSummaryScroll = GUI.BeginScrollView(scrollViewport, runSummaryScroll, contentRect, false, true);
 
             float y = 0f;
-            float spacing = 14f;
+            float spacing = 16f;
 
             Color previousColor;
             Rect animatedRect;
 
             if (BeginAnimatedBlock(new Rect(0f, y, contentRect.width, runBoardHeight), 0f, 36f, out animatedRect, out previousColor))
             {
-                DrawPanelWithShadow(animatedRect, new Color(HudPanel.r, HudPanel.g, HudPanel.b, 0.96f), new Color(WorkshopBlue.r, WorkshopBlue.g, WorkshopBlue.b, 0.58f));
-                DrawRect(new Rect(animatedRect.x, animatedRect.y, animatedRect.width, 3f), WorkshopBlue);
-                Rect showcaseRect = new Rect(animatedRect.xMax - 114f, animatedRect.y + 16f, 90f, 90f);
-                float boardTextWidth = animatedRect.width - 150f;
-                GUI.Label(new Rect(animatedRect.x + 16f, animatedRect.y + 12f, boardTextWidth, 18f), "Run Board", sectionStyle);
-                GUI.Label(new Rect(animatedRect.x + 16f, animatedRect.y + 34f, boardTextWidth, 18f), $"Final Fight: {finalBossName}", bodyStyle);
-                GUI.Label(new Rect(animatedRect.x + 16f, animatedRect.y + 54f, boardTextWidth, 18f), $"{Mathf.Max(1, battleCount)} fights  •  {summary.TotalTurnsElapsed} turns", bodyStyle);
-                GUI.Label(new Rect(animatedRect.x + 16f, animatedRect.y + 74f, boardTextWidth, 16f), $"{summary.TotalCardsPlayed} cards  •  {summary.TotalDamageDealt} dmg  •  {summary.TotalHealingDone} heal", mutedStyle);
-                GUI.Label(new Rect(animatedRect.x + 16f, animatedRect.y + 92f, boardTextWidth, 16f), BuildRunBoardGainText(summary), mutedStyle);
+                DrawPaletteDockFrame(animatedRect, WorkshopBlue, 0.98f);
+                Rect showcaseRect = new Rect(animatedRect.xMax - 138f, animatedRect.y + 18f, 108f, 108f);
+                float boardTextWidth = animatedRect.width - 190f;
+                GUI.Label(new Rect(animatedRect.x + 24f, animatedRect.y + 18f, boardTextWidth, 22f), "Run Board", summaryHeadingStyle);
+                GUI.Label(new Rect(animatedRect.x + 24f, animatedRect.y + 46f, boardTextWidth, 20f), $"Final Fight: {finalBossName}", summaryBodyStyle);
+                GUI.Label(new Rect(animatedRect.x + 24f, animatedRect.y + 72f, boardTextWidth, 20f), $"{Mathf.Max(1, battleCount)} fights  •  {summary.TotalTurnsElapsed} turns", summaryBodyStyle);
+                GUI.Label(new Rect(animatedRect.x + 24f, animatedRect.y + 98f, boardTextWidth, 18f), $"{summary.TotalCardsPlayed} cards  •  {summary.TotalDamageDealt} dmg  •  {summary.TotalHealingDone} heal", summaryMutedStyle);
+                GUI.Label(new Rect(animatedRect.x + 24f, animatedRect.y + 120f, boardTextWidth, 20f), BuildRunBoardGainText(summary), summaryMutedStyle);
                 DrawIllustratedSummaryCard(
                     showcaseRect,
                     string.Empty,
@@ -980,7 +963,7 @@ namespace ArcaneAtelier.Battle
             }
             else
             {
-                endY = y + 118f;
+                endY = y + GetHeroStatsSectionHeight(contentRect.width);
             }
             y = endY + spacing;
 
@@ -991,7 +974,7 @@ namespace ArcaneAtelier.Battle
             }
             else
             {
-                endY = y + 164f;
+                endY = y + GetRunSummaryColumnsSectionHeight();
             }
             y = endY + spacing;
 
@@ -1002,15 +985,15 @@ namespace ArcaneAtelier.Battle
             }
             else
             {
-                endY = y + 120f;
+                endY = y + GetEncounterHistorySectionHeight(summary);
             }
             y = endY;
 
             GUI.EndScrollView();
 
-            DrawRect(new Rect(24f, rect.height - footerHeight, rect.width - 48f, 1f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.72f));
-            GUI.Label(new Rect(24f, rect.height - footerHeight + 12f, rect.width - 240f, 18f), "Legacy Sigils persist outside the run. Tokens remain run-only.", mutedStyle);
-            if (DrawThemedButton(new Rect(rect.width - 196f, rect.height - 54f, 172f, 32f), "Return To Menu", WorkshopGold, "run_summary_main_menu", true))
+            DrawRect(new Rect(30f, rect.height - footerHeight, rect.width - 60f, 1f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.72f));
+            GUI.Label(new Rect(34f, rect.height - footerHeight + 14f, rect.width - 260f, 22f), "Legacy Sigils persist outside the run. Tokens remain run-only.", summaryMutedStyle);
+            if (DrawThemedButton(new Rect(rect.width - 214f, rect.height - 58f, 184f, 34f), "Return To Menu", WorkshopGold, "run_summary_main_menu", true))
             {
                 controller.ReturnToMainMenu();
             }
@@ -1039,25 +1022,24 @@ namespace ArcaneAtelier.Battle
                 summary.TotalTokensEarned.ToString()
             };
 
-            int columns = rect.width < 980f ? 3 : 5;
+            int columns = GetHeroStatsColumns(rect.width);
             int rows = Mathf.CeilToInt(labels.Length / (float)columns);
-            float panelHeight = 44f + rows * 64f + (rows - 1) * 10f + 18f;
-            DrawPanelWithShadow(new Rect(rect.x, rect.y, rect.width, panelHeight), new Color(HudPanel.r, HudPanel.g, HudPanel.b, 0.96f), new Color(WorkshopGold.r, WorkshopGold.g, WorkshopGold.b, 0.62f));
-            DrawRect(new Rect(rect.x, rect.y, rect.width, 3f), WorkshopGold);
-            GUI.Label(new Rect(rect.x + 16f, rect.y + 12f, rect.width - 32f, 20f), "Hero Stats", sectionStyle);
+            float panelHeight = GetHeroStatsSectionHeight(rect.width);
+            DrawPaletteDockFrame(new Rect(rect.x, rect.y, rect.width, panelHeight), WorkshopGold, 0.98f);
+            GUI.Label(new Rect(rect.x + 24f, rect.y + 18f, rect.width - 48f, 22f), "Hero Stats", summaryHeadingStyle);
 
-            float tileGap = 10f;
-            float tileWidth = (rect.width - 32f - tileGap * (columns - 1)) / columns;
-            float startX = rect.x + 16f;
-            float startY = rect.y + 42f;
+            float tileGap = 12f;
+            float tileWidth = (rect.width - 48f - tileGap * (columns - 1)) / columns;
+            float startX = rect.x + 24f;
+            float startY = rect.y + 52f;
             for (int i = 0; i < labels.Length; i++)
             {
                 int row = i / columns;
                 int column = i % columns;
                 float tileX = startX + column * (tileWidth + tileGap);
-                float tileY = startY + row * 72f;
+                float tileY = startY + row * 84f;
                 Color accent = i % 3 == 0 ? WorkshopGold : i % 3 == 1 ? WorkshopBlue : WorkshopViolet;
-                DrawRunSummaryStatTile(new Rect(tileX, tileY, tileWidth, 62f), values[i], labels[i], accent);
+                DrawRunSummaryStatTile(new Rect(tileX, tileY, tileWidth, 72f), values[i], labels[i], accent);
             }
 
             return rect.y + panelHeight;
@@ -1065,44 +1047,40 @@ namespace ArcaneAtelier.Battle
 
         private float DrawRunSummaryColumns(Rect rect, RunSummaryData summary)
         {
-            int encountersLogged = Mathf.Max(1, summary.BattleHistory != null ? summary.BattleHistory.Count : 0);
             float avgCardsPerTurn = summary.TotalTurnsElapsed > 0
                 ? summary.TotalCardsPlayed / (float)summary.TotalTurnsElapsed
                 : 0f;
-            float panelHeight = 164f;
-            float columnGap = 14f;
+            float panelHeight = 196f;
+            float columnGap = 16f;
             float columnWidth = (rect.width - columnGap) * 0.5f;
 
             Rect battleRect = new Rect(rect.x, rect.y, columnWidth, panelHeight);
             Rect workshopRect = new Rect(rect.x + columnWidth + columnGap, rect.y, columnWidth, panelHeight);
 
-            DrawPanelWithShadow(battleRect, new Color(HudPanel.r, HudPanel.g, HudPanel.b, 0.96f), new Color(WorkshopBlue.r, WorkshopBlue.g, WorkshopBlue.b, 0.62f));
-            DrawRect(new Rect(battleRect.x, battleRect.y, battleRect.width, 3f), WorkshopBlue);
-            GUI.Label(new Rect(battleRect.x + 16f, battleRect.y + 12f, battleRect.width - 32f, 20f), "Battle Summary", sectionStyle);
-            GUI.Label(new Rect(battleRect.x + 16f, battleRect.y + 42f, battleRect.width - 32f, 18f), $"Damage  •  {summary.TotalDamageDealt}", bodyStyle);
-            GUI.Label(new Rect(battleRect.x + 16f, battleRect.y + 64f, battleRect.width - 32f, 18f), $"Healing •  {summary.TotalHealingDone}", bodyStyle);
-            GUI.Label(new Rect(battleRect.x + 16f, battleRect.y + 86f, battleRect.width - 32f, 18f), $"Shield  •  {summary.TotalShieldGained}", bodyStyle);
-            GUI.Label(new Rect(battleRect.x + 16f, battleRect.y + 108f, battleRect.width - 32f, 18f), $"Cards   •  {summary.TotalCardsPlayed}", bodyStyle);
-            GUI.Label(new Rect(battleRect.x + 16f, battleRect.y + 130f, battleRect.width - 32f, 18f), $"Turns   •  {summary.TotalTurnsElapsed}", bodyStyle);
+            DrawPaletteDockFrame(battleRect, WorkshopBlue, 0.98f);
+            GUI.Label(new Rect(battleRect.x + 20f, battleRect.y + 16f, battleRect.width - 40f, 22f), "Battle Summary", summaryHeadingStyle);
+            DrawSummaryMetricLine(new Rect(battleRect.x + 20f, battleRect.y + 52f, battleRect.width - 40f, 20f), "Damage", summary.TotalDamageDealt.ToString(), WorkshopBlue);
+            DrawSummaryMetricLine(new Rect(battleRect.x + 20f, battleRect.y + 78f, battleRect.width - 40f, 20f), "Healing", summary.TotalHealingDone.ToString(), new Color(0.46f, 0.9f, 0.7f, 1f));
+            DrawSummaryMetricLine(new Rect(battleRect.x + 20f, battleRect.y + 104f, battleRect.width - 40f, 20f), "Shield", summary.TotalShieldGained.ToString(), ShieldAccent);
+            DrawSummaryMetricLine(new Rect(battleRect.x + 20f, battleRect.y + 130f, battleRect.width - 40f, 20f), "Cards", summary.TotalCardsPlayed.ToString(), WorkshopGold);
+            DrawSummaryMetricLine(new Rect(battleRect.x + 20f, battleRect.y + 156f, battleRect.width - 40f, 20f), "Turns", summary.TotalTurnsElapsed.ToString(), WorkshopViolet);
 
-            DrawPanelWithShadow(workshopRect, new Color(HudPanel.r, HudPanel.g, HudPanel.b, 0.96f), new Color(WorkshopGold.r, WorkshopGold.g, WorkshopGold.b, 0.62f));
-            DrawRect(new Rect(workshopRect.x, workshopRect.y, workshopRect.width, 3f), WorkshopGold);
-            GUI.Label(new Rect(workshopRect.x + 16f, workshopRect.y + 12f, workshopRect.width - 32f, 20f), "Workshop Summary", sectionStyle);
-            GUI.Label(new Rect(workshopRect.x + 16f, workshopRect.y + 42f, workshopRect.width - 32f, 18f), $"Prep    •  {summary.TotalPrepTicksUsed}", bodyStyle);
-            GUI.Label(new Rect(workshopRect.x + 16f, workshopRect.y + 64f, workshopRect.width - 32f, 18f), $"Copies  •  {summary.TotalCraftedCardCopies}", bodyStyle);
-            GUI.Label(new Rect(workshopRect.x + 16f, workshopRect.y + 86f, workshopRect.width - 32f, 18f), $"Types   •  {summary.TotalCraftedCardTypes}", bodyStyle);
-            GUI.Label(new Rect(workshopRect.x + 16f, workshopRect.y + 108f, workshopRect.width - 32f, 18f), $"Tokens  •  {summary.TotalTokensEarned}", bodyStyle);
-            GUI.Label(new Rect(workshopRect.x + 16f, workshopRect.y + 130f, workshopRect.width - 32f, 18f), $"Pace    •  {avgCardsPerTurn:0.00}/turn", bodyStyle);
+            DrawPaletteDockFrame(workshopRect, WorkshopGold, 0.98f);
+            GUI.Label(new Rect(workshopRect.x + 20f, workshopRect.y + 16f, workshopRect.width - 40f, 22f), "Workshop Summary", summaryHeadingStyle);
+            DrawSummaryMetricLine(new Rect(workshopRect.x + 20f, workshopRect.y + 52f, workshopRect.width - 40f, 20f), "Prep", summary.TotalPrepTicksUsed.ToString(), WorkshopGold);
+            DrawSummaryMetricLine(new Rect(workshopRect.x + 20f, workshopRect.y + 78f, workshopRect.width - 40f, 20f), "Copies", summary.TotalCraftedCardCopies.ToString(), WorkshopBlue);
+            DrawSummaryMetricLine(new Rect(workshopRect.x + 20f, workshopRect.y + 104f, workshopRect.width - 40f, 20f), "Types", summary.TotalCraftedCardTypes.ToString(), WorkshopViolet);
+            DrawSummaryMetricLine(new Rect(workshopRect.x + 20f, workshopRect.y + 130f, workshopRect.width - 40f, 20f), "Tokens", summary.TotalTokensEarned.ToString(), new Color(0.95f, 0.56f, 0.28f, 1f));
+            DrawSummaryMetricLine(new Rect(workshopRect.x + 20f, workshopRect.y + 156f, workshopRect.width - 40f, 20f), "Pace", $"{avgCardsPerTurn:0.00}/turn", new Color(0.78f, 0.84f, 0.98f, 1f));
 
-            Rect gainsRect = new Rect(rect.x, rect.y + panelHeight + 12f, rect.width, 108f);
-            DrawPanelWithShadow(gainsRect, new Color(HudPanel.r, HudPanel.g, HudPanel.b, 0.96f), new Color(WorkshopViolet.r, WorkshopViolet.g, WorkshopViolet.b, 0.62f));
-            DrawRect(new Rect(gainsRect.x, gainsRect.y, gainsRect.width, 3f), WorkshopViolet);
-            GUI.Label(new Rect(gainsRect.x + 16f, gainsRect.y + 12f, gainsRect.width - 32f, 20f), "Battle Result & Legacy", sectionStyle);
+            Rect gainsRect = new Rect(rect.x, rect.y + panelHeight + 16f, rect.width, 132f);
+            DrawPaletteDockFrame(gainsRect, WorkshopViolet, 0.98f);
+            GUI.Label(new Rect(gainsRect.x + 20f, gainsRect.y + 16f, gainsRect.width - 40f, 22f), "Battle Result & Legacy", summaryHeadingStyle);
 
-            float cardGap = 14f;
-            float cardWidth = (gainsRect.width - 32f - cardGap) * 0.5f;
-            Rect resultCardRect = new Rect(gainsRect.x + 16f, gainsRect.y + 40f, cardWidth, 58f);
-            Rect legacyCardRect = new Rect(resultCardRect.xMax + cardGap, gainsRect.y + 40f, cardWidth, 58f);
+            float cardGap = 16f;
+            float cardWidth = (gainsRect.width - 40f - cardGap) * 0.5f;
+            Rect resultCardRect = new Rect(gainsRect.x + 20f, gainsRect.y + 48f, cardWidth, 72f);
+            Rect legacyCardRect = new Rect(resultCardRect.xMax + cardGap, gainsRect.y + 48f, cardWidth, 72f);
 
             DrawIllustratedSummaryCard(
                 resultCardRect,
@@ -1120,32 +1098,35 @@ namespace ArcaneAtelier.Battle
                 WorkshopViolet,
                 null,
                 MetaHudIconKind.Bounty);
-            return gainsRect.y + gainsRect.height;
+
+            Rect graphRect = new Rect(rect.x, gainsRect.yMax + 16f, rect.width, 188f);
+            DrawRunTrendChart(graphRect, summary);
+            return graphRect.yMax;
         }
 
         private float DrawEncounterHistorySection(Rect rect, RunSummaryData summary)
         {
             int recordCount = summary.BattleHistory != null ? summary.BattleHistory.Count : 0;
             float y = rect.y;
-            GUI.Label(new Rect(rect.x, y, rect.width, 20f), "Fight Log", sectionStyle);
-            y += 28f;
+            GUI.Label(new Rect(rect.x, y, rect.width, 22f), "Fight Log", summaryHeadingStyle);
+            y += 32f;
 
             if (recordCount == 0)
             {
-                DrawPanelWithShadow(new Rect(rect.x, y, rect.width, 72f), new Color(HudPanel.r, HudPanel.g, HudPanel.b, 0.96f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.62f));
-                GUI.Label(new Rect(rect.x + 16f, y + 18f, rect.width - 32f, 18f), "No encounter records were captured for this run.", bodyStyle);
-                return y + 72f;
+                DrawPaletteDockFrame(new Rect(rect.x, y, rect.width, 86f), WorkshopBlue, 0.98f);
+                GUI.Label(new Rect(rect.x + 24f, y + 24f, rect.width - 48f, 22f), "No encounter records were captured for this run.", summaryBodyStyle);
+                return y + 86f;
             }
 
             for (int i = 0; i < recordCount; i++)
             {
                 RunBattleRecord record = summary.BattleHistory[i];
-                float panelHeight = 108f;
+                float panelHeight = GetEncounterRecordHeight();
                 DrawEncounterRecord(new Rect(rect.x, y, rect.width, panelHeight), record, i + 1);
-                y += panelHeight + 12f;
+                y += panelHeight + 14f;
             }
 
-            return y;
+            return y - 14f;
         }
 
         private void DrawEncounterRecord(Rect rect, RunBattleRecord record, int index)
@@ -1166,33 +1147,151 @@ namespace ArcaneAtelier.Battle
                 ? $"Turns {record.TurnsElapsed}  •  Cards {record.CardsPlayed}  •  Dmg {record.TotalDamageDealt}  •  Heal {record.TotalHealingDone}  •  Guard {record.TotalShieldGained}"
                 : "No battle detail";
 
-            DrawPanelWithShadow(rect, new Color(HudPanel.r, HudPanel.g, HudPanel.b, 0.97f), new Color(accent.r, accent.g, accent.b, 0.62f));
-            DrawRect(new Rect(rect.x, rect.y, rect.width, 3f), accent);
-            GUI.Label(new Rect(rect.x + 16f, rect.y + 10f, rect.width - 160f, 20f), $"Fight {index}: {encounterLabel}", sectionStyle);
-            DrawTag(new Rect(rect.x + rect.width - 108f, rect.y + 12f, 92f, 18f), outcome, new Color(accent.r, accent.g, accent.b, 0.24f));
-            GUI.Label(new Rect(rect.x + 16f, rect.y + 34f, rect.width - 32f, 18f), bossName, bodyStyle);
-            GUI.Label(new Rect(rect.x + 16f, rect.y + 54f, rect.width - 32f, 16f), battleText, bodyStyle);
-            GUI.Label(new Rect(rect.x + 16f, rect.y + 72f, rect.width - 32f, 16f), detailText, bodyStyle);
-            GUI.Label(new Rect(rect.x + 16f, rect.y + 90f, rect.width - 32f, 16f), gainText, mutedStyle);
+            DrawPaletteDockFrame(rect, accent, 0.98f);
+            GUI.Label(new Rect(rect.x + 22f, rect.y + 14f, rect.width - 180f, 22f), $"Fight {index}: {encounterLabel}", summaryHeadingStyle);
+            DrawTag(new Rect(rect.x + rect.width - 120f, rect.y + 16f, 98f, 20f), outcome, new Color(accent.r, accent.g, accent.b, 0.24f));
+            GUI.Label(new Rect(rect.x + 22f, rect.y + 42f, rect.width - 44f, 20f), bossName, summaryBodyStyle);
+            GUI.Label(new Rect(rect.x + 22f, rect.y + 66f, rect.width - 44f, 20f), battleText, summaryBodyStyle);
+            GUI.Label(new Rect(rect.x + 22f, rect.y + 90f, rect.width - 44f, 20f), detailText, summaryBodyStyle);
+            GUI.Label(new Rect(rect.x + 22f, rect.y + 112f, rect.width - 44f, 18f), gainText, summaryMutedStyle);
         }
 
         private void DrawRunSummaryStatTile(Rect rect, string value, string label, Color accent)
         {
-            DrawPanelWithShadow(rect, new Color(HudPanelSoft.r, HudPanelSoft.g, HudPanelSoft.b, 0.98f), new Color(accent.r, accent.g, accent.b, 0.48f));
-            DrawRect(new Rect(rect.x, rect.y, rect.width, 3f), new Color(accent.r, accent.g, accent.b, 0.9f));
-            GUI.Label(new Rect(rect.x, rect.y + 10f, rect.width, 20f), value, statStyle);
-            GUI.Label(new Rect(rect.x + 8f, rect.y + 34f, rect.width - 16f, 18f), label, centeredMutedStyle);
+            DrawPaletteCardFrame(rect, accent, 0.98f, 0.05f);
+            GUI.Label(new Rect(rect.x + 8f, rect.y + 12f, rect.width - 16f, 26f), value, summaryStatValueStyle);
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 42f, rect.width - 24f, 20f), label, summaryStatLabelStyle);
         }
 
         private float CalculateRunSummaryContentHeight(RunSummaryData summary, float width)
         {
-            int heroColumns = width < 980f ? 3 : 5;
-            int heroRows = Mathf.CeilToInt(6f / heroColumns);
+            float runBoardHeight = 154f;
+            float spacing = 16f;
+            float heroStatsHeight = GetHeroStatsSectionHeight(width);
+            float summaryColumnsHeight = GetRunSummaryColumnsSectionHeight();
+            float encounterHeight = GetEncounterHistorySectionHeight(summary);
+            return runBoardHeight + spacing + heroStatsHeight + spacing + summaryColumnsHeight + spacing + encounterHeight + 8f;
+        }
+
+        private int GetHeroStatsColumns(float width)
+        {
+            return width < 1180f ? 3 : 6;
+        }
+
+        private float GetHeroStatsSectionHeight(float width)
+        {
+            int columns = GetHeroStatsColumns(width);
+            int rows = Mathf.CeilToInt(6f / columns);
+            return 52f + rows * 72f + (rows - 1) * 12f + 22f;
+        }
+
+        private float GetRunSummaryColumnsSectionHeight()
+        {
+            return 196f + 16f + 132f + 16f + 188f;
+        }
+
+        private float GetEncounterRecordHeight()
+        {
+            return 134f;
+        }
+
+        private float GetEncounterHistorySectionHeight(RunSummaryData summary)
+        {
             int encounterCount = summary.BattleHistory != null ? summary.BattleHistory.Count : 0;
-            float heroStatsHeight = 44f + heroRows * 64f + (heroRows - 1) * 10f + 18f;
-            float summaryColumnsHeight = 164f + 12f + 108f;
-            float encounterHeight = 28f + (encounterCount > 0 ? encounterCount * 120f : 72f);
-            return 124f + 14f + heroStatsHeight + 14f + summaryColumnsHeight + 14f + encounterHeight + 8f;
+            return 32f + (encounterCount > 0 ? encounterCount * (GetEncounterRecordHeight() + 14f) - 14f : 86f);
+        }
+
+        private void DrawSummaryMetricLine(Rect rect, string label, string value, Color accent)
+        {
+            DrawRect(new Rect(rect.x, rect.y + rect.height * 0.5f - 5f, 10f, 10f), new Color(accent.r, accent.g, accent.b, 0.92f));
+            GUI.Label(new Rect(rect.x + 18f, rect.y, rect.width * 0.5f, rect.height), label, summaryMutedStyle);
+            GUI.Label(new Rect(rect.x + rect.width * 0.45f, rect.y, rect.width * 0.55f - 8f, rect.height), value, new GUIStyle(summaryBodyStyle) { alignment = TextAnchor.UpperRight });
+        }
+
+        private void DrawRunTrendChart(Rect rect, RunSummaryData summary)
+        {
+            DrawPaletteDockFrame(rect, WorkshopBlue, 0.98f);
+            GUI.Label(new Rect(rect.x + 20f, rect.y + 16f, rect.width - 40f, 22f), "Fight Trend", summaryHeadingStyle);
+            GUI.Label(new Rect(rect.x + 20f, rect.y + 40f, rect.width - 40f, 18f), "Damage, cards played, and token yield by encounter.", summaryMutedStyle);
+
+            List<RunBattleRecord> records = summary.BattleHistory ?? new List<RunBattleRecord>();
+            if (records.Count == 0)
+            {
+                GUI.Label(new Rect(rect.x + 20f, rect.y + 82f, rect.width - 40f, 22f), "No recorded fights available for charting.", summaryBodyStyle);
+                return;
+            }
+
+            DrawMetricLegend(new Rect(rect.x + 20f, rect.y + 64f, rect.width - 40f, 16f), WorkshopGold, "Damage", WorkshopBlue, "Cards", WorkshopViolet, "Tokens");
+
+            Rect chartRect = new Rect(rect.x + 20f, rect.y + 88f, rect.width - 40f, rect.height - 112f);
+            float labelHeight = 22f;
+            float barAreaHeight = chartRect.height - labelHeight;
+            DrawRect(new Rect(chartRect.x, chartRect.yMax - labelHeight, chartRect.width, 1f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.52f));
+
+            int maxDamage = 1;
+            int maxCards = 1;
+            int maxTokens = 1;
+            for (int i = 0; i < records.Count; i++)
+            {
+                RunBattleRecord record = records[i];
+                if (record == null)
+                {
+                    continue;
+                }
+
+                maxDamage = Mathf.Max(maxDamage, record.TotalDamageDealt);
+                maxCards = Mathf.Max(maxCards, record.CardsPlayed);
+                maxTokens = Mathf.Max(maxTokens, record.TokensEarned);
+            }
+
+            float groupWidth = chartRect.width / records.Count;
+            GUIStyle centerLabelStyle = new GUIStyle(summaryMutedStyle) { alignment = TextAnchor.MiddleCenter, fontSize = 11 };
+            GUIStyle bossLabelStyle = new GUIStyle(summaryMutedStyle) { alignment = TextAnchor.MiddleCenter, fontSize = 10, fontStyle = FontStyle.Bold };
+
+            for (int i = 0; i < records.Count; i++)
+            {
+                RunBattleRecord record = records[i];
+                Rect groupRect = new Rect(chartRect.x + i * groupWidth, chartRect.y, groupWidth, chartRect.height);
+                if (record != null && record.IsBoss)
+                {
+                    DrawRect(new Rect(groupRect.x + 2f, groupRect.y + 2f, groupRect.width - 4f, barAreaHeight - 4f), new Color(WorkshopGold.r, WorkshopGold.g, WorkshopGold.b, 0.06f));
+                    GUI.Label(new Rect(groupRect.x, groupRect.y + 2f, groupRect.width, 14f), "Boss", bossLabelStyle);
+                }
+
+                float innerWidth = Mathf.Max(24f, groupRect.width - 14f);
+                float barGap = Mathf.Clamp(innerWidth * 0.08f, 4f, 10f);
+                float barWidth = Mathf.Max(6f, (innerWidth - barGap * 2f) / 3f);
+                float startX = groupRect.x + (groupRect.width - (barWidth * 3f + barGap * 2f)) * 0.5f;
+                float baseY = chartRect.y + barAreaHeight - 2f;
+                float damageHeight = record != null ? (barAreaHeight - 18f) * (record.TotalDamageDealt / (float)maxDamage) : 0f;
+                float cardsHeight = record != null ? (barAreaHeight - 18f) * (record.CardsPlayed / (float)maxCards) : 0f;
+                float tokensHeight = record != null ? (barAreaHeight - 18f) * (record.TokensEarned / (float)maxTokens) : 0f;
+
+                DrawRect(new Rect(startX, baseY - damageHeight, barWidth, damageHeight), new Color(WorkshopGold.r, WorkshopGold.g, WorkshopGold.b, 0.92f));
+                DrawRect(new Rect(startX + barWidth + barGap, baseY - cardsHeight, barWidth, cardsHeight), new Color(WorkshopBlue.r, WorkshopBlue.g, WorkshopBlue.b, 0.92f));
+                DrawRect(new Rect(startX + (barWidth + barGap) * 2f, baseY - tokensHeight, barWidth, tokensHeight), new Color(WorkshopViolet.r, WorkshopViolet.g, WorkshopViolet.b, 0.92f));
+
+                DrawOutline(new Rect(startX, baseY - damageHeight, barWidth, damageHeight), new Color(1f, 1f, 1f, 0.08f));
+                DrawOutline(new Rect(startX + barWidth + barGap, baseY - cardsHeight, barWidth, cardsHeight), new Color(1f, 1f, 1f, 0.08f));
+                DrawOutline(new Rect(startX + (barWidth + barGap) * 2f, baseY - tokensHeight, barWidth, tokensHeight), new Color(1f, 1f, 1f, 0.08f));
+
+                string fightLabel = record != null && record.EncounterIndex > 0 ? $"F{record.EncounterIndex}" : $"F{i + 1}";
+                GUI.Label(new Rect(groupRect.x, chartRect.yMax - labelHeight + 2f, groupRect.width, 18f), fightLabel, centerLabelStyle);
+            }
+        }
+
+        private void DrawMetricLegend(Rect rect, Color firstColor, string firstLabel, Color secondColor, string secondLabel, Color thirdColor, string thirdLabel)
+        {
+            float swatch = 10f;
+            float x = rect.x;
+            DrawRect(new Rect(x, rect.y + 3f, swatch, swatch), firstColor);
+            GUI.Label(new Rect(x + 16f, rect.y, 62f, rect.height), firstLabel, summaryMutedStyle);
+            x += 84f;
+            DrawRect(new Rect(x, rect.y + 3f, swatch, swatch), secondColor);
+            GUI.Label(new Rect(x + 16f, rect.y, 54f, rect.height), secondLabel, summaryMutedStyle);
+            x += 76f;
+            DrawRect(new Rect(x, rect.y + 3f, swatch, swatch), thirdColor);
+            GUI.Label(new Rect(x + 16f, rect.y, 58f, rect.height), thirdLabel, summaryMutedStyle);
         }
 
         private string BuildRewardsClaimedText(RunSummaryData summary)
@@ -1329,17 +1428,15 @@ namespace ArcaneAtelier.Battle
             MetaHudIconKind fallbackIcon,
             bool compact = false)
         {
-            DrawPanelWithShadow(rect, new Color(HudPanelSoft.r, HudPanelSoft.g, HudPanelSoft.b, 0.98f), new Color(accent.r, accent.g, accent.b, 0.5f));
-            DrawRect(new Rect(rect.x, rect.y, rect.width, compact ? 2f : 3f), new Color(accent.r, accent.g, accent.b, 0.9f));
+            DrawPaletteCardFrame(rect, accent, 0.98f, compact ? 0.04f : 0.05f);
 
-            float inset = compact ? 6f : 10f;
+            float inset = compact ? 8f : 12f;
             Rect artRect = new Rect(rect.x + inset, rect.y + inset, rect.height - inset * 2f, rect.height - inset * 2f);
-            DrawRect(artRect, new Color(0.05f, 0.08f, 0.12f, 0.98f));
-            DrawOutline(artRect, new Color(accent.r, accent.g, accent.b, 0.42f));
+            DrawPaletteCardFrame(artRect, accent, 0.98f, 0.03f);
 
-            if (!DrawSpriteContained(new Rect(artRect.x + 3f, artRect.y + 3f, artRect.width - 6f, artRect.height - 6f), sprite, Color.white))
+            if (!DrawSpriteContained(new Rect(artRect.x + 7f, artRect.y + 7f, artRect.width - 14f, artRect.height - 14f), sprite, Color.white))
             {
-                float iconSize = Mathf.Min(artRect.width - 10f, artRect.height - 10f);
+                float iconSize = Mathf.Min(artRect.width - 16f, artRect.height - 16f);
                 Rect iconRect = new Rect(artRect.center.x - iconSize * 0.5f, artRect.center.y - iconSize * 0.5f, iconSize, iconSize);
                 DrawMetaIcon(iconRect, fallbackIcon);
             }
@@ -1349,11 +1446,11 @@ namespace ArcaneAtelier.Battle
                 return;
             }
 
-            float textX = artRect.xMax + 10f;
-            float textWidth = rect.xMax - textX - 10f;
-            GUI.Label(new Rect(textX, rect.y + 6f, textWidth, 16f), title, mutedStyle);
-            GUI.Label(new Rect(textX, rect.y + 22f, textWidth, 18f), string.IsNullOrWhiteSpace(headline) ? "Unavailable" : headline, bodyStyle);
-            GUI.Label(new Rect(textX, rect.y + 38f, textWidth, 18f), body, mutedStyle);
+            float textX = artRect.xMax + 14f;
+            float textWidth = rect.xMax - textX - 14f;
+            GUI.Label(new Rect(textX, rect.y + 10f, textWidth, 16f), title, summaryMutedStyle);
+            GUI.Label(new Rect(textX, rect.y + 28f, textWidth, 20f), string.IsNullOrWhiteSpace(headline) ? "Unavailable" : headline, summaryBodyStyle);
+            GUI.Label(new Rect(textX, rect.y + 48f, textWidth, rect.height - 58f), body, summaryMutedStyle);
         }
 
         private void UpdateTargetRects()
