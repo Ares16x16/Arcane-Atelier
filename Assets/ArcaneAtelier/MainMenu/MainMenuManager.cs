@@ -56,14 +56,14 @@ public sealed class MainMenuManager : MonoBehaviour
     private Texture2D buttonHoverTexture;
     private Texture2D secondaryButtonTexture;
     private Texture2D secondaryButtonHoverTexture;
-    private Sprite workshopBackgroundSprite;
-    private Sprite workshopPanelMainSprite;
-    private Sprite workshopPanelSubSprite;
-    private Sprite workshopStatusBarSprite;
-    private Sprite workshopTopLeftPanelSprite;
-    private Sprite workshopOrnateFrameSprite;
-    private Sprite workshopButtonSprite;
-    private Sprite workshopButtonSmallSprite;
+    private Sprite uiBackgroundSprite;
+    private Sprite uiPanelMainSprite;
+    private Sprite uiPanelSubSprite;
+    private Sprite uiStatusBarSprite;
+    private Sprite uiTopLeftPanelSprite;
+    private Sprite uiOrnateFrameSprite;
+    private Sprite uiButtonSprite;
+    private Sprite uiButtonSmallSprite;
 
     private enum MenuPage
     {
@@ -238,7 +238,7 @@ public sealed class MainMenuManager : MonoBehaviour
         float panelHeight = Mathf.Min(screenHeight - 96f, 676f);
         Rect panelRect = new Rect((screenWidth - panelWidth) * 0.5f, (screenHeight - panelHeight) * 0.5f, panelWidth, panelHeight);
 
-        DrawRegionFrame(panelRect, workshopOrnateFrameSprite, new Color(0.88f, 0.72f, 0.3f, 1f));
+        DrawRegionFrame(panelRect, uiOrnateFrameSprite, new Color(0.88f, 0.72f, 0.3f, 1f));
 
         GUI.BeginGroup(panelRect);
         GUI.Label(new Rect(28f, 22f, panelRect.width - 56f, 32f), "Legacy Archive", pageTitleStyle);
@@ -289,7 +289,7 @@ public sealed class MainMenuManager : MonoBehaviour
         float panelHeight = Mathf.Min(screenHeight - 96f, 520f);
         Rect panelRect = new Rect((screenWidth - panelWidth) * 0.5f, (screenHeight - panelHeight) * 0.5f, panelWidth, panelHeight);
 
-        DrawRegionFrame(panelRect, workshopOrnateFrameSprite, new Color(0.42f, 0.72f, 0.94f, 1f));
+        DrawRegionFrame(panelRect, uiOrnateFrameSprite, new Color(0.42f, 0.72f, 0.94f, 1f));
 
         GUI.BeginGroup(panelRect);
         GUI.Label(new Rect(28f, 22f, panelRect.width - 56f, 32f), "Settings", pageTitleStyle);
@@ -375,9 +375,9 @@ public sealed class MainMenuManager : MonoBehaviour
 
     private void DrawBackdrop(float screenWidth, float screenHeight)
     {
-        if (workshopBackgroundSprite != null)
+        if (uiBackgroundSprite != null)
         {
-            DrawSprite(new Rect(0f, 0f, screenWidth, screenHeight), workshopBackgroundSprite, Color.white);
+            DrawSprite(new Rect(0f, 0f, screenWidth, screenHeight), uiBackgroundSprite, Color.white);
         }
         else if (battleBackdropTexture != null)
         {
@@ -401,7 +401,7 @@ public sealed class MainMenuManager : MonoBehaviour
     private void DrawSaveBadge(float screenWidth)
     {
         Rect badgeRect = new Rect(screenWidth - 250f, 22f, 226f, 64f);
-        DrawRegionFrame(badgeRect, workshopStatusBarSprite, new Color(0.72f, 0.5f, 0.96f, 1f));
+        DrawRegionFrame(badgeRect, uiStatusBarSprite, new Color(0.72f, 0.5f, 0.96f, 1f));
         GUI.Label(new Rect(badgeRect.x + 12f, badgeRect.y + 10f, badgeRect.width - 24f, 18f), $"Cycle {MetaProgressionStore.SealedCycles}", sectionStyle);
         GUI.Label(new Rect(badgeRect.x + 12f, badgeRect.y + 34f, badgeRect.width - 24f, 18f), $"Legacy Sigils {MetaProgressionStore.LegacySigils}", footerStyle);
     }
@@ -448,7 +448,7 @@ public sealed class MainMenuManager : MonoBehaviour
 
     private void DrawMenuPanel(Rect panelRect)
     {
-        DrawRegionFrame(panelRect, workshopTopLeftPanelSprite, new Color(0.88f, 0.72f, 0.3f, 1f));
+        DrawRegionFrame(panelRect, uiTopLeftPanelSprite, new Color(0.88f, 0.72f, 0.3f, 1f));
 
         GUI.Label(new Rect(panelRect.x, panelRect.y + 18f, panelRect.width, 22f), "MAIN MENU", sectionStyle);
 
@@ -540,16 +540,16 @@ public sealed class MainMenuManager : MonoBehaviour
             whiteTexture.Apply();
         }
 
-        if (workshopPanelMainSprite == null)
+        if (uiPanelMainSprite == null)
         {
-            workshopBackgroundSprite = ArcaneArtCatalog.GetWorkshopBackground();
-            workshopPanelMainSprite = ArcaneArtCatalog.GetWorkshopPanelMain();
-            workshopPanelSubSprite = ArcaneArtCatalog.GetWorkshopPanelSub();
-            workshopStatusBarSprite = ArcaneArtCatalog.GetWorkshopStatusBar();
-            workshopTopLeftPanelSprite = ArcaneArtCatalog.GetWorkshopTopLeftPanel();
-            workshopOrnateFrameSprite = ArcaneArtCatalog.GetWorkshopOrnateFrame();
-            workshopButtonSprite = ArcaneArtCatalog.GetWorkshopButton();
-            workshopButtonSmallSprite = ArcaneArtCatalog.GetWorkshopButtonSmall();
+            uiBackgroundSprite = ArcaneArtCatalog.GetUiBackground();
+            uiPanelMainSprite = ArcaneArtCatalog.GetUiPanelMain();
+            uiPanelSubSprite = ArcaneArtCatalog.GetUiPanelSub();
+            uiStatusBarSprite = ArcaneArtCatalog.GetUiStatusBar();
+            uiTopLeftPanelSprite = ArcaneArtCatalog.GetUiTopLeftPanel();
+            uiOrnateFrameSprite = ArcaneArtCatalog.GetUiOrnateFrame();
+            uiButtonSprite = ArcaneArtCatalog.GetUiButton();
+            uiButtonSmallSprite = ArcaneArtCatalog.GetUiButtonSmall();
         }
 
         if (titleStyle != null)
@@ -607,25 +607,18 @@ public sealed class MainMenuManager : MonoBehaviour
         footerStyle.alignment = TextAnchor.MiddleCenter;
         footerStyle.normal.textColor = new Color32(149, 159, 178, 255);
 
-        buttonStyle = new GUIStyle(GUI.skin.button);
+        buttonStyle = new GUIStyle(GUI.skin.label);
         buttonStyle.fontSize = 21;
         buttonStyle.fontStyle = FontStyle.Bold;
-        buttonStyle.normal.background = buttonTexture;
-        buttonStyle.hover.background = buttonHoverTexture;
-        buttonStyle.active.background = buttonHoverTexture;
         buttonStyle.normal.textColor = new Color32(251, 245, 233, 255);
         buttonStyle.hover.textColor = new Color32(255, 250, 240, 255);
         buttonStyle.alignment = TextAnchor.MiddleCenter;
-        buttonStyle.border = new RectOffset(10, 10, 10, 10);
 
         archivePrimaryButtonStyle = new GUIStyle(buttonStyle);
         archivePrimaryButtonStyle.fontSize = 16;
 
         secondaryButtonStyle = new GUIStyle(buttonStyle);
         secondaryButtonStyle.fontSize = 17;
-        secondaryButtonStyle.normal.background = secondaryButtonTexture;
-        secondaryButtonStyle.hover.background = secondaryButtonHoverTexture;
-        secondaryButtonStyle.active.background = secondaryButtonHoverTexture;
 
         smallButtonStyle = new GUIStyle(secondaryButtonStyle);
         smallButtonStyle.fontSize = 13;
@@ -678,10 +671,10 @@ public sealed class MainMenuManager : MonoBehaviour
 
     private void DrawPanelFrame(Rect rect, Color accent)
     {
-        if (workshopPanelMainSprite != null)
+        if (uiPanelMainSprite != null)
         {
             DrawRect(new Rect(rect.x + 5f, rect.y + 7f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.22f));
-            DrawSprite(rect, workshopPanelMainSprite, Color.white);
+            DrawSprite(rect, uiPanelMainSprite, Color.white);
             DrawRect(new Rect(rect.x + 14f, rect.y + 14f, rect.width - 28f, rect.height - 28f), new Color(accent.r, accent.g, accent.b, 0.05f));
             DrawRect(new Rect(rect.x + 28f, rect.y + 18f, rect.width - 56f, 2f), new Color(accent.r, accent.g, accent.b, 0.28f));
             return;
@@ -693,10 +686,10 @@ public sealed class MainMenuManager : MonoBehaviour
 
     private void DrawSubPanel(Rect rect, Color accent)
     {
-        if (workshopPanelSubSprite != null)
+        if (uiPanelSubSprite != null)
         {
             DrawRect(new Rect(rect.x + 3f, rect.y + 4f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.16f));
-            DrawSprite(rect, workshopPanelSubSprite, Color.white);
+            DrawSprite(rect, uiPanelSubSprite, Color.white);
             DrawRect(new Rect(rect.x + 10f, rect.y + 10f, rect.width - 20f, rect.height - 20f), new Color(accent.r, accent.g, accent.b, 0.045f));
             return;
         }
@@ -721,19 +714,26 @@ public sealed class MainMenuManager : MonoBehaviour
                 textColor = enabled ? labelStyle.normal.textColor : new Color32(146, 152, 165, 255)
             }
         };
+        style.normal.background = null;
+        style.hover.background = null;
+        style.active.background = null;
+        style.focused.background = null;
+        style.onNormal.background = null;
+        style.onHover.background = null;
+        style.onActive.background = null;
+        style.onFocused.background = null;
 
-        bool useWideArtButton = workshopButtonSprite != null && rect.width >= rect.height * 2.1f;
-        if (useWideArtButton)
+        if (uiButtonSprite != null)
         {
             DrawRect(new Rect(rect.x + 2f, rect.y + 3f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.18f));
-            DrawSprite(rect, workshopButtonSprite, enabled ? Color.white : new Color(0.72f, 0.72f, 0.72f, 0.82f));
+            DrawSprite(rect, uiButtonSprite, enabled ? Color.white : new Color(0.72f, 0.72f, 0.72f, 0.82f));
             DrawRect(new Rect(rect.x + 10f, rect.y + 8f, rect.width - 20f, rect.height - 16f), new Color(accent.r, accent.g, accent.b, enabled ? (isHover ? 0.14f : 0.08f) : 0.03f));
             GUI.Label(rect, label, style);
         }
-        else if (workshopButtonSmallSprite != null)
+        else if (uiButtonSmallSprite != null)
         {
             DrawRect(new Rect(rect.x + 2f, rect.y + 3f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.16f));
-            DrawSprite(rect, workshopButtonSmallSprite, enabled ? Color.white : new Color(0.72f, 0.72f, 0.72f, 0.82f));
+            DrawSprite(rect, uiButtonSmallSprite, enabled ? Color.white : new Color(0.72f, 0.72f, 0.72f, 0.82f));
             DrawRect(new Rect(rect.x + 4f, rect.y + 4f, rect.width - 8f, rect.height - 8f), new Color(accent.r, accent.g, accent.b, enabled ? (isHover ? 0.14f : 0.06f) : 0.03f));
             GUI.Label(rect, label, style);
         }

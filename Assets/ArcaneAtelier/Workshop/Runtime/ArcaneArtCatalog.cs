@@ -17,7 +17,7 @@ namespace ArcaneAtelier
         private const string ConduitSpritePath = "Nodes/Factories/node_factory_conduit.png";
         private const string TurnConduitSpritePath = "Nodes/Factories/node_factory_turn_conduit.png";
         private const string TurnSpellConduitSpritePath = "Nodes/Factories/node_factory_turn_spell_conduit.png";
-        private const string WorkshopArtRoot = "Workshop/";
+        private const string UiArtRoot = "Workshop/";
 
         public static Sprite GetElementIcon(ArcaneAtelier.Workshop.WorkshopElementAttribute element)
         {
@@ -95,119 +95,234 @@ namespace ArcaneAtelier
             };
         }
 
+        public static Sprite GetUiBackground()
+        {
+            return LoadSprite($"{UiArtRoot}WS_BG_Far.png");
+        }
+
+        public static Sprite GetUiStatusBar()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Status_Bar.png");
+        }
+
+        public static Sprite GetUiTopLeftPanel()
+        {
+            return LoadSprite($"{UiArtRoot}WS_TopLeft_Panel.png");
+        }
+
+        public static Sprite GetUiRightRailPanel()
+        {
+            return LoadSprite($"{UiArtRoot}WS_RightRail_Panel.png");
+        }
+
+        public static Sprite GetUiPaletteDock()
+        {
+            return LoadSprite($"{UiArtRoot}WS_PaletteDock.png");
+        }
+
+        public static Sprite GetUiSubPanelColumn()
+        {
+            return LoadSprite($"{UiArtRoot}WS_SubPanel_Column.png");
+        }
+
+        public static Sprite GetUiOrnateFrame()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Frame_temp.png");
+        }
+
+        public static Sprite GetUiBoardUnderlay()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Board_Underlay.png");
+        }
+
+        public static Sprite GetUiTileA()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Tile_A.png");
+        }
+
+        public static Sprite GetUiTileB()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Tile_B.png");
+        }
+
+        public static Sprite GetUiTileHover()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Tile_Hover.png", true);
+        }
+
+        public static Sprite GetUiTileSelected()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Tile_Selected.png", true);
+        }
+
+        public static Sprite GetUiLeylineHorizontal()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Leyline_H.png", true);
+        }
+
+        public static Sprite GetUiLeylineVertical()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Leyline_V.png", true);
+        }
+
+        public static Sprite GetUiPanelMain()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Panel_Main_9slice.png");
+        }
+
+        public static Sprite GetUiPanelSub()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Panel_Sub_9slice.png");
+        }
+
+        public static Sprite GetUiButton()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Button.png", true, 28);
+        }
+
+        public static Sprite GetUiButtonSmall()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Button_Small.png", true);
+        }
+
+        public static Sprite GetUiTabActive()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Tab_Active.png", true);
+        }
+
+        public static Sprite GetUiTabInactive()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Tab_Inactive.png", true);
+        }
+
+        public static Sprite GetUiBlueprintCard()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Blueprint_Card.png", true, 20);
+        }
+
+        public static Sprite GetUiSlotFrame()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Slot_Frame.png", true);
+        }
+
+        public static Sprite GetUiTooltipFrame()
+        {
+            return LoadSprite($"{UiArtRoot}WS_Tooltip_Frame.png", true);
+        }
+
         public static Sprite GetWorkshopBackground()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_BG_Far.png");
+            return GetUiBackground();
         }
 
         public static Sprite GetWorkshopStatusBar()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Status_Bar.png");
+            return GetUiStatusBar();
         }
 
         public static Sprite GetWorkshopTopLeftPanel()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_TopLeft_Panel.png");
+            return GetUiTopLeftPanel();
         }
 
         public static Sprite GetWorkshopRightRailPanel()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_RightRail_Panel.png");
+            return GetUiRightRailPanel();
         }
 
         public static Sprite GetWorkshopPaletteDock()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_PaletteDock.png");
+            return GetUiPaletteDock();
         }
 
         public static Sprite GetWorkshopSubPanelColumn()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_SubPanel_Column.png");
+            return GetUiSubPanelColumn();
         }
 
         public static Sprite GetWorkshopOrnateFrame()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Frame_temp.png");
+            return GetUiOrnateFrame();
         }
 
         public static Sprite GetWorkshopBoardUnderlay()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Board_Underlay.png");
+            return GetUiBoardUnderlay();
         }
 
         public static Sprite GetWorkshopTileA()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Tile_A.png");
+            return GetUiTileA();
         }
 
         public static Sprite GetWorkshopTileB()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Tile_B.png");
+            return GetUiTileB();
         }
 
         public static Sprite GetWorkshopTileHover()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Tile_Hover.png", true);
+            return GetUiTileHover();
         }
 
         public static Sprite GetWorkshopTileSelected()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Tile_Selected.png", true);
+            return GetUiTileSelected();
         }
 
         public static Sprite GetWorkshopLeylineHorizontal()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Leyline_H.png", true);
+            return GetUiLeylineHorizontal();
         }
 
         public static Sprite GetWorkshopLeylineVertical()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Leyline_V.png", true);
+            return GetUiLeylineVertical();
         }
 
         public static Sprite GetWorkshopPanelMain()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Panel_Main_9slice.png");
+            return GetUiPanelMain();
         }
 
         public static Sprite GetWorkshopPanelSub()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Panel_Sub_9slice.png");
+            return GetUiPanelSub();
         }
 
         public static Sprite GetWorkshopButton()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Button.png", true, 28);
+            return GetUiButton();
         }
 
         public static Sprite GetWorkshopButtonSmall()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Button_Small.png", true);
+            return GetUiButtonSmall();
         }
 
         public static Sprite GetWorkshopTabActive()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Tab_Active.png", true);
+            return GetUiTabActive();
         }
 
         public static Sprite GetWorkshopTabInactive()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Tab_Inactive.png", true);
+            return GetUiTabInactive();
         }
 
         public static Sprite GetWorkshopBlueprintCard()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Blueprint_Card.png", true, 20);
+            return GetUiBlueprintCard();
         }
 
         public static Sprite GetWorkshopSlotFrame()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Slot_Frame.png", true);
+            return GetUiSlotFrame();
         }
 
         public static Sprite GetWorkshopTooltipFrame()
         {
-            return LoadSprite($"{WorkshopArtRoot}WS_Tooltip_Frame.png", true);
+            return GetUiTooltipFrame();
         }
 
         private static Sprite LoadSprite(string relativePath, bool trimTransparentBounds = false, byte alphaThreshold = 8)

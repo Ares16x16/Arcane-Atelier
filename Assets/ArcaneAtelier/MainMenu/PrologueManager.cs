@@ -1,3 +1,4 @@
+using ArcaneAtelier;
 using ArcaneAtelier.Audio;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -35,6 +36,12 @@ public sealed class PrologueManager : MonoBehaviour
     private Texture2D topTintTexture;
     private Texture2D bottomTintTexture;
     private Texture2D shadowTexture;
+    private Texture2D whiteTexture;
+    private Sprite uiBackgroundSprite;
+    private Sprite uiPanelMainSprite;
+    private Sprite uiOrnateFrameSprite;
+    private Sprite uiButtonSprite;
+    private Sprite uiButtonSmallSprite;
 
     private void Awake()
     {
@@ -89,6 +96,22 @@ public sealed class PrologueManager : MonoBehaviour
             return;
         }
 
+        if (whiteTexture == null)
+        {
+            whiteTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+            whiteTexture.SetPixel(0, 0, Color.white);
+            whiteTexture.Apply();
+        }
+
+        if (uiPanelMainSprite == null)
+        {
+            uiBackgroundSprite = ArcaneArtCatalog.GetUiBackground();
+            uiPanelMainSprite = ArcaneArtCatalog.GetUiPanelMain();
+            uiOrnateFrameSprite = ArcaneArtCatalog.GetUiOrnateFrame();
+            uiButtonSprite = ArcaneArtCatalog.GetUiButton();
+            uiButtonSmallSprite = ArcaneArtCatalog.GetUiButtonSmall();
+        }
+
         backgroundTexture = CreateSolidTexture(new Color32(7, 10, 18, 255));
         panelTexture = CreateSolidTexture(new Color32(14, 18, 28, 240));
         accentTexture = CreateSolidTexture(new Color32(198, 157, 71, 255));
@@ -121,20 +144,14 @@ public sealed class PrologueManager : MonoBehaviour
         hintStyle.wordWrap = true;
         hintStyle.normal.textColor = new Color32(170, 176, 192, 255);
 
-        primaryButtonStyle = new GUIStyle(GUI.skin.button);
+        primaryButtonStyle = new GUIStyle(GUI.skin.label);
         primaryButtonStyle.fontSize = 20;
         primaryButtonStyle.fontStyle = FontStyle.Bold;
-        primaryButtonStyle.normal.background = buttonTexture;
-        primaryButtonStyle.hover.background = buttonHoverTexture;
-        primaryButtonStyle.active.background = buttonHoverTexture;
         primaryButtonStyle.normal.textColor = new Color32(250, 244, 230, 255);
         primaryButtonStyle.hover.textColor = new Color32(255, 251, 239, 255);
-        primaryButtonStyle.border = new RectOffset(8, 8, 8, 8);
+        primaryButtonStyle.alignment = TextAnchor.MiddleCenter;
 
         secondaryButtonStyle = new GUIStyle(primaryButtonStyle);
-        secondaryButtonStyle.normal.background = panelTexture;
-        secondaryButtonStyle.hover.background = CreateSolidTexture(new Color32(36, 43, 57, 255));
-        secondaryButtonStyle.active.background = secondaryButtonStyle.hover.background;
     }
 
     private void OnGUI()
@@ -155,38 +172,35 @@ public sealed class PrologueManager : MonoBehaviour
         float panelHeight = Mathf.Min(520f, screenHeight - 112f);
         Rect panelRect = new Rect(leftMargin, (screenHeight - panelHeight) * 0.5f, panelWidth, panelHeight);
 
-        GUI.Box(panelRect, GUIContent.none, panelStyle);
-        GUI.DrawTexture(new Rect(panelRect.x, panelRect.y, panelRect.width, AccentLineHeight), accentTexture, ScaleMode.StretchToFill);
+        DrawRegionFrame(panelRect, uiOrnateFrameSprite, new Color(0.88f, 0.72f, 0.3f, 1f));
 
-        Rect titleRect = new Rect(panelRect.x + 30f, panelRect.y + 26f, panelRect.width - 60f, 44f);
+        Rect titleRect = new Rect(panelRect.x + 70f, panelRect.y + 36f, panelRect.width - 60f, 44f);
         GUI.Label(titleRect, "The First Breach", titleStyle);
 
-        Rect chapterRect = new Rect(panelRect.x + 30f, panelRect.y + 76f, panelRect.width - 60f, 24f);
+        Rect chapterRect = new Rect(panelRect.x + 70f, panelRect.y + 86f, panelRect.width - 60f, 24f);
         GUI.Label(chapterRect, $"Prologue {currentPage + 1}/{storyPages.Length}  /  Spellsmith briefing", hintStyle);
 
-        Rect bodyRect = new Rect(panelRect.x + 30f, panelRect.y + 118f, panelRect.width - 60f, panelRect.height - 230f);
+        Rect bodyRect = new Rect(panelRect.x + 70f, panelRect.y + 118f, panelRect.width - 60f, panelRect.height - 230f);
         GUI.Label(bodyRect, GetVisibleStoryText(), bodyStyle);
 
         DrawMovingPlayer(screenWidth, screenHeight, panelRect);
 
-        Rect hintRect = new Rect(panelRect.x + 30f, panelRect.yMax - 98f, panelRect.width - 60f, 26f);
+        Rect hintRect = new Rect(panelRect.x + 70f, panelRect.yMax - 108f, panelRect.width - 60f, 26f);
         string hintText = currentPage >= storyPages.Length - 1
             ? "Press Space or Enter to enter the workshop. Press Esc to return to menu."
             : "Press Space or Enter to continue. Press Esc to return to menu.";
         GUI.Label(hintRect, hintText, hintStyle);
 
         float buttonY = panelRect.yMax - 58f;
-        Rect primaryButtonRect = new Rect(panelRect.x + 30f, buttonY, 220f, 38f);
-        Rect secondaryButtonRect = new Rect(panelRect.x + 266f, buttonY, 170f, 38f);
+        Rect primaryButtonRect = new Rect(panelRect.x + 70f, buttonY - 22f, 220f, 38f);
+        Rect secondaryButtonRect = new Rect(panelRect.x + 306f, buttonY - 22f, 170f, 38f);
 
-        ReportHover(primaryButtonRect, "advance");
-        if (GUI.Button(primaryButtonRect, currentPage >= storyPages.Length - 1 ? "Enter Workshop" : "Continue", primaryButtonStyle))
+        if (DrawThemedButton(primaryButtonRect, currentPage >= storyPages.Length - 1 ? "Enter Workshop" : "Continue", new Color(0.88f, 0.72f, 0.3f, 1f), "advance"))
         {
             AdvanceOrEnterWorkshop();
         }
 
-        ReportHover(secondaryButtonRect, "back_to_menu");
-        if (GUI.Button(secondaryButtonRect, "Back To Menu", secondaryButtonStyle))
+        if (DrawThemedButton(secondaryButtonRect, "Back To Menu", new Color(0.42f, 0.72f, 0.94f, 1f), "back_to_menu"))
         {
             ReturnToMenu();
         }
@@ -197,13 +211,22 @@ public sealed class PrologueManager : MonoBehaviour
 
     private void DrawSceneBackdrop(float screenWidth, float screenHeight)
     {
-        if (battleBackdropTexture != null)
+        if (uiBackgroundSprite != null)
+        {
+            DrawSprite(new Rect(0f, 0f, screenWidth, screenHeight), uiBackgroundSprite, Color.white);
+        }
+        else if (battleBackdropTexture != null)
         {
             GUI.DrawTexture(new Rect(0f, 0f, screenWidth, screenHeight), battleBackdropTexture, ScaleMode.ScaleAndCrop);
         }
         else
         {
             GUI.DrawTexture(new Rect(0f, 0f, screenWidth, screenHeight), backgroundTexture, ScaleMode.StretchToFill);
+        }
+
+        if (battleBackdropTexture != null)
+        {
+            DrawTextureContain(new Rect(0f, 0f, screenWidth, screenHeight), battleBackdropTexture, 0.14f);
         }
 
         GUI.DrawTexture(new Rect(0f, 0f, screenWidth, screenHeight), backdropTintTexture, ScaleMode.StretchToFill);
@@ -266,6 +289,11 @@ public sealed class PrologueManager : MonoBehaviour
 
     private static void DrawTextureContain(Rect rect, Texture2D texture)
     {
+        DrawTextureContain(rect, texture, 1f);
+    }
+
+    private static void DrawTextureContain(Rect rect, Texture2D texture, float alpha)
+    {
         if (texture == null)
         {
             return;
@@ -288,7 +316,10 @@ public sealed class PrologueManager : MonoBehaviour
             drawRect.width = width;
         }
 
+        Color previous = GUI.color;
+        GUI.color = new Color(1f, 1f, 1f, alpha);
         GUI.DrawTexture(drawRect, texture, ScaleMode.StretchToFill, true);
+        GUI.color = previous;
     }
 
     private static void ReportHover(Rect rect, string controlId)
@@ -300,5 +331,95 @@ public sealed class PrologueManager : MonoBehaviour
         }
 
         AudioManager.ReportUIHover($"prologue:{controlId}");
+    }
+
+    private void DrawRegionFrame(Rect rect, Sprite sprite, Color accent)
+    {
+        if (sprite != null)
+        {
+            DrawRect(new Rect(rect.x + 4f, rect.y + 5f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.18f));
+            DrawSprite(rect, sprite, Color.white);
+            DrawRect(new Rect(rect.x + 22f, rect.y + 18f, Mathf.Max(0f, rect.width - 44f), Mathf.Max(0f, rect.height - 36f)), new Color(accent.r, accent.g, accent.b, 0.03f));
+            return;
+        }
+
+        DrawRect(new Rect(rect.x + 5f, rect.y + 7f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.22f));
+        GUI.DrawTexture(rect, panelTexture, ScaleMode.StretchToFill);
+        DrawRect(new Rect(rect.x, rect.y, rect.width, AccentLineHeight), accent);
+    }
+
+    private bool DrawThemedButton(Rect rect, string label, Color accent, string interactionId)
+    {
+        bool isHover = Event.current != null && rect.Contains(Event.current.mousePosition);
+        if (isHover)
+        {
+            AudioManager.ReportUIHover($"prologue:{interactionId}");
+        }
+
+        GUIStyle labelStyle = rect.height <= 32f ? secondaryButtonStyle : primaryButtonStyle;
+        GUIStyle textStyle = new GUIStyle(labelStyle);
+        textStyle.normal.background = null;
+        textStyle.hover.background = null;
+        textStyle.active.background = null;
+        textStyle.focused.background = null;
+        textStyle.onNormal.background = null;
+        textStyle.onHover.background = null;
+        textStyle.onActive.background = null;
+        textStyle.onFocused.background = null;
+        if (uiButtonSprite != null)
+        {
+            DrawRect(new Rect(rect.x + 2f, rect.y + 3f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.18f));
+            DrawSprite(rect, uiButtonSprite, Color.white);
+            DrawRect(new Rect(rect.x + 10f, rect.y + 8f, rect.width - 20f, rect.height - 16f), new Color(accent.r, accent.g, accent.b, isHover ? 0.14f : 0.08f));
+            GUI.Label(rect, label, textStyle);
+        }
+        else if (uiButtonSmallSprite != null)
+        {
+            DrawRect(new Rect(rect.x + 2f, rect.y + 3f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.16f));
+            DrawSprite(rect, uiButtonSmallSprite, Color.white);
+            DrawRect(new Rect(rect.x + 4f, rect.y + 4f, rect.width - 8f, rect.height - 8f), new Color(accent.r, accent.g, accent.b, isHover ? 0.14f : 0.06f));
+            GUI.Label(rect, label, textStyle);
+        }
+        else
+        {
+            GUI.DrawTexture(rect, buttonTexture, ScaleMode.StretchToFill);
+            DrawRect(new Rect(rect.x, rect.y, rect.width, AccentLineHeight), accent);
+            GUI.Label(rect, label, textStyle);
+        }
+
+        if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
+        {
+            AudioManager.PlaySFX(SFXType.ButtonClick);
+            return true;
+        }
+
+        return false;
+    }
+
+    private void DrawRect(Rect rect, Color color)
+    {
+        Color previous = GUI.color;
+        GUI.color = color;
+        GUI.DrawTexture(rect, whiteTexture, ScaleMode.StretchToFill);
+        GUI.color = previous;
+    }
+
+    private void DrawSprite(Rect rect, Sprite sprite, Color tint)
+    {
+        if (sprite == null || sprite.texture == null)
+        {
+            return;
+        }
+
+        Color previousColor = GUI.color;
+        GUI.color = tint;
+        Rect textureRect = sprite.textureRect;
+        Rect uv = new Rect(
+            textureRect.x / sprite.texture.width,
+            textureRect.y / sprite.texture.height,
+            textureRect.width / sprite.texture.width,
+            textureRect.height / sprite.texture.height);
+        GUI.DrawTextureWithTexCoords(rect, sprite.texture, uv, true);
+        GUI.color = previousColor;
     }
 }

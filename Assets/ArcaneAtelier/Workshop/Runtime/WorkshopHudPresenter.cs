@@ -646,33 +646,36 @@ namespace ArcaneAtelier.Workshop
             bool showBufferDetails = node != null && Input.GetKey(KeyCode.T);
             var bufferEntries = !showBufferDetails
                 ? System.Array.Empty<System.Collections.Generic.KeyValuePair<WorkshopItemDefinition, int>>()
-                : node.EnumerateBuffer().Where(pair => pair.Key != null && pair.Value > 0).Take(8).ToArray();
-            var tooltipWidth = showBufferDetails ? 386f : node == null ? 238f : 304f;
-            var tooltipHeight = node == null
-                ? 82f
-                : showBufferDetails
-                    ? (bufferEntries.Length == 0 ? 186f : 172f + Mathf.Min(bufferEntries.Length, 8) * 48f)
-                    : 132f;
+                : node.EnumerateBuffer().Where(pair => pair.Key != null && pair.Value > 0).ToArray();
+            float tooltipWidth = showBufferDetails ? 404f : node == null ? 246f : 320f;
+            float descriptionHeight = node == null
+                ? 0f
+                : Mathf.Max(34f, bodyStyle.CalcHeight(new GUIContent(node.Definition.Description), tooltipWidth - 56f));
+            float bufferHeight = showBufferDetails ? CalculateTooltipBufferHeight(node, bufferEntries) : 0f;
+            float tooltipHeight = node == null
+                ? 90f
+                : 94f + descriptionHeight + 24f + (showBufferDetails ? bufferHeight + 14f : 0f);
             Rect rect = PositionTooltip(mouse, tooltipWidth, tooltipHeight);
 
-            DrawTooltipFrame(rect, node == null ? new Color(0.42f, 0.54f, 0.7f) : GetCategoryColor(node.Definition.Category, node.Definition.Tint));
+            DrawHoverCardFrame(rect, node == null ? new Color(0.42f, 0.54f, 0.7f) : GetCategoryColor(node.Definition.Category, node.Definition.Tint));
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(28f, 12f, rect.width - 28f, 18f), node == null ? "Empty Tile" : node.Definition.DisplayName, sectionStyle);
-            GUI.Label(new Rect(28f, 30f, rect.width - 28f, 18f), $"Cell {controller.HoveredCell.x}, {controller.HoveredCell.y}", tinyLabelStyle);
+            GUI.Label(new Rect(28f, 18f, rect.width - 28f, 18f), node == null ? "Empty Tile" : node.Definition.DisplayName, sectionStyle);
+            GUI.Label(new Rect(28f, 36f, rect.width - 28f, 18f), $"Cell {controller.HoveredCell.x}, {controller.HoveredCell.y}", tinyLabelStyle);
 
             if (node == null)
             {
-                GUI.Label(new Rect(28f, 50f, rect.width - 28f, 18f), "LMB place armed machine", bodyStyle);
+                GUI.Label(new Rect(28f, 56f, rect.width - 28f, 18f), "LMB place armed machine", bodyStyle);
             }
             else
             {
-                GUI.Label(new Rect(28f, 50f, rect.width - 28f, 18f), node.Definition.Category.ToString(), tinyLabelStyle);
-                GUI.Label(new Rect(28f, 68f, rect.width - 28f, 34f), node.Definition.Description, bodyStyle);
+                GUI.Label(new Rect(28f, 56f, rect.width - 28f, 18f), node.Definition.Category.ToString(), tinyLabelStyle);
+                GUI.Label(new Rect(28f, 74f, rect.width - 28f, descriptionHeight), node.Definition.Description, bodyStyle);
                 string activeText = node.IsRecentlyActive ? "Active" : "Idle";
-                GUI.Label(new Rect(28f, 104f, rect.width - 28f, 18f), $"Rot {node.RotationQuarterTurns * 90}°  Buffer {node.BufferedItemCount}/{node.Definition.BufferCapacity}  {activeText}", tinyLabelStyle);
+                float statsY = 68f + descriptionHeight + 8f;
+                GUI.Label(new Rect(28f, statsY, rect.width - 28f, 18f), $"Rot {node.RotationQuarterTurns * 90}°  Buffer {node.BufferedItemCount}/{node.Definition.BufferCapacity}  {activeText}", tinyLabelStyle);
                 if (showBufferDetails)
                 {
-                    DrawTooltipBuffer(new Rect(28f, 126f, rect.width - 28f, rect.height - 138f), node, bufferEntries);
+                    DrawTooltipBuffer(new Rect(28f, statsY + 22f, rect.width - 56f, bufferHeight), node, bufferEntries);
                 }
             }
 
@@ -746,6 +749,16 @@ namespace ArcaneAtelier.Workshop
                 GUI.Label(new Rect(rowRect.xMax - 48f, rowRect.y + 12f, 40f, 18f), $"x{pair.Value}", tooltipPrimaryStyle);
                 listY += 48f;
             }
+        }
+
+        private float CalculateTooltipBufferHeight(WorkshopNodeState node, System.Collections.Generic.KeyValuePair<WorkshopItemDefinition, int>[] bufferEntries)
+        {
+            if (node == null || bufferEntries.Length == 0)
+            {
+                return 62f;
+            }
+
+            return 24f + bufferEntries.Length * 48f;
         }
 
         private void DrawItemIcon(Rect rect, WorkshopItemDefinition item)
@@ -1231,6 +1244,19 @@ namespace ArcaneAtelier.Workshop
                 DrawRect(new Rect(rect.x + 4f, rect.y + 5f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.18f));
                 DrawSprite(rect, tooltipFrameSprite, Color.white);
                 DrawRect(new Rect(rect.x + 14f, rect.y + 12f, rect.width - 28f, rect.height - 24f), new Color(accent.r, accent.g, accent.b, 0.04f));
+                return;
+            }
+
+            DrawPanelFrame(rect, accent);
+        }
+
+        private void DrawHoverCardFrame(Rect rect, Color accent)
+        {
+            if (paletteDockSprite != null)
+            {
+                DrawRect(new Rect(rect.x + 4f, rect.y + 5f, rect.width, rect.height), new Color(0f, 0f, 0f, 0.18f));
+                DrawSprite(rect, paletteDockSprite, Color.white);
+                DrawRect(InsetRect(rect, 22f, 18f, 22f, 18f), new Color(accent.r, accent.g, accent.b, 0.03f));
                 return;
             }
 
