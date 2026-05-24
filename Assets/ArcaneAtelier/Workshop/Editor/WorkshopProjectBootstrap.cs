@@ -527,8 +527,18 @@ namespace ArcaneAtelier.Workshop.Editor
 
             var parts = id.Split('.');
             var subdir = parts.Length >= 2 && parts[1] == "factory" ? "Factories" : "Spirits";
-            var spritePath = $"Assets/ArcaneAtelier/Art/Nodes/{subdir}/{SanitizeAssetName(id)}.png";
+            var spritePath = $"Assets/ArcaneAtelier/Art/Nodes/{subdir}/{ResolveNodeSpriteFileName(id)}.png";
             return AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+        }
+
+        private static string ResolveNodeSpriteFileName(string id)
+        {
+            if (id == "node.factory.deck_collector")
+            {
+                return "node_battle_deck_collector";
+            }
+
+            return SanitizeAssetName(id);
         }
 
         private static WorkshopRewardDefinition UpsertReward(

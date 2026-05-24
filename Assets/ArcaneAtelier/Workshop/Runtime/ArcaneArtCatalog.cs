@@ -17,6 +17,7 @@ namespace ArcaneAtelier
         private const string ConduitSpritePath = "Nodes/Factories/node_factory_conduit.png";
         private const string TurnConduitSpritePath = "Nodes/Factories/node_factory_turn_conduit.png";
         private const string TurnSpellConduitSpritePath = "Nodes/Factories/node_factory_turn_spell_conduit.png";
+        private const string DeckCollectorSpritePath = "Nodes/Factories/node_battle_deck_collector.png";
         private const string UiArtRoot = "Workshop/";
         private const string StatusBoxArtRoot = "Resources/UI/Status Boxes/";
 
@@ -59,7 +60,7 @@ namespace ArcaneAtelier
                 "node.spirit.dark" => LoadSprite("Nodes/Spirits/node_spirit_dark.png"),
                 "node.factory.conduit" => LoadSprite(ConduitSpritePath),
                 "node.factory.spell_conduit" => LoadSprite(ConduitSpritePath),
-                "node.factory.deck_collector" => LoadSprite(ConduitSpritePath),
+                "node.factory.deck_collector" => LoadSprite(DeckCollectorSpritePath),
                 Workshop.WorkshopNodeVariantUtility.TurningConduitId => LoadSprite(TurnConduitSpritePath),
                 Workshop.WorkshopNodeVariantUtility.TurningConduitMirrorId => LoadSprite(TurnConduitSpritePath),
                 Workshop.WorkshopNodeVariantUtility.TurningSpellConduitId => LoadSprite(TurnSpellConduitSpritePath),

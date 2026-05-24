@@ -360,7 +360,7 @@ namespace ArcaneAtelier.Workshop
 
             var parts = id.Split('.');
             var subdir = parts.Length >= 2 && parts[1] == "factory" ? "Factories" : "Spirits";
-            var filePath = Path.Combine(Application.dataPath, "ArcaneAtelier", "Art", "Nodes", subdir, $"{SanitizeAssetName(id)}.png");
+            var filePath = Path.Combine(Application.dataPath, "ArcaneAtelier", "Art", "Nodes", subdir, $"{ResolveNodeSpriteFileName(id)}.png");
             if (!File.Exists(filePath))
             {
                 return null;
@@ -374,7 +374,7 @@ namespace ArcaneAtelier.Workshop
 
             var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false)
             {
-                name = $"{SanitizeAssetName(id)}_runtime",
+                name = $"{ResolveNodeSpriteFileName(id)}_runtime",
                 filterMode = FilterMode.Point,
                 wrapMode = TextureWrapMode.Clamp
             };
@@ -386,6 +386,16 @@ namespace ArcaneAtelier.Workshop
             }
 
             return Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f);
+        }
+
+        private static string ResolveNodeSpriteFileName(string id)
+        {
+            if (id == "node.factory.deck_collector")
+            {
+                return "node_battle_deck_collector";
+            }
+
+            return SanitizeAssetName(id);
         }
 
         private static string SanitizeAssetName(string id)
