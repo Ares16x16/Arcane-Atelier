@@ -763,9 +763,20 @@ namespace ArcaneAtelier.Battle
             DrawRect(new Rect(animatedRect.x, animatedRect.y, animatedRect.width, 52f), new Color(accent.r, accent.g, accent.b, 0.2f));
 
             GUI.BeginGroup(animatedRect);
-            GUI.Label(new Rect(28f, 14f, animatedRect.width - 56f, 30f), outcome, resultStyle);
-            GUI.Label(new Rect(28f, 44f, animatedRect.width - 56f, 18f), result.BossDisplayName, sectionStyle);
-            GUI.Label(new Rect(28f, 68f, animatedRect.width - 56f, 16f), result.ResultType == BattleResultType.Victory ? $"Run cleared. {result.EncountersCleared} encounters completed." : $"Run failed after clearing {result.EncountersCleared} encounter(s).", mutedStyle);
+            Rect showcaseRect = new Rect(animatedRect.width - 82f, 6f, 48f, 48f);
+            float headerTextWidth = animatedRect.width - 124f;
+            GUI.Label(new Rect(28f, 14f, headerTextWidth, 30f), outcome, resultStyle);
+            GUI.Label(new Rect(28f, 44f, headerTextWidth, 18f), result.BossDisplayName, sectionStyle);
+            GUI.Label(new Rect(28f, 68f, headerTextWidth, 16f), result.ResultType == BattleResultType.Victory ? $"Run cleared. {result.EncountersCleared} encounters completed." : $"Run failed after clearing {result.EncountersCleared} encounter(s).", mutedStyle);
+            DrawIllustratedSummaryCard(
+                showcaseRect,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                accent,
+                GetRunSummaryBossSprite(),
+                GetRunSummaryBossFallbackIcon(),
+                compact: true);
 
             DrawMiniStat(new Rect(28f, 98f, 88f, 52f), $"{result.TotalDamageDealt}", "Damage");
             DrawMiniStat(new Rect(126f, 98f, 88f, 52f), $"{result.TotalHealingDone}", "Healing");
@@ -885,6 +896,7 @@ namespace ArcaneAtelier.Battle
             float headerHeight = 112f;
             float footerHeight = 76f;
             float contentHeight = CalculateRunSummaryContentHeight(summary, rect.width - 66f);
+            float runBoardHeight = 124f;
 
             DrawRect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0f, 0f, 0f, 0.68f));
             DrawPanelFrame(rect, WorkshopGold, 0.99f);
@@ -909,17 +921,29 @@ namespace ArcaneAtelier.Battle
             Color previousColor;
             Rect animatedRect;
 
-            if (BeginAnimatedBlock(new Rect(0f, y, contentRect.width, 94f), 0f, 36f, out animatedRect, out previousColor))
+            if (BeginAnimatedBlock(new Rect(0f, y, contentRect.width, runBoardHeight), 0f, 36f, out animatedRect, out previousColor))
             {
                 DrawPanelWithShadow(animatedRect, new Color(HudPanel.r, HudPanel.g, HudPanel.b, 0.96f), new Color(WorkshopBlue.r, WorkshopBlue.g, WorkshopBlue.b, 0.58f));
                 DrawRect(new Rect(animatedRect.x, animatedRect.y, animatedRect.width, 3f), WorkshopBlue);
-                GUI.Label(new Rect(animatedRect.x + 16f, animatedRect.y + 12f, animatedRect.width - 32f, 18f), "Run Board", sectionStyle);
-                GUI.Label(new Rect(animatedRect.x + 16f, animatedRect.y + 34f, animatedRect.width - 32f, 18f), $"Final Fight: {finalBossName}", bodyStyle);
-                GUI.Label(new Rect(animatedRect.x + 16f, animatedRect.y + 54f, animatedRect.width - 32f, 18f), $"{Mathf.Max(1, battleCount)} fights  •  {summary.TotalTurnsElapsed} turns", bodyStyle);
-                GUI.Label(new Rect(animatedRect.x + 16f, animatedRect.y + 72f, animatedRect.width - 32f, 16f), $"{summary.TotalCardsPlayed} cards  •  {summary.TotalDamageDealt} dmg  •  {summary.TotalHealingDone} heal", mutedStyle);
+                Rect showcaseRect = new Rect(animatedRect.xMax - 114f, animatedRect.y + 16f, 90f, 90f);
+                float boardTextWidth = animatedRect.width - 150f;
+                GUI.Label(new Rect(animatedRect.x + 16f, animatedRect.y + 12f, boardTextWidth, 18f), "Run Board", sectionStyle);
+                GUI.Label(new Rect(animatedRect.x + 16f, animatedRect.y + 34f, boardTextWidth, 18f), $"Final Fight: {finalBossName}", bodyStyle);
+                GUI.Label(new Rect(animatedRect.x + 16f, animatedRect.y + 54f, boardTextWidth, 18f), $"{Mathf.Max(1, battleCount)} fights  •  {summary.TotalTurnsElapsed} turns", bodyStyle);
+                GUI.Label(new Rect(animatedRect.x + 16f, animatedRect.y + 74f, boardTextWidth, 16f), $"{summary.TotalCardsPlayed} cards  •  {summary.TotalDamageDealt} dmg  •  {summary.TotalHealingDone} heal", mutedStyle);
+                GUI.Label(new Rect(animatedRect.x + 16f, animatedRect.y + 92f, boardTextWidth, 16f), BuildRunBoardGainText(summary), mutedStyle);
+                DrawIllustratedSummaryCard(
+                    showcaseRect,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    summary.RunWon ? WorkshopGold : DefeatAccent,
+                    GetRunSummaryBossSprite(),
+                    GetRunSummaryBossFallbackIcon(),
+                    compact: true);
                 EndAnimatedBlock(previousColor);
             }
-            y += 94f + spacing;
+            y += runBoardHeight + spacing;
 
             float endY;
             if (BeginAnimatedBlock(new Rect(0f, y, contentRect.width, 0f), FinalVictorySummaryStagger * 1f, 32f, out animatedRect, out previousColor))
@@ -1043,12 +1067,32 @@ namespace ArcaneAtelier.Battle
             GUI.Label(new Rect(workshopRect.x + 16f, workshopRect.y + 108f, workshopRect.width - 32f, 18f), $"Tokens  •  {summary.TotalTokensEarned}", bodyStyle);
             GUI.Label(new Rect(workshopRect.x + 16f, workshopRect.y + 130f, workshopRect.width - 32f, 18f), $"Pace    •  {avgCardsPerTurn:0.00}/turn", bodyStyle);
 
-            Rect gainsRect = new Rect(rect.x, rect.y + panelHeight + 12f, rect.width, 82f);
+            Rect gainsRect = new Rect(rect.x, rect.y + panelHeight + 12f, rect.width, 108f);
             DrawPanelWithShadow(gainsRect, new Color(HudPanel.r, HudPanel.g, HudPanel.b, 0.96f), new Color(WorkshopViolet.r, WorkshopViolet.g, WorkshopViolet.b, 0.62f));
             DrawRect(new Rect(gainsRect.x, gainsRect.y, gainsRect.width, 3f), WorkshopViolet);
-            GUI.Label(new Rect(gainsRect.x + 16f, gainsRect.y + 12f, gainsRect.width - 32f, 20f), "Gains", sectionStyle);
-            GUI.Label(new Rect(gainsRect.x + 16f, gainsRect.y + 40f, gainsRect.width * 0.5f - 24f, 18f), $"Workshop Rewards  •  {BuildRewardsClaimedText(summary)}", bodyStyle);
-            GUI.Label(new Rect(gainsRect.x + gainsRect.width * 0.5f, gainsRect.y + 40f, gainsRect.width * 0.5f - 16f, 18f), $"Boss Reward  •  {BuildFinalRewardStatusText(summary)}", bodyStyle);
+            GUI.Label(new Rect(gainsRect.x + 16f, gainsRect.y + 12f, gainsRect.width - 32f, 20f), "Battle Result & Legacy", sectionStyle);
+
+            float cardGap = 14f;
+            float cardWidth = (gainsRect.width - 32f - cardGap) * 0.5f;
+            Rect resultCardRect = new Rect(gainsRect.x + 16f, gainsRect.y + 40f, cardWidth, 58f);
+            Rect legacyCardRect = new Rect(resultCardRect.xMax + cardGap, gainsRect.y + 40f, cardWidth, 58f);
+
+            DrawIllustratedSummaryCard(
+                resultCardRect,
+                "Battle Result",
+                string.IsNullOrWhiteSpace(summary.FinalBossName) ? "Final Boss" : summary.FinalBossName,
+                BuildBattleResultCardText(summary),
+                WorkshopBlue,
+                GetRunSummaryBossSprite(),
+                GetRunSummaryBossFallbackIcon());
+            DrawIllustratedSummaryCard(
+                legacyCardRect,
+                "Legacy Archive",
+                BuildFinalRewardStatusText(summary),
+                BuildLegacyCardText(summary),
+                WorkshopViolet,
+                null,
+                MetaHudIconKind.Bounty);
             return gainsRect.y + gainsRect.height;
         }
 
@@ -1119,9 +1163,9 @@ namespace ArcaneAtelier.Battle
             int heroRows = Mathf.CeilToInt(6f / heroColumns);
             int encounterCount = summary.BattleHistory != null ? summary.BattleHistory.Count : 0;
             float heroStatsHeight = 44f + heroRows * 64f + (heroRows - 1) * 10f + 18f;
-            float summaryColumnsHeight = 164f + 12f + 82f;
+            float summaryColumnsHeight = 164f + 12f + 108f;
             float encounterHeight = 28f + (encounterCount > 0 ? encounterCount * 120f : 72f);
-            return 94f + 14f + heroStatsHeight + 14f + summaryColumnsHeight + 14f + encounterHeight + 8f;
+            return 124f + 14f + heroStatsHeight + 14f + summaryColumnsHeight + 14f + encounterHeight + 8f;
         }
 
         private string BuildRewardsClaimedText(RunSummaryData summary)
@@ -1153,7 +1197,44 @@ namespace ArcaneAtelier.Battle
                 return summary.LegacyUnlockName;
             }
 
-            return "Not in yet";
+            return "No legacy gain";
+        }
+
+        private string BuildRunBoardGainText(RunSummaryData summary)
+        {
+            string rewardText = BuildRewardsClaimedText(summary);
+            string legacyText = BuildFinalRewardStatusText(summary);
+            return $"Workshop rewards  •  {rewardText}    Legacy  •  {legacyText}";
+        }
+
+        private string BuildBattleResultCardText(RunSummaryData summary)
+        {
+            if (summary == null)
+            {
+                return "No recorded battle result.";
+            }
+
+            if (summary.RewardsClaimed != null && summary.RewardsClaimed.Count > 0)
+            {
+                return $"Rewards: {BuildRewardsClaimedText(summary)}";
+            }
+
+            return $"Tokens earned: {summary.TotalTokensEarned}";
+        }
+
+        private string BuildLegacyCardText(RunSummaryData summary)
+        {
+            if (summary == null)
+            {
+                return "No legacy archive data recorded.";
+            }
+
+            if (!string.IsNullOrWhiteSpace(summary.LegacyUnlockName))
+            {
+                return "Permanent reward stored for future cycles.";
+            }
+
+            return "Clear the final boss to carve a permanent legacy reward.";
         }
 
         private string BuildEncounterGainText(RunBattleRecord record)
@@ -1170,9 +1251,82 @@ namespace ArcaneAtelier.Battle
 
             return record.IsBoss
                 ? $"Gain: Boss reward pending  •  Tokens +{record.TokensEarned}"
-                : record.TokensEarned > 0
+                    : record.TokensEarned > 0
                     ? $"Gain: Tokens +{record.TokensEarned}"
                     : "Gain: None";
+        }
+
+        private Sprite GetRunSummaryBossSprite()
+        {
+            Sprite bossSprite = controller != null &&
+                controller.VisualManager != null &&
+                controller.VisualManager.BossVisual != null &&
+                controller.VisualManager.BossVisual.SpriteRenderer != null
+                ? controller.VisualManager.BossVisual.SpriteRenderer.sprite
+                : null;
+            if (bossSprite != null)
+            {
+                return bossSprite;
+            }
+
+            if (controller == null || controller.CurrentBossDefinition == null)
+            {
+                return null;
+            }
+
+            Sprite spiritIcon = ArcaneArtCatalog.GetSpiritIcon(controller.CurrentBossDefinition.Element);
+            if (spiritIcon != null)
+            {
+                return spiritIcon;
+            }
+
+            return ArcaneArtCatalog.GetElementIcon(controller.CurrentBossDefinition.Element);
+        }
+
+        private MetaHudIconKind GetRunSummaryBossFallbackIcon()
+        {
+            return controller != null &&
+                controller.CurrentBossDefinition != null &&
+                controller.CurrentBossDefinition.IsBoss
+                ? MetaHudIconKind.Bounty
+                : MetaHudIconKind.BreachPressure;
+        }
+
+        private void DrawIllustratedSummaryCard(
+            Rect rect,
+            string title,
+            string headline,
+            string body,
+            Color accent,
+            Sprite sprite,
+            MetaHudIconKind fallbackIcon,
+            bool compact = false)
+        {
+            DrawPanelWithShadow(rect, new Color(HudPanelSoft.r, HudPanelSoft.g, HudPanelSoft.b, 0.98f), new Color(accent.r, accent.g, accent.b, 0.5f));
+            DrawRect(new Rect(rect.x, rect.y, rect.width, compact ? 2f : 3f), new Color(accent.r, accent.g, accent.b, 0.9f));
+
+            float inset = compact ? 6f : 10f;
+            Rect artRect = new Rect(rect.x + inset, rect.y + inset, rect.height - inset * 2f, rect.height - inset * 2f);
+            DrawRect(artRect, new Color(0.05f, 0.08f, 0.12f, 0.98f));
+            DrawOutline(artRect, new Color(accent.r, accent.g, accent.b, 0.42f));
+
+            if (!DrawSpriteContained(new Rect(artRect.x + 3f, artRect.y + 3f, artRect.width - 6f, artRect.height - 6f), sprite, Color.white))
+            {
+                float iconSize = Mathf.Min(artRect.width - 10f, artRect.height - 10f);
+                Rect iconRect = new Rect(artRect.center.x - iconSize * 0.5f, artRect.center.y - iconSize * 0.5f, iconSize, iconSize);
+                DrawMetaIcon(iconRect, fallbackIcon);
+            }
+
+            if (compact)
+            {
+                return;
+            }
+
+            float textX = artRect.xMax + 10f;
+            float textWidth = rect.xMax - textX - 10f;
+            GUI.Label(new Rect(textX, rect.y + 6f, textWidth, 16f), title, mutedStyle);
+            GUI.Label(new Rect(textX, rect.y + 22f, textWidth, 18f), string.IsNullOrWhiteSpace(headline) ? "Unavailable" : headline, bodyStyle);
+            GUI.Label(new Rect(textX, rect.y + 38f, textWidth, 18f), body, mutedStyle);
         }
 
         private void UpdateTargetRects()
@@ -2233,6 +2387,39 @@ namespace ArcaneAtelier.Battle
             GUI.DrawTextureWithTexCoords(rect, sprite.texture, uv, true);
             GUI.color = previous;
             return true;
+        }
+
+        private bool DrawSpriteContained(Rect rect, Sprite sprite, Color tint)
+        {
+            if (sprite == null || sprite.texture == null)
+            {
+                return false;
+            }
+
+            Rect textureRect = sprite.textureRect;
+            if (textureRect.width <= 0f || textureRect.height <= 0f)
+            {
+                return false;
+            }
+
+            float spriteAspect = textureRect.width / textureRect.height;
+            float rectAspect = rect.width / rect.height;
+            Rect fittedRect = rect;
+
+            if (spriteAspect > rectAspect)
+            {
+                float fittedHeight = rect.width / spriteAspect;
+                fittedRect.y += (rect.height - fittedHeight) * 0.5f;
+                fittedRect.height = fittedHeight;
+            }
+            else
+            {
+                float fittedWidth = rect.height * spriteAspect;
+                fittedRect.x += (rect.width - fittedWidth) * 0.5f;
+                fittedRect.width = fittedWidth;
+            }
+
+            return DrawSprite(fittedRect, sprite, tint);
         }
 
         private void DrawProgressBar(Rect rect, float ratio, Color fillColor, Color backgroundColor)

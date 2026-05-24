@@ -509,7 +509,7 @@ namespace ArcaneAtelier.Workshop
                 DrawRect(new Rect(actionRect.x, actionRect.y, actionRect.width, actionRect.height), new Color(0.04f, 0.055f, 0.082f, 0.72f));
                 DrawOutline(new Rect(actionRect.x, actionRect.y, actionRect.width, actionRect.height), new Color(buyColor.r, buyColor.g, buyColor.b, 0.45f));
                 GUI.Label(new Rect(actionRect.x + 10f, actionRect.y + 8f, actionRect.width * 0.46f, 16f), stateLabel, tinyLabelStyle);
-                GUI.Label(new Rect(actionRect.x + actionRect.width * 0.42f, actionRect.y + 8f, actionRect.width * 0.22f, 16f), $"{cost} Tokens", centeredTinyLabelStyle);
+                //GUI.Label(new Rect(actionRect.x + actionRect.width * 0.42f, actionRect.y + 8f, actionRect.width * 0.22f, 16f), $"{cost} Tokens", centeredTinyLabelStyle);
 
                 bool previouslyEnabled = GUI.enabled;
                 GUI.enabled = canAfford && !owned;
