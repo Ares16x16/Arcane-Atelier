@@ -241,13 +241,13 @@ public sealed class MainMenuManager : MonoBehaviour
         DrawRegionFrame(panelRect, uiOrnateFrameSprite, new Color(0.88f, 0.72f, 0.3f, 1f));
 
         GUI.BeginGroup(panelRect);
-        GUI.Label(new Rect(28f, 22f, panelRect.width - 56f, 32f), "Legacy Archive", pageTitleStyle);
-        GUI.Label(new Rect(32f, 62f, panelRect.width - 64f, 22f), "Carve permanent sigils, read the cycle omen, then enter the next breach.", subtitleStyle);
+        GUI.Label(new Rect(28f, 28f, panelRect.width - 56f, 42f), "Legacy Archive", pageTitleStyle);
+        GUI.Label(new Rect(32f, 70f, panelRect.width - 64f, 32f), "Carve permanent sigils, read the cycle omen, then enter the next breach.", subtitleStyle);
 
         float statY = 106f;
-        DrawArchiveStat(new Rect(28f, statY, 190f, 74f), MetaProgressionStore.SealedCycles.ToString(), "Sealed Cycles");
-        DrawArchiveStat(new Rect(234f, statY, 190f, 74f), MetaProgressionStore.LegacySigils.ToString(), "Legacy Sigils");
-        DrawArchiveStat(new Rect(440f, statY, 190f, 74f), MetaProgressionStore.BestTokensEarnedInRun.ToString(), "Best Run Tokens");
+        DrawArchiveStat(new Rect(158f, statY, 190f, 74f), MetaProgressionStore.SealedCycles.ToString(), "Sealed Cycles");
+        DrawArchiveStat(new Rect(364f, statY, 190f, 74f), MetaProgressionStore.LegacySigils.ToString(), "Legacy Sigils");
+        DrawArchiveStat(new Rect(570f, statY, 190f, 74f), MetaProgressionStore.BestTokensEarnedInRun.ToString(), "Best Run Tokens");
 
         DrawArchiveOmen(new Rect(28f, 200f, panelRect.width - 56f, 72f));
 
@@ -256,7 +256,7 @@ public sealed class MainMenuManager : MonoBehaviour
         LegacyArchiveUpgrade[] upgrades = MetaProgressionStore.AvailableUpgrades.ToArray();
         if (upgrades.Length == 0)
         {
-            GUI.Label(new Rect(28f, itemY + 8f, panelRect.width - 56f, 40f), "Every sigil path has been fully carved. The archive holds steady until a new system is added.", bodyStyle);
+            GUI.Label(new Rect(38f, itemY + 8f, panelRect.width - 56f, 40f), "Every sigil path has been fully carved. The archive holds steady until a new system is added.", bodyStyle);
         }
         else
         {
@@ -268,14 +268,17 @@ public sealed class MainMenuManager : MonoBehaviour
         }
 
         float archiveActionWidth = 172f;
-        float archiveActionX = panelRect.width - archiveActionWidth - 42f;
-        GUI.Label(new Rect(28f, panelRect.height - 100f, panelRect.width - 280f, 38f), archiveMessage, bodyStyle);
-        if (DrawThemedButton(new Rect(archiveActionX, panelRect.height - 98f, archiveActionWidth, 34f), "Enter Next Breach", new Color(0.88f, 0.72f, 0.3f, 1f), "archive_enter"))
+        float archiveActionGap = 12f;
+        float archiveBackX = panelRect.width - archiveActionWidth - 28f;
+        float archiveEnterX = archiveBackX - archiveActionWidth - archiveActionGap;
+        float archiveActionsY = panelRect.height - 76f;
+        GUI.Label(new Rect(78f, panelRect.height - 80f, archiveEnterX - 44f, 38f), archiveMessage, bodyStyle);
+        if (DrawThemedButton(new Rect(archiveEnterX, archiveActionsY, archiveActionWidth, 30f), "Enter Next Breach", new Color(0.88f, 0.72f, 0.3f, 1f), "archive_enter"))
         {
             StartLoadedRun();
         }
 
-        if (DrawThemedButton(new Rect(archiveActionX, panelRect.height - 56f, archiveActionWidth, 30f), "Back", new Color(0.42f, 0.72f, 0.94f, 1f), "archive_back"))
+        if (DrawThemedButton(new Rect(archiveBackX, archiveActionsY, archiveActionWidth, 30f), "Back", new Color(0.42f, 0.72f, 0.94f, 1f), "archive_back"))
         {
             currentPage = MenuPage.Landing;
         }
@@ -493,8 +496,10 @@ public sealed class MainMenuManager : MonoBehaviour
     private void DrawArchiveStat(Rect rect, string value, string label)
     {
         DrawSubPanel(rect, new Color(0.88f, 0.72f, 0.3f, 1f));
-        GUI.Label(new Rect(rect.x, rect.y + 14f, rect.width, 28f), value, statStyle);
-        GUI.Label(new Rect(rect.x, rect.y + 46f, rect.width, 18f), label, footerStyle);
+        GUIStyle centeredStatStyle = new GUIStyle(statStyle) { alignment = TextAnchor.MiddleCenter };
+        GUIStyle centeredFooterStyle = new GUIStyle(footerStyle) { alignment = TextAnchor.MiddleCenter };
+        GUI.Label(new Rect(rect.x, rect.y + 14f, rect.width, 28f), value, centeredStatStyle);
+        GUI.Label(new Rect(rect.x, rect.y + 46f, rect.width, 18f), label, centeredFooterStyle);
     }
 
     private void DrawArchiveUpgrade(Rect rect, LegacyArchiveUpgrade upgrade)
@@ -502,14 +507,18 @@ public sealed class MainMenuManager : MonoBehaviour
         bool maxed = upgrade.IsMaxed;
         bool affordable = MetaProgressionStore.LegacySigils >= upgrade.SigilCost;
         DrawSubPanel(rect, maxed ? new Color(0.42f, 0.72f, 0.94f, 1f) : new Color(0.88f, 0.72f, 0.3f, 1f));
-        GUI.Label(new Rect(rect.x + 16f, rect.y + 10f, rect.width - 220f, 20f), upgrade.DisplayName, sectionStyle);
-        GUI.Label(new Rect(rect.x + 16f, rect.y + 28f, 120f, 16f), upgrade.CategoryLabel, footerStyle);
-        GUI.Label(new Rect(rect.x + 120f, rect.y + 28f, 90f, 16f), $"{upgrade.CurrentRank}/{upgrade.MaxRank} carved", footerStyle);
-        GUI.Label(new Rect(rect.x + 16f, rect.y + 46f, rect.width - 190f, 24f), upgrade.Description, bodyStyle);
-        GUI.Label(new Rect(rect.x + rect.width - 154f, rect.y + 14f, 130f, 18f), $"{upgrade.SigilCost} Sigils", footerStyle);
+        float textWidth = rect.width - 220f;
+        GUIStyle centeredSectionStyle = new GUIStyle(sectionStyle) { alignment = TextAnchor.MiddleCenter };
+        GUIStyle centeredFooterStyle = new GUIStyle(footerStyle) { alignment = TextAnchor.MiddleCenter };
+        GUIStyle centeredBodyStyle = new GUIStyle(bodyStyle) { alignment = TextAnchor.MiddleCenter };
+        GUI.Label(new Rect(rect.x + 16f, rect.y + 10f, textWidth, 20f), upgrade.DisplayName, centeredSectionStyle);
+        GUI.Label(new Rect(rect.x + 16f, rect.y + 28f, textWidth * 0.5f - 4f, 16f), upgrade.CategoryLabel, centeredFooterStyle);
+        GUI.Label(new Rect(rect.x + 16f + textWidth * 0.5f + 4f, rect.y + 28f, textWidth * 0.5f - 4f, 16f), $"{upgrade.CurrentRank}/{upgrade.MaxRank} carved", centeredFooterStyle);
+        GUI.Label(new Rect(rect.x + 16f, rect.y + 46f, textWidth, 24f), upgrade.Description, centeredBodyStyle);
+        GUI.Label(new Rect(rect.x + rect.width - 174f, rect.y + 14f, 130f, 18f), $"{upgrade.SigilCost} Sigils", footerStyle);
 
         string buttonLabel = maxed ? "Maxed" : affordable ? "Carve" : "Locked";
-        if (DrawThemedButton(new Rect(rect.x + rect.width - 154f, rect.y + 40f, 130f, 26f), buttonLabel, affordable ? new Color(0.72f, 0.5f, 0.96f, 1f) : new Color(0.42f, 0.72f, 0.94f, 1f), $"archive_upgrade_{upgrade.Id}", !maxed && affordable))
+        if (DrawThemedButton(new Rect(rect.x + rect.width - 174f, rect.y + 40f, 130f, 26f), buttonLabel, affordable ? new Color(0.72f, 0.5f, 0.96f, 1f) : new Color(0.42f, 0.72f, 0.94f, 1f), $"archive_upgrade_{upgrade.Id}", !maxed && affordable))
         {
             if (MetaProgressionStore.TryPurchaseUpgrade(upgrade.Id, out string message))
             {
@@ -527,7 +536,8 @@ public sealed class MainMenuManager : MonoBehaviour
         LegacyOmenView omen = MetaProgressionStore.ActiveOmen;
         DrawSubPanel(rect, new Color(0.72f, 0.5f, 0.96f, 1f));
         GUI.Label(new Rect(rect.x + 16f, rect.y + 10f, rect.width - 32f, 18f), "Cycle Omen", sectionStyle);
-        GUI.Label(new Rect(rect.x + 16f, rect.y + 30f, rect.width - 32f, 18f), omen != null ? omen.DisplayName : "None", bodyStyle);
+        GUIStyle centeredBody = new GUIStyle(bodyStyle) { alignment = TextAnchor.MiddleCenter };
+        GUI.Label(new Rect(rect.x + 16f, rect.y + 30f, rect.width - 32f, 18f), omen != null ? omen.DisplayName : "None", centeredBody);
         GUI.Label(new Rect(rect.x + 16f, rect.y + 48f, rect.width - 32f, 18f), MetaProgressionStore.BuildRunModifierSummary(), footerStyle);
     }
 
