@@ -390,12 +390,16 @@ namespace ArcaneAtelier.Workshop
 
             Vector2 mouse = Event.current != null ? Event.current.mousePosition : Vector2.zero;
             float width = 312f;
-            float bodyHeight = Mathf.Max(20f, bodyStyle.CalcHeight(new GUIContent(hoveredMetaBody), width - 28f));
-            Rect rect = PositionUiTooltip(mouse, width, 44f + bodyHeight);
+            float contentWidth = width - 56f;
+            float titleHeight = CalculateTooltipTextHeight(sectionStyle, hoveredMetaTitle, contentWidth, 20f);
+            float bodyHeight = CalculateTooltipTextHeight(bodyStyle, hoveredMetaBody, contentWidth, 20f);
+            Rect rect = PositionUiTooltip(mouse, width, 30f + titleHeight + bodyHeight);
             DrawTooltipFrame(rect, hoveredMetaAccent);
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(40f, 12f, rect.width - 28f, 18f), hoveredMetaTitle, sectionStyle);
-            GUI.Label(new Rect(40f, 34f, rect.width - 28f, bodyHeight), hoveredMetaBody, bodyStyle);
+            float contentY = 12f;
+            GUI.Label(new Rect(28f, contentY, contentWidth, titleHeight), hoveredMetaTitle, sectionStyle);
+            contentY += titleHeight + 6f;
+            GUI.Label(new Rect(28f, contentY, contentWidth, bodyHeight), hoveredMetaBody, bodyStyle);
             GUI.EndGroup();
         }
 
@@ -725,38 +729,72 @@ namespace ArcaneAtelier.Workshop
                 ? System.Array.Empty<System.Collections.Generic.KeyValuePair<WorkshopItemDefinition, int>>()
                 : node.EnumerateBuffer().Where(pair => pair.Key != null && pair.Value > 0).ToArray();
             float tooltipWidth = showBufferDetails ? 404f : node == null ? 246f : 320f;
+            float contentWidth = tooltipWidth - 56f;
+            string titleText = node == null ? "Empty Tile" : node.Definition.DisplayName;
+            string cellText = $"Cell {controller.HoveredCell.x}, {controller.HoveredCell.y}";
+            float titleHeight = CalculateTooltipTextHeight(sectionStyle, titleText, contentWidth, 20f);
+            float cellHeight = CalculateTooltipTextHeight(tinyLabelStyle, cellText, contentWidth, 14f);
             float descriptionHeight = node == null
                 ? 0f
-                : Mathf.Max(34f, bodyStyle.CalcHeight(new GUIContent(node.Definition.Description), tooltipWidth - 56f));
+                : CalculateTooltipTextHeight(bodyStyle, node.Definition.Description, contentWidth, 34f);
             float bufferHeight = showBufferDetails ? CalculateTooltipBufferHeight(node, bufferEntries) : 0f;
-            float tooltipHeight = node == null
-                ? 90f
-                : 94f + descriptionHeight + 24f + (showBufferDetails ? bufferHeight + 14f : 0f);
+            float tooltipHeight;
+            float categoryHeight = 0f;
+            float statsHeight = 0f;
+            float emptyTileHintHeight = 0f;
+            if (node == null)
+            {
+                emptyTileHintHeight = CalculateTooltipTextHeight(bodyStyle, "LMB place armed machine", contentWidth, 18f);
+                tooltipHeight = 30f + titleHeight + cellHeight + emptyTileHintHeight;
+            }
+            else
+            {
+                categoryHeight = CalculateTooltipTextHeight(tinyLabelStyle, node.Definition.Category.ToString(), contentWidth, 14f);
+                string activeText = node.IsRecentlyActive ? "Active" : "Idle";
+                string statsText = $"Rot {node.RotationQuarterTurns * 90}°  Buffer {node.BufferedItemCount}/{node.Definition.BufferCapacity}  {activeText}";
+                statsHeight = CalculateTooltipTextHeight(tinyLabelStyle, statsText, contentWidth, 14f);
+                tooltipHeight = 46f + titleHeight + cellHeight + categoryHeight + descriptionHeight + statsHeight + (showBufferDetails ? bufferHeight + 14f : 0f);
+            }
             Rect rect = PositionTooltip(mouse, tooltipWidth, tooltipHeight);
 
             DrawHoverCardFrame(rect, node == null ? new Color(0.42f, 0.54f, 0.7f) : GetCategoryColor(node.Definition.Category, node.Definition.Tint));
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(28f, 18f, rect.width - 28f, 18f), node == null ? "Empty Tile" : node.Definition.DisplayName, sectionStyle);
-            GUI.Label(new Rect(28f, 36f, rect.width - 28f, 18f), $"Cell {controller.HoveredCell.x}, {controller.HoveredCell.y}", tinyLabelStyle);
+            float contentY = 18f;
+            GUI.Label(new Rect(28f, contentY, contentWidth, titleHeight), titleText, sectionStyle);
+            contentY += titleHeight + 2f;
+            GUI.Label(new Rect(28f, contentY, contentWidth, cellHeight), cellText, tinyLabelStyle);
+            contentY += cellHeight + 6f;
 
             if (node == null)
             {
-                GUI.Label(new Rect(28f, 56f, rect.width - 28f, 18f), "LMB place armed machine", bodyStyle);
+                GUI.Label(new Rect(28f, contentY, contentWidth, emptyTileHintHeight), "LMB place armed machine", bodyStyle);
             }
             else
             {
-                GUI.Label(new Rect(28f, 56f, rect.width - 28f, 18f), node.Definition.Category.ToString(), tinyLabelStyle);
-                GUI.Label(new Rect(28f, 74f, rect.width - 28f, descriptionHeight), node.Definition.Description, bodyStyle);
+                GUI.Label(new Rect(28f, contentY, contentWidth, categoryHeight), node.Definition.Category.ToString(), tinyLabelStyle);
+                contentY += categoryHeight + 4f;
+                GUI.Label(new Rect(28f, contentY, contentWidth, descriptionHeight), node.Definition.Description, bodyStyle);
+                contentY += descriptionHeight + 8f;
                 string activeText = node.IsRecentlyActive ? "Active" : "Idle";
-                float statsY = 68f + descriptionHeight + 8f;
-                GUI.Label(new Rect(28f, statsY, rect.width - 28f, 18f), $"Rot {node.RotationQuarterTurns * 90}°  Buffer {node.BufferedItemCount}/{node.Definition.BufferCapacity}  {activeText}", tinyLabelStyle);
+                GUI.Label(new Rect(28f, contentY, contentWidth, statsHeight), $"Rot {node.RotationQuarterTurns * 90}°  Buffer {node.BufferedItemCount}/{node.Definition.BufferCapacity}  {activeText}", tinyLabelStyle);
                 if (showBufferDetails)
                 {
-                    DrawTooltipBuffer(new Rect(28f, statsY + 22f, rect.width - 56f, bufferHeight), node, bufferEntries);
+                    DrawTooltipBuffer(new Rect(28f, contentY + statsHeight + 8f, rect.width - 56f, bufferHeight), node, bufferEntries);
                 }
             }
 
             GUI.EndGroup();
+        }
+
+        private static float CalculateTooltipTextHeight(GUIStyle style, string text, float width, float minHeight)
+        {
+            if (style == null)
+            {
+                return minHeight;
+            }
+
+            float calculatedHeight = style.CalcHeight(new GUIContent(string.IsNullOrEmpty(text) ? " " : text), width);
+            return Mathf.Max(minHeight, Mathf.Ceil(calculatedHeight + 4f));
         }
 
         private Rect PositionTooltip(Vector2 mouse, float tooltipWidth, float tooltipHeight)
