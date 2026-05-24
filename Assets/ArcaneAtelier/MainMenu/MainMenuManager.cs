@@ -457,9 +457,9 @@ public sealed class MainMenuManager : MonoBehaviour
         float firstButtonY = panelRect.y + 54f;
         bool hasSave = MetaProgressionStore.HasSaveFile;
         Rect continueButtonRect = new Rect(buttonX, firstButtonY, buttonWidth, 44f);
-        Rect newButtonRect = new Rect(buttonX, firstButtonY + 56f, buttonWidth, 44f);
-        Rect settingsButtonRect = new Rect(buttonX, firstButtonY + 116f, buttonWidth, 38f);
-        Rect quitButtonRect = new Rect(buttonX, firstButtonY + 164f, buttonWidth, 34f);
+        Rect newButtonRect = new Rect(buttonX, firstButtonY + 51f, buttonWidth, 44f);
+        Rect settingsButtonRect = new Rect(buttonX, firstButtonY + 102f, buttonWidth, 44f);
+        Rect quitButtonRect = new Rect(buttonX, firstButtonY + 153f, buttonWidth, 44f);
 
         bool previousEnabled = GUI.enabled;
         GUI.enabled = hasSave;
