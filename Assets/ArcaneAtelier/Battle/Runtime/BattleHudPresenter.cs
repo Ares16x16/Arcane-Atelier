@@ -530,16 +530,16 @@ namespace ArcaneAtelier.Battle
             Rect contentRect = new Rect(14f, 48f, rect.width - 28f, rect.height - 62f);
 
             DrawPaletteCardFrame(headerRect, WorkshopGold, 0.98f, 0.08f);
-            GUI.Label(new Rect(headerRect.x + 12f, headerRect.y + 8f, 140f, 18f), "Hand", sectionStyle);
+            GUI.Label(new Rect(headerRect.x + 32f, headerRect.y + 8f, 140f, 18f), "Hand", sectionStyle);
 
             float pileWidth = 72f;
             float pileGap = 10f;
-            float discardX = headerRect.x + headerRect.width - pileWidth;
+            float discardX = headerRect.x + headerRect.width - pileWidth - 50f;
             float drawX = discardX - pileGap - pileWidth;
-            DrawCardPileMini(new Rect(drawX, headerRect.y + 4f, pileWidth, 26f), "Deck", controller.Simulation.Deck.DrawPileCount, WorkshopBlue, drawPilePulse, Time.unscaledTime < shuffleNoticeUntil);
-            DrawCardPileMini(new Rect(discardX, headerRect.y + 4f, pileWidth, 26f), "Discard", controller.Simulation.Deck.DiscardPileCount, WorkshopViolet, discardPilePulse, false);
-            drawPileScreenRect = OffsetRect(new Rect(drawX, headerRect.y + 4f, pileWidth, 26f), rect.position);
-            discardPileScreenRect = OffsetRect(new Rect(discardX, headerRect.y + 4f, pileWidth, 26f), rect.position);
+            DrawCardPileMini(new Rect(drawX, headerRect.y + 4f, pileWidth, 50f), "Deck", controller.Simulation.Deck.DrawPileCount, WorkshopBlue, drawPilePulse, Time.unscaledTime < shuffleNoticeUntil);
+            DrawCardPileMini(new Rect(discardX, headerRect.y + 4f, pileWidth, 50f), "Discard", controller.Simulation.Deck.DiscardPileCount, WorkshopViolet, discardPilePulse, false);
+            drawPileScreenRect = OffsetRect(new Rect(drawX, headerRect.y + 4f, pileWidth, 50f), rect.position);
+            discardPileScreenRect = OffsetRect(new Rect(discardX, headerRect.y + 4f, pileWidth, 50f), rect.position);
             GUI.Label(new Rect(drawX - 118f, headerRect.y + 8f, 104f, 16f), $"Hand {handCount}", new GUIStyle(mutedStyle) { alignment = TextAnchor.MiddleRight });
 
             DrawPaletteCardFrame(contentRect, WorkshopBlue, 0.97f, 0.05f);
@@ -1486,8 +1486,8 @@ namespace ArcaneAtelier.Battle
             DrawOutline(new Rect(frontRect.x + 13f, frontRect.y - 2f, 14f, 12f), new Color(accent.r, accent.g, accent.b, 0.74f));
             GUI.Label(new Rect(frontRect.x + 13f, frontRect.y - 2f, 14f, 12f), count.ToString(), chipStyle);
 
-            GUI.Label(new Rect(rect.x + 34f, rect.y + 1f, rect.width - 34f, 14f), showShuffle ? "Shuffle" : label, mutedStyle);
-            GUI.Label(new Rect(rect.x + 34f, rect.y + 13f, rect.width - 34f, 14f), count > 0 ? "Ready" : "Empty", sectionStyle);
+            GUI.Label(new Rect(rect.x + 34f, rect.y + 1f, rect.width - 20f, 20f), showShuffle ? "Shuffle" : label, mutedStyle);
+            GUI.Label(new Rect(rect.x + 34f, rect.y + 13f, rect.width - 20f, 20f), count > 0 ? "Ready" : "Empty", sectionStyle);
         }
 
         private string BuildRoleLabel(WorkshopSpellRole role)
