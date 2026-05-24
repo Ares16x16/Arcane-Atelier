@@ -34,6 +34,9 @@ namespace ArcaneAtelier.Battle
 
         private BattleSceneController controller;
         private Texture2D whiteTexture;
+        [SerializeField] private Texture2D playerPanelTexture;
+        [SerializeField] private Texture2D bossPanelTexture;
+        [SerializeField] private Texture2D centerPanelTexture;
         private Sprite uiPanelMainSprite;
         private Sprite uiPaletteDockSprite;
         private Sprite uiButtonSprite;
@@ -53,6 +56,13 @@ namespace ArcaneAtelier.Battle
         private GUIStyle cardMetaStyle;
         private GUIStyle cardSummaryStyle;
         private GUIStyle targetHintStyle;
+        private GUIStyle turnInfoStyle;
+        private GUIStyle summaryTitleStyle;
+        private GUIStyle summaryHeadingStyle;
+        private GUIStyle summaryBodyStyle;
+        private GUIStyle summaryMutedStyle;
+        private GUIStyle summaryStatValueStyle;
+        private GUIStyle summaryStatLabelStyle;
         private Vector2 handScroll;
         private Vector2 runSummaryScroll;
         private int selectedCardIndex = -1;
@@ -245,19 +255,19 @@ namespace ArcaneAtelier.Battle
             DrawPaletteDockFrame(rect, ApAccent, 0.94f);
             GUI.BeginGroup(rect);
 
-            float sideWidth = Mathf.Clamp((rect.width - 440f) * 0.5f, 260f, 360f);
+            float sideWidth = Mathf.Clamp((rect.width - 400f) * 0.5f, 300f, 400f);
             Rect playerRect = new Rect(16f, 16f, sideWidth, rect.height - 32f);
             Rect centerRect = new Rect(rect.width * 0.5f - 190f, 16f, 380f, rect.height - 32f);
             Rect bossRect = new Rect(rect.width - sideWidth - 16f, 16f, sideWidth, rect.height - 32f);
 
-            DrawUnitStatusBlock(playerRect, controller.Player, "Player", false);
-            DrawCenterBattleStrip(centerRect);
-            DrawUnitStatusBlock(bossRect, controller.Boss, "Enemy", true);
+            DrawUnitStatusBlock(playerRect, controller.Player, "Player", false, playerPanelTexture);
+            DrawCenterBattleStrip(centerRect, centerPanelTexture);
+            DrawUnitStatusBlock(bossRect, controller.Boss, "Enemy", true, bossPanelTexture);
 
             GUI.EndGroup();
         }
 
-        private void DrawUnitStatusBlock(Rect rect, BattleUnit unit, string fallbackTitle, bool alignRight)
+        private void DrawUnitStatusBlock(Rect rect, BattleUnit unit, string fallbackTitle, bool alignRight, Texture2D panelTexture)
         {
             string displayName = unit != null && !string.IsNullOrWhiteSpace(unit.DisplayName) ? unit.DisplayName : fallbackTitle;
             int currentHealth = unit != null ? unit.CurrentHealth : 0;
@@ -266,13 +276,20 @@ namespace ArcaneAtelier.Battle
             WorkshopElementAttribute element = unit != null ? unit.Element : WorkshopElementAttribute.None;
             Color accent = GetElementColor(element);
 
-            //DrawPaletteCardFrame(rect, accent, 0.98f, 0.08f);
+            if (panelTexture != null)
+            {
+                GUI.DrawTexture(rect, panelTexture, ScaleMode.StretchToFill, true);
+            }
+            else
+            {
+                DrawPanelWithShadow(rect, new Color(HudPanel.r, HudPanel.g, HudPanel.b, 0.96f), new Color(accent.r, accent.g, accent.b, 0.48f));
+            }
 
             GUIStyle nameStyle = new GUIStyle(sectionStyle)
             {
                 alignment = alignRight ? TextAnchor.UpperRight : TextAnchor.UpperLeft
             };
-            GUIStyle valueStyle = new GUIStyle(mutedStyle)
+            GUIStyle valueStyle = new GUIStyle(bodyStyle)
             {
                 alignment = alignRight ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft
             };
@@ -475,9 +492,16 @@ namespace ArcaneAtelier.Battle
             hoveredMetaAccent = Color.white;
         }
 
-        private void DrawCenterBattleStrip(Rect rect)
+        private void DrawCenterBattleStrip(Rect rect, Texture2D centerPanelTexture)
         {
-            //DrawPaletteCardFrame(rect, WorkshopBlue, 0.97f, 0.07f);
+            if (centerPanelTexture != null)
+            {
+                GUI.DrawTexture(rect, centerPanelTexture, ScaleMode.StretchToFill, true);
+            }
+            else
+            {
+                DrawPanelWithShadow(rect, new Color(HudPanelSoft.r, HudPanelSoft.g, HudPanelSoft.b, 0.9f), new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.82f));
+            }
 
             BattleBossAction nextAction = controller.Simulation.BossAI.PeekNextAction();
             Color intentAccent = GetIntentColor(nextAction.ActionType);
@@ -493,16 +517,16 @@ namespace ArcaneAtelier.Battle
                     new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.08f + windupProgress * 0.08f));
             }
 
-            GUI.Label(new Rect(rect.x, rect.y + 8f, rect.width, 14f), $"Encounter {controller.CurrentEncounterNumber}/{controller.TotalEncounterCount}", centeredMutedStyle);
+            GUI.Label(new Rect(rect.x, rect.y + 8f, rect.width, 14f), $"Encounter {controller.CurrentEncounterNumber}/{controller.TotalEncounterCount}", turnInfoStyle);
             GUI.Label(
                 new Rect(rect.x, rect.y + 24f, rect.width, 14f),
                 bossTurnPending ? "Enemy action incoming" : $"Turn {controller.Simulation.TurnsElapsed + 1}",
-                centeredMutedStyle);
+                turnInfoStyle);
             DrawTag(new Rect(rect.x + rect.width * 0.5f - 56f, rect.y + 46f, 112f, 20f), intentBadge, new Color(intentAccent.r, intentAccent.g, intentAccent.b, 0.88f));
             GUI.Label(
                 new Rect(rect.x + 18f, rect.y + 72f, rect.width - 36f, 30f),
                 bossTurnPending ? $"Preparing: {intent}" : intent,
-                centeredBodyStyle);
+                turnInfoStyle);
 
             DrawActionPoints(new Rect(rect.x + 28f, rect.y + 108f, rect.width - 56f, 20f));
 
@@ -2272,6 +2296,64 @@ namespace ArcaneAtelier.Battle
                 fontStyle = FontStyle.Bold,
                 alignment = TextAnchor.MiddleLeft,
                 normal = { textColor = HudText }
+            };
+
+            turnInfoStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 12,
+                alignment = TextAnchor.MiddleCenter,
+                wordWrap = true,
+                normal = { textColor = new Color(0.95f, 0.95f, 0.98f) }
+            };
+
+            summaryTitleStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 32,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.UpperLeft,
+                wordWrap = true,
+                normal = { textColor = HudText }
+            };
+
+            summaryHeadingStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 16,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.UpperLeft,
+                wordWrap = true,
+                normal = { textColor = HudText }
+            };
+
+            summaryBodyStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 13,
+                alignment = TextAnchor.UpperLeft,
+                wordWrap = true,
+                normal = { textColor = new Color(0.94f, 0.94f, 0.92f) }
+            };
+
+            summaryMutedStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 12,
+                alignment = TextAnchor.UpperLeft,
+                wordWrap = true,
+                normal = { textColor = new Color(0.74f, 0.78f, 0.82f) }
+            };
+
+            summaryStatValueStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 22,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter,
+                normal = { textColor = HudText }
+            };
+
+            summaryStatLabelStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 12,
+                alignment = TextAnchor.MiddleCenter,
+                wordWrap = true,
+                normal = { textColor = new Color(0.74f, 0.78f, 0.82f) }
             };
         }
 
