@@ -300,6 +300,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4075fd983b75c45ddbd95c89401546c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: ArcaneAtelier.Battle.Runtime::ArcaneAtelier.Battle.BattleHudPresenter
+  playerPanelTexture: {fileID: 2800000, guid: 89f3a39efe244924e993779864316980, type: 3}
+  bossPanelTexture: {fileID: 2800000, guid: 252ff7c73d60d4b459fd4777b2e87296, type: 3}
+  centerPanelTexture: {fileID: 2800000, guid: c5cf2571eb3a0164d8643fe3d06f4013, type: 3}
 --- !u!114 &860823089
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -315,6 +318,9 @@ MonoBehaviour:
   playerVisual: {fileID: 2034777171}
   bossVisual: {fileID: 733382184}
   backgroundRenderer: {fileID: 1404755038}
+  playerShadowRenderer: {fileID: 0}
+  bossShadowRenderer: {fileID: 0}
+  centerRuneRenderer: {fileID: 0}
   playerAnchor: {fileID: 0}
   bossAnchor: {fileID: 0}
   playerSprite: {fileID: 21300000, guid: 79b9be081114e4159acf5867465f4072, type: 3}
