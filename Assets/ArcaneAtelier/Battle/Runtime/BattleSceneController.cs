@@ -179,7 +179,7 @@ namespace ArcaneAtelier.Battle
             }
             else
             {
-                Debug.LogWarning("BattleScene: no workshop payload found. Using fallback deck.");
+                Debug.LogWarning("BattleScene: no workshop payload found. Starting battle with an empty deck.");
                 currentDeck.Clear();
             }
         }

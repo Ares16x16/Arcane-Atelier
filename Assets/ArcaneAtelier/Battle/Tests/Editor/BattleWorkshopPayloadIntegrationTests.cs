@@ -67,6 +67,18 @@ namespace ArcaneAtelier.Battle.Tests
             Assert.That(deck.LastPlayedDefinition.Instructions[1].StatusId, Is.EqualTo("Expose"));
         }
 
+        [Test]
+        public void EmptyOrMissingWorkshopPayload_ProducesNoBattleHand()
+        {
+            BattleDeckController missingPayloadDeck = new BattleDeckController(null, null);
+            BattleDeckController emptyPayloadDeck = new BattleDeckController(null, new WorkshopBattlePayload());
+
+            Assert.That(missingPayloadDeck.HandCount, Is.EqualTo(0));
+            Assert.That(missingPayloadDeck.DrawPileCount, Is.EqualTo(0));
+            Assert.That(emptyPayloadDeck.HandCount, Is.EqualTo(0));
+            Assert.That(emptyPayloadDeck.DrawPileCount, Is.EqualTo(0));
+        }
+
         private static WorkshopItemDefinition FindCardById(WorkshopContentDatabase database, string id)
         {
             foreach (WorkshopNodeDefinition node in database.PlaceableNodes)

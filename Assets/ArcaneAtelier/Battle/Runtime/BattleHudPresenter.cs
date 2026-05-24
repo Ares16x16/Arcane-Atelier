@@ -273,7 +273,7 @@ namespace ArcaneAtelier.Battle
             WorkshopElementAttribute element = unit != null ? unit.Element : WorkshopElementAttribute.None;
             Color accent = GetElementColor(element);
 
-            DrawPaletteCardFrame(rect, accent, 0.98f, 0.08f);
+            //DrawPaletteCardFrame(rect, accent, 0.98f, 0.08f);
 
             GUIStyle nameStyle = new GUIStyle(sectionStyle)
             {
@@ -485,7 +485,7 @@ namespace ArcaneAtelier.Battle
 
         private void DrawCenterBattleStrip(Rect rect)
         {
-            DrawPaletteCardFrame(rect, WorkshopBlue, 0.97f, 0.07f);
+            //DrawPaletteCardFrame(rect, WorkshopBlue, 0.97f, 0.07f);
 
             BattleBossAction nextAction = controller.Simulation.BossAI.PeekNextAction();
             Color intentAccent = GetIntentColor(nextAction.ActionType);
@@ -538,7 +538,7 @@ namespace ArcaneAtelier.Battle
             Rect contentRect = new Rect(14f, 48f, rect.width - 28f, rect.height - 62f);
             float handCardOffsetX = 30f;
 
-            DrawPaletteCardFrame(headerRect, WorkshopGold, 0.98f, 0.08f);
+            //DrawPaletteCardFrame(headerRect, WorkshopGold, 0.98f, 0.08f);
             GUI.Label(new Rect(headerRect.x + 32f, headerRect.y + 12f, 140f, 18f), "Hand", sectionStyle);
 
             float pileWidth = 72f;
@@ -551,7 +551,7 @@ namespace ArcaneAtelier.Battle
             discardPileScreenRect = OffsetRect(new Rect(discardX, headerRect.y + 10f, pileWidth, 50f), rect.position);
             GUI.Label(new Rect(drawX - 118f, headerRect.y + 8f, 104f, 16f), $"Hand {handCount}", new GUIStyle(mutedStyle) { alignment = TextAnchor.MiddleRight });
 
-            DrawPaletteCardFrame(contentRect, WorkshopBlue, 0.97f, 0.05f);
+            //DrawPaletteCardFrame(contentRect, WorkshopBlue, 0.97f, 0.05f);
             DrawRect(new Rect(contentRect.x + 10f, contentRect.y + 8f, contentRect.width - 20f, 1f), new Color(1f, 1f, 1f, 0.03f));
             DrawRect(new Rect(contentRect.x + 10f, contentRect.yMax - 9f, contentRect.width - 20f, 1f), new Color(0f, 0f, 0f, 0.18f));
 
@@ -2275,8 +2275,20 @@ namespace ArcaneAtelier.Battle
             if (uiPanelMainSprite == null)
             {
                 uiPanelMainSprite = ArcaneArtCatalog.GetUiPanelMain();
+            }
+
+            if (uiPaletteDockSprite == null)
+            {
                 uiPaletteDockSprite = ArcaneArtCatalog.GetUiPaletteDock();
+            }
+
+            if (uiButtonSprite == null)
+            {
                 uiButtonSprite = ArcaneArtCatalog.GetUiButton();
+            }
+
+            if (uiButtonSmallSprite == null)
+            {
                 uiButtonSmallSprite = ArcaneArtCatalog.GetUiButtonSmall();
             }
 

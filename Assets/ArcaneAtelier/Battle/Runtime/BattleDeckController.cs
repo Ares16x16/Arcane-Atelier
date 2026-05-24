@@ -41,52 +41,8 @@ namespace ArcaneAtelier.Battle
                     }
                 }
             }
-            else
-            {
-                BuildFallbackDeck();
-            }
 
             ShuffleDrawPile();
-        }
-
-        private void BuildFallbackDeck()
-        {
-            AddFallbackCard("combat.spell.basic.fire", "Cinder Dart", WorkshopElementAttribute.Fire, WorkshopSpellRole.Attack, 8, 1, 1f, "Burn", 3);
-            AddFallbackCard("combat.spell.basic.wind", "Zephyr Cut", WorkshopElementAttribute.Wind, WorkshopSpellRole.Attack, 5, 2, 10f, "Expose", 2);
-            AddFallbackCard("combat.spell.basic.ice", "Frost Pin", WorkshopElementAttribute.Ice, WorkshopSpellRole.Attack, 4, 2, 20f, "Slow", 2);
-            AddFallbackCard("combat.spell.basic.thunder", "Volt Javelin", WorkshopElementAttribute.Thunder, WorkshopSpellRole.Attack, 7, 1, 15f, "Shock", 2);
-            AddFallbackCard("combat.spell.basic.water", "Tidal Mend", WorkshopElementAttribute.Water, WorkshopSpellRole.Healing, 4, 1, 5f, "Regen", 2);
-            AddFallbackCard("combat.spell.basic.light", "Lumen Prayer", WorkshopElementAttribute.Light, WorkshopSpellRole.Healing, 3, 2, 8f, "Bless", 2);
-            AddFallbackCard("combat.spell.basic.earth", "Stoneguard Sigil", WorkshopElementAttribute.Earth, WorkshopSpellRole.Defense, 4, 1, 10f, "Bulwark", 2);
-            AddFallbackCard("combat.spell.basic.dark", "Gloam Ward", WorkshopElementAttribute.Dark, WorkshopSpellRole.Defense, 4, 1, 10f, "Veil", 1);
-        }
-
-        private void AddFallbackCard(
-            string cardId,
-            string displayName,
-            WorkshopElementAttribute element,
-            WorkshopSpellRole role,
-            int primaryValue,
-            int hitCount,
-            float secondaryValue,
-            string effectKeyword,
-            int copies)
-        {
-            for (int i = 0; i < copies; i++)
-            {
-                drawPile.Add(new WorkshopBattleCardEntry
-                {
-                    CardId = cardId,
-                    DisplayName = displayName,
-                    Amount = 1,
-                    Element = element,
-                    Role = role,
-                    PrimaryValue = primaryValue,
-                    HitCount = hitCount,
-                    SecondaryValue = secondaryValue,
-                    EffectKeyword = effectKeyword
-                });
-            }
         }
 
         private void ShuffleDrawPile()
