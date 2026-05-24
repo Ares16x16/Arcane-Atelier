@@ -7,12 +7,16 @@ namespace ArcaneAtelier.Workshop
 {
     public sealed class WorkshopHudPresenter : MonoBehaviour
     {
-        private const float Margin = 20f;
+        private const float Margin = 5f;
         private const float ThroughputPanelWidth = 352f;
         private const float ControlPanelWidth = 236f;
         private const float TopPanelGap = 20f;
         private const float RightRailWidth = 380f;
-        private const float BottomDockHeight = 292f;
+        private const float PaletteHeaderHeight = 124f;
+        private const float PaletteCardSpacing = 12f;
+        private const float PaletteCardHeight = 108f;
+        private const int PaletteVisibleRows = 2;
+        private const float BottomDockHeight = PaletteHeaderHeight + PaletteVisibleRows * PaletteCardHeight + (PaletteVisibleRows + 1) * PaletteCardSpacing + 16f;
         private const float TopHudHeight = 94f;
 
         private static readonly Color HudBackground = new Color(0.035f, 0.052f, 0.085f, 0.94f);
@@ -33,6 +37,7 @@ namespace ArcaneAtelier.Workshop
         private WorkshopSceneController controller;
 
         private Texture2D whiteTexture;
+        private Texture2D circleTexture;
         private Sprite panelMainSprite;
         private Sprite panelSubSprite;
         private Sprite statusBarSprite;
@@ -183,8 +188,8 @@ namespace ArcaneAtelier.Workshop
             DrawRegionFrame(rect, statusBarSprite, new Color(0.54f, 0.4f, 0.85f));
 
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(34f, 10f, rect.width - 68f, 18f), "Status", sectionStyle);
-            GUI.Label(new Rect(40f, 28f, rect.width - 80f, 20f), controller.StatusMessage, statusBarStyle);
+            GUI.Label(new Rect(60f, 10f, rect.width - 68f, 18f), "Status", sectionStyle);
+            GUI.Label(new Rect(60f, 28f, rect.width - 80f, 20f), controller.StatusMessage, statusBarStyle);
             GUI.EndGroup();
         }
 
@@ -195,35 +200,35 @@ namespace ArcaneAtelier.Workshop
             GUI.BeginGroup(rect);
             const float buttonSize = 26f;
             const float buttonGap = 6f;
-            const float rotationChipWidth = 54f;
-            var buttonStartX = rect.width - 12f - (rotationChipWidth + 12f + buttonSize * 5f + buttonGap * 4f);
-            DrawRect(new Rect(buttonStartX, 12f, rotationChipWidth, 24f), new Color(0.1f, 0.12f, 0.16f, 0.94f));
-            DrawOutline(new Rect(buttonStartX, 12f, rotationChipWidth, 24f), new Color(0.32f, 0.28f, 0.22f));
-            GUI.Label(new Rect(buttonStartX, 16f, rotationChipWidth, 14f), $"{controller.PlacementRotationQuarterTurns * 90}°", chipStyle);
+            const float rotationChipWidth = 25f;
+            var buttonStartX = rect.width - 22f - (rotationChipWidth + 12f + buttonSize * 5f + buttonGap * 4f);
+            DrawRect(new Rect(buttonStartX, 17f, rotationChipWidth, 24f), new Color(0.1f, 0.12f, 0.16f, 0.94f));
+            DrawOutline(new Rect(buttonStartX, 17f, rotationChipWidth, 24f), new Color(0.32f, 0.28f, 0.22f));
+            GUI.Label(new Rect(buttonStartX, 21f, rotationChipWidth, 14f), $"{controller.PlacementRotationQuarterTurns * 90}°", chipStyle);
             buttonStartX += rotationChipWidth + 12f;
 
-            if (DrawThemedButton(new Rect(buttonStartX, 10f, buttonSize, buttonSize), "?", ArcaneBlue, smallButtonStyle, "toggle_guide"))
+            if (DrawThemedButton(new Rect(buttonStartX, 15f, buttonSize, buttonSize), "?", ArcaneBlue, smallButtonStyle, "toggle_guide"))
             {
                 showGuide = !showGuide;
             }
 
-            if (DrawThemedButton(new Rect(buttonStartX + buttonSize + buttonGap, 10f, buttonSize, buttonSize), "✦", SpellViolet, smallButtonStyle, "toggle_rewards"))
+            if (DrawThemedButton(new Rect(buttonStartX + buttonSize + buttonGap, 15f, buttonSize, buttonSize), "✦", SpellViolet, smallButtonStyle, "toggle_rewards"))
             {
                 showRewards = !showRewards;
             }
 
             var pauseLabel = controller.IsPaused ? "▶" : "⏸";
-            if (DrawThemedButton(new Rect(buttonStartX + (buttonSize + buttonGap) * 2f, 10f, buttonSize, buttonSize), pauseLabel, AtelierGold, smallButtonStyle, "toggle_pause"))
+            if (DrawThemedButton(new Rect(buttonStartX + (buttonSize + buttonGap) * 2f, 15f, buttonSize, buttonSize), pauseLabel, AtelierGold, smallButtonStyle, "toggle_pause"))
             {
                 controller.TogglePause();
             }
 
-            if (DrawThemedButton(new Rect(buttonStartX + (buttonSize + buttonGap) * 3f, 10f, buttonSize, buttonSize), "↺", new Color(0.9f, 0.5f, 0.34f, 1f), smallButtonStyle, "reset_workshop"))
+            if (DrawThemedButton(new Rect(buttonStartX + (buttonSize + buttonGap) * 3f, 15f, buttonSize, buttonSize), "↺", new Color(0.9f, 0.5f, 0.34f, 1f), smallButtonStyle, "reset_workshop"))
             {
                 controller.ResetWorkshop();
             }
 
-            if (DrawThemedButton(new Rect(buttonStartX + (buttonSize + buttonGap) * 4f, 10f, buttonSize, buttonSize), "H", new Color(0.54f, 0.78f, 0.54f, 1f), smallButtonStyle, "load_hack_layout"))
+            if (DrawThemedButton(new Rect(buttonStartX + (buttonSize + buttonGap) * 4f, 15f, buttonSize, buttonSize), "H", new Color(0.54f, 0.78f, 0.54f, 1f), smallButtonStyle, "load_hack_layout"))
             {
                 controller.LoadHackFactoryLayout();
             }
@@ -373,21 +378,21 @@ namespace ArcaneAtelier.Workshop
         private void DrawRightRail(Rect rect)
         {
             DrawTallRegionFrame(rect, rightRailPanelSprite, new Color(0.37f, 0.72f, 0.94f));
-            DrawRect(new Rect(rect.x + 28f, rect.y + 14f, rect.width - 56f, 58f), new Color(0.03f, 0.045f, 0.07f, 0.7f));
+            //DrawRect(new Rect(rect.x + 28f, rect.y + 14f, rect.width - 56f, 58f), new Color(0.03f, 0.045f, 0.07f, 0.7f));
 
             GUI.BeginGroup(rect);
             var contentX = 30f;
             var contentWidth = rect.width - 60f;
-            GUI.Label(new Rect(contentX, 16f, contentWidth, 20f), "Selected", sectionStyle);
-            GUI.Label(new Rect(contentX, 36f, contentWidth, 18f), $"{controller.EncounterLabel}  {controller.RemainingPreparationTicks}/{controller.TotalPreparationTicks} ticks", tinyLabelStyle);
-            GUI.Label(new Rect(contentX, 52f, contentWidth, 18f), $"Cell {controller.SelectedCell.x}, {controller.SelectedCell.y}", tinyLabelStyle);
+            GUI.Label(new Rect(contentX+130f, 20f, contentWidth, 20f), "Selected", sectionStyle);
+            GUI.Label(new Rect(contentX+77f, 40f, contentWidth, 18f), $"{controller.EncounterLabel}  {controller.RemainingPreparationTicks}/{controller.TotalPreparationTicks} ticks", tinyLabelStyle);
+            GUI.Label(new Rect(contentX+135f, 55f, contentWidth, 18f), $"Cell {controller.SelectedCell.x}, {controller.SelectedCell.y}", tinyLabelStyle);
 
             var node = controller.SelectedNode;
             const float detailBottom = 166f;
             if (node == null)
             {
-                DrawSubPanel(new Rect(contentX, 80f, contentWidth, 56f), ArcaneBlue);
-                GUI.Label(new Rect(contentX + 16f, 94f, contentWidth - 32f, 30f), "Choose a tile to inspect a machine. Place with LMB on empty cells.", bodyStyle);
+                DrawSubPanel(new Rect(contentX + 5f, 90f, contentWidth - 10f, 46f), ArcaneBlue);
+                GUI.Label(new Rect(contentX + 21f, 94f, contentWidth - 32f, 30f), "Choose a tile to inspect a machine. Place with LMB on empty cells.", bodyStyle);
             }
             else
             {
@@ -445,12 +450,12 @@ namespace ArcaneAtelier.Workshop
             GUI.Label(new Rect(deckX + 14f, payloadTop + 34f, columnWidth - 28f, 18f), "Cards that reached collectors", tinyLabelStyle);
             DrawCompactList(new Rect(deckX + 14f, payloadTop + 60f, columnWidth - 28f, payloadHeight - 76f), deckItems);
 
-            if (DrawThemedButton(new Rect(contentX, stepButtonY, contentWidth, 28f), "Advance 1 Prep Tick", ArcaneBlue, buttonStyle, "advance_tick"))
+            if (DrawThemedButton(new Rect(contentX, stepButtonY, contentWidth, 30f), "Advance 1 Prep Tick", ArcaneBlue, buttonStyle, "advance_tick"))
             {
                 controller.StepPreparationOnce();
             }
 
-            if (DrawThemedButton(new Rect(contentX, deployButtonY, contentWidth, 28f), "Forge And Deploy", AtelierGold, buttonStyle, "forge_and_deploy", playClickSound: false))
+            if (DrawThemedButton(new Rect(contentX, deployButtonY, contentWidth, 30f), "Forge And Deploy", AtelierGold, buttonStyle, "forge_and_deploy", playClickSound: false))
             {
                 controller.DeployToBattle();
             }
@@ -595,22 +600,18 @@ namespace ArcaneAtelier.Workshop
             DrawRegionFrame(rect, paletteDockSprite, new Color(0.88f, 0.74f, 0.33f));
 
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(34f, 20f, 220f, 24f), "Workshop Palette", titleStyle);
-            GUI.Label(new Rect(34f, 44f, rect.width - 68f, 18f), "Choose a blueprint. LMB arms default, RMB arms mirror on corner conduits. Short LMB places/selects; hold LMB and drag pans.", mutedStyle);
-            DrawElementLegend(new Rect(34f, 64f, 272f, 18f));
+            GUI.Label(new Rect(65f, 25f, 220f, 24f), "Workshop Palette", titleStyle);
+            GUI.Label(new Rect(65f, 49f, rect.width - 68f, 18f), "Choose a blueprint. LMB arms default, RMB arms mirror on corner conduits. Short LMB places/selects; hold LMB and drag pans.", mutedStyle);
+            DrawElementLegend(new Rect(65f, 69f, 272f, 18f));
 
-            DrawPaletteTabs(new Rect(34f, 88f, rect.width - 68f, 28f));
+            DrawPaletteTabs(new Rect(65f, 95f, rect.width - 68f, 28f));
 
-            var contentRect = new Rect(28f, 124f, rect.width - 56f, rect.height - 140f);
+            var contentRect = new Rect(47f, PaletteHeaderHeight, rect.width - 80f, rect.height - 140f);
             var nodes = GetPaletteNodesForActiveTab();
-            const float spacing = 12f;
-            const float cardHeight = 108f;
-            int columns = Mathf.Max(1, Mathf.FloorToInt((contentRect.width + spacing) / (312f + spacing)));
-            float cardWidth = Mathf.Floor((contentRect.width - spacing * (columns + 1)) / columns);
+            int columns = Mathf.Max(1, Mathf.FloorToInt((contentRect.width + PaletteCardSpacing) / (312f + PaletteCardSpacing)));
+            float cardWidth = Mathf.Floor((contentRect.width - PaletteCardSpacing * (columns + 1)) / columns);
             int rows = Mathf.Max(1, Mathf.CeilToInt(nodes.Length / (float)columns));
-            int visibleRows = Mathf.Min(rows, 2);
-            float gridHeight = visibleRows * cardHeight + (visibleRows + 1) * spacing;
-            DrawSubPanel(new Rect(contentRect.x, contentRect.y, contentRect.width, gridHeight), AtelierGold);
+            int visibleRows = Mathf.Min(rows, PaletteVisibleRows);
 
             for (int index = 0; index < nodes.Length; index++)
             {
@@ -621,9 +622,9 @@ namespace ArcaneAtelier.Workshop
                     break;
                 }
 
-                float x = contentRect.x + spacing + column * (cardWidth + spacing);
-                float y = contentRect.y + spacing + row * (cardHeight + spacing);
-                DrawBlueprintCard(new Rect(x, y, cardWidth, cardHeight), nodes[index]);
+                float x = contentRect.x + PaletteCardSpacing + column * (cardWidth + PaletteCardSpacing);
+                float y = contentRect.y + PaletteCardSpacing + row * (PaletteCardHeight + PaletteCardSpacing);
+                DrawBlueprintCard(new Rect(x, y, cardWidth, PaletteCardHeight), nodes[index]);
             }
             GUI.EndGroup();
         }
@@ -979,18 +980,18 @@ namespace ArcaneAtelier.Workshop
 
             var iconSprite = ResolveNodeSprite(node);
             var iconTint = ResolveNodeSpriteTint(node);
-            if (!DrawSprite(new Rect(drawRect.x + 24f, drawRect.y + 20f, 40f, 40f), iconSprite, iconTint))
+            if (!DrawSprite(new Rect(drawRect.x + 26f, drawRect.y + 24f, 47f, 47f), iconSprite, iconTint))
             {
-                GUI.Label(new Rect(drawRect.x + 25f, drawRect.y + 21f, 38f, 38f), GetCategorySymbol(node.Category), iconStyle);
+                GUI.Label(new Rect(drawRect.x + 29f, drawRect.y + 27f, 40f, 40f), GetCategorySymbol(node.Category), iconStyle);
             }
-            DrawNodeElementBadge(new Rect(drawRect.x + drawRect.width - 52f, drawRect.y + 18f, 24f, 24f), node);
-            GUI.Label(new Rect(drawRect.x + 84f, drawRect.y + 18f, drawRect.width - 164f, 18f), node.DisplayName, blueprintTitleStyle);
-            GUI.Label(new Rect(drawRect.x + 84f, drawRect.y + 43f, drawRect.width - 116f, 16f), node.Category.ToString(), blueprintMetaStyle);
-            GUI.Label(new Rect(drawRect.x + 84f, drawRect.y + 64f, drawRect.width - 116f, 16f), unlocked ? "Ready" : "Locked reward", blueprintMetaStyle);
+            DrawNodeElementBadge(new Rect(drawRect.x + drawRect.width - 40f, drawRect.y + 11f, 24f, 24f), node);
+            GUI.Label(new Rect(drawRect.x + 95f, drawRect.y + 13f, drawRect.width - 164f, 18f), node.DisplayName, blueprintTitleStyle);
+            GUI.Label(new Rect(drawRect.x + 95f, drawRect.y + 40f, drawRect.width - 116f, 16f), node.Category.ToString(), blueprintMetaStyle);
+            GUI.Label(new Rect(drawRect.x + 95f, drawRect.y + 64f, drawRect.width - 116f, 16f), unlocked ? "Ready" : "Locked reward", blueprintMetaStyle);
 
             if (mirrorNode != null)
             {
-                DrawCornerVariantStrip(new Rect(drawRect.x + 24f, drawRect.y + drawRect.height - 30f, drawRect.width - 48f, 18f), node, mirrorNode, mirrorSelected, unlocked);
+                DrawCornerVariantStrip(new Rect(drawRect.x + 24f, drawRect.y + drawRect.height - 19f, drawRect.width - 48f, 18f), node, mirrorNode, mirrorSelected, unlocked);
             }
 
             if (!unlocked)
@@ -1142,8 +1143,24 @@ namespace ArcaneAtelier.Workshop
         {
             if (TryGetNodeElement(node, out var element))
             {
-                DrawFormulaIcon(rect, element);
+                DrawCircleBadge(rect, element);
             }
+        }
+
+        private void DrawCircleBadge(Rect rect, WorkshopElementAttribute element)
+        {
+            DrawCircle(new Rect(rect.x - 1f, rect.y - 1f, rect.width + 2f, rect.height + 2f), new Color(AtelierGold.r, AtelierGold.g, AtelierGold.b, 0.55f));
+            DrawCircle(rect, new Color(0.06f, 0.08f, 0.11f, 0.96f));
+
+            var iconRect = new Rect(rect.x + 4f, rect.y + 4f, rect.width - 8f, rect.height - 8f);
+            Sprite elementSprite = GetElementSprite(element);
+            if (elementSprite == null)
+            {
+                GUI.Label(iconRect, GetElementDisplayName(element).Substring(0, 1), chipStyle);
+                return;
+            }
+
+            DrawSpritePreserveAspect(iconRect, elementSprite, Color.white);
         }
 
         private void DrawGuideRow(Rect rect, string key, string action)
@@ -1319,6 +1336,20 @@ namespace ArcaneAtelier.Workshop
             var previousColor = GUI.color;
             GUI.color = color;
             GUI.DrawTexture(rect, whiteTexture, ScaleMode.StretchToFill);
+            GUI.color = previousColor;
+        }
+
+        private void DrawCircle(Rect rect, Color color)
+        {
+            if (circleTexture == null)
+            {
+                DrawRect(rect, color);
+                return;
+            }
+
+            var previousColor = GUI.color;
+            GUI.color = color;
+            GUI.DrawTexture(rect, circleTexture, ScaleMode.StretchToFill, true);
             GUI.color = previousColor;
         }
 
@@ -1520,6 +1551,11 @@ namespace ArcaneAtelier.Workshop
                 whiteTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
                 whiteTexture.SetPixel(0, 0, Color.white);
                 whiteTexture.Apply();
+            }
+
+            if (circleTexture == null)
+            {
+                circleTexture = CreateCircleTexture(32);
             }
 
             if (panelMainSprite == null)
@@ -1908,6 +1944,31 @@ namespace ArcaneAtelier.Workshop
                 DrawOutline(rect, new Color(0.4f, 0.34f, 0.62f));
                 GUI.Label(rect, reward != null ? "✦" : "•", iconStyle);
             }
+        }
+
+        private static Texture2D CreateCircleTexture(int size)
+        {
+            Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.filterMode = FilterMode.Bilinear;
+
+            float center = (size - 1) * 0.5f;
+            float radius = center - 0.5f;
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x - center;
+                    float dy = y - center;
+                    float distance = Mathf.Sqrt(dx * dx + dy * dy);
+                    float alpha = Mathf.Clamp01((radius + 0.75f - distance) / 1.25f);
+                    texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                }
+            }
+
+            texture.Apply();
+            return texture;
         }
 
         private void DrawElementLegend(Rect rect)
